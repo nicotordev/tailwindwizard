@@ -44,6 +44,7 @@ const listBlocksRoute = createRoute({
       status: z.enum(["PUBLISHED", "DRAFT"]).optional(),
       creatorId: z.string().optional(),
       visibility: z.enum(["PUBLIC", "PRIVATE"]).optional(),
+      categorySlug: z.string().optional(),
     }),
   },
   responses: {
@@ -243,13 +244,13 @@ const createReviewRoute = createRoute({
 // Implementation
 // --------------------------------------------------------------------------
 
-blockApp.openapi(listBlocksRoute, blockController.list);
-blockApp.openapi(getBlockRoute, blockController.getById);
-blockApp.openapi(createBlockRoute, blockController.create);
-blockApp.openapi(updateBlockRoute, blockController.update);
-blockApp.openapi(deleteBlockRoute, blockController.delete);
+blockApp.openapi(listBlocksRoute, (c) => blockController.list(c));
+blockApp.openapi(getBlockRoute, (c) => blockController.getById(c));
+blockApp.openapi(createBlockRoute, (c) => blockController.create(c));
+blockApp.openapi(updateBlockRoute, (c) => blockController.update(c));
+blockApp.openapi(deleteBlockRoute, (c) => blockController.delete(c));
 
-blockApp.openapi(listReviewsRoute, reviewController.listByBlock);
-blockApp.openapi(createReviewRoute, reviewController.create);
+blockApp.openapi(listReviewsRoute, (c) => reviewController.listByBlock(c));
+blockApp.openapi(createReviewRoute, (c) => reviewController.create(c));
 
 export default blockApp;

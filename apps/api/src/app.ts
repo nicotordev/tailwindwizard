@@ -1,16 +1,15 @@
-import { clerkMiddleware, getAuth } from "@hono/clerk-auth";
+import { clerkMiddleware } from "@hono/clerk-auth";
 import { swaggerUI } from "@hono/swagger-ui";
 import { OpenAPIHono } from "@hono/zod-openapi";
-import { pinoLogger } from "hono-pino";
 import { cors } from "hono/cors";
 import { secureHeaders } from "hono/secure-headers";
+import { pinoLogger } from "hono-pino";
 // Routes
 import appRouter from "./routes/index.js";
 
-
 const app = new OpenAPIHono<{ Bindings: NodeJS.ProcessEnv }>({
   defaultHook: (result, c) => {
-    if (result.success === false) {
+    if (!result.success) {
       return c.json(
         {
           success: false,
@@ -60,4 +59,5 @@ app.doc("/doc", {
   ],
 });
 
+export type AppType = typeof app;
 export default app;

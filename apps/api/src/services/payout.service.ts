@@ -5,12 +5,12 @@ import { prisma } from "../db/prisma.js";
 import stripe from "../lib/stripe.js";
 import { calcPlatformFeeCents, toCents } from "../utils/money.js";
 
-type CreatorPayoutCalc = {
+interface CreatorPayoutCalc {
   creatorId: string;
   stripeAccountId: string;
   currency: "usd";
   amountCents: number; // net to creator
-};
+}
 
 export const payoutService = {
   async transferToCreatorsForPurchase(purchaseId: string): Promise<void> {
@@ -41,13 +41,11 @@ export const payoutService = {
       const block = item.block;
       const creator = block.creator;
       if (!creator) throw new Error("Block.creator missing");
-      if (!creator.stripeAccountId)
-        throw new Error("Creator missing stripeAccountId");
       if (creator.stripeAccountStatus !== "ENABLED")
         throw new Error("Creator Stripe account not enabled");
 
       const priceCents = toCents(block.price);
-      const platformFeeBps = block.platformFeeBps ?? 1500;
+      const platformFeeBps = block.platformFeeBps;
 
       // Buyer already paid (price + fee). Seller gets price.
       // If quieres que seller pague parte del fee, cambia acá.
@@ -55,6 +53,9 @@ export const payoutService = {
 
       const prev = byCreator.get(creator.id);
       if (!prev) {
+        if (!creator.stripeAccountId) {
+          throw new Error(`Creator ${creator.id} has no Stripe account connected`);
+        }
         byCreator.set(creator.id, {
           creatorId: creator.id,
           stripeAccountId: creator.stripeAccountId,

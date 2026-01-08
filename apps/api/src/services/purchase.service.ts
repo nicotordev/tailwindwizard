@@ -1,16 +1,16 @@
 // src/services/purchase.service.ts
 import { randomBytes } from "crypto";
+import env from "../config/env.config.js";
 import { Prisma } from "../db/generated/prisma/client.js";
 import type { LicenseType } from "../db/generated/prisma/client.js";
-import env from "../config/env.config.js";
 import { prisma } from "../db/prisma.js";
 import stripe from "../lib/stripe.js";
 import { calcPlatformFeeCents, fromCents, toCents } from "../utils/money.js";
 
-type CreatePendingPurchaseResult = {
+interface CreatePendingPurchaseResult {
   purchaseId: string;
   checkoutUrl: string;
-};
+}
 
 export const purchaseService = {
   /**
@@ -59,7 +59,7 @@ export const purchaseService = {
     // money calc (in cents)
     const items = blocks.map((b) => {
       const priceCents = toCents(b.price);
-      const feeBps = b.platformFeeBps ?? 1500;
+      const feeBps = b.platformFeeBps;
       const platformFeeCents = calcPlatformFeeCents(priceCents, feeBps);
       const grossCents = priceCents + platformFeeCents;
 

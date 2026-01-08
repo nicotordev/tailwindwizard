@@ -134,9 +134,9 @@ const getByIdRoute = createRoute({
 // Implementation
 // --------------------------------------------------------------------------
 
-creatorApp.openapi(getMeRoute, creatorController.getMe);
-creatorApp.openapi(createMeRoute, creatorController.createMe);
-creatorApp.openapi(updateMeRoute, creatorController.updateMe);
-creatorApp.openapi(getByIdRoute, creatorController.getById);
+creatorApp.openapi(getMeRoute, (c) => creatorController.getMe(c));
+creatorApp.openapi(createMeRoute, (c) => creatorController.createMe(c));
+creatorApp.openapi(updateMeRoute, (c) => creatorController.updateMe(c));
+creatorApp.openapi(getByIdRoute, (c) => creatorController.getById(c));
 
 export default creatorApp;

@@ -20,6 +20,17 @@ export const BlockTagSchema = z
   })
   .openapi("BlockTag");
 
+export const BlockCategorySchema = z
+  .object({
+    category: z.object({
+      id: z.string(),
+      name: z.string(),
+      slug: z.string(),
+      icon: z.string().nullable().optional(),
+    }),
+  })
+  .openapi("BlockCategory");
+
 export const BlockSchema = z
   .object({
     id: z.string(),
@@ -57,6 +68,7 @@ export const BlockSchema = z
 
     previews: z.array(PreviewAssetSchema).optional(),
     tags: z.array(BlockTagSchema).optional(),
+    categories: z.array(BlockCategorySchema).optional(),
 
     soldCount: z.number(),
     ratingAvg: z.number(),

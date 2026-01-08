@@ -1,5 +1,5 @@
-import type { Prisma, ApiKeyScope } from "../db/generated/prisma/client.js";
 import { randomBytes, createHash } from "crypto";
+import type { Prisma, ApiKeyScope } from "../db/generated/prisma/client.js";
 import { prisma } from "../db/prisma.js";
 
 export const userService = {

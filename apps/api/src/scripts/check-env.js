@@ -17,7 +17,7 @@ if (!result.success) {
   result.error.issues.forEach((issue) => {
     console.error(`  • ${issue.path.join(".")}: ${issue.message}`);
   });
-  process.exit(1);
+  process.exitCode = 1;
+} else {
+  console.log("✅ Environment variables are valid and ready to go! 🚀");
 }
-
-console.log("✅ Environment variables are valid and ready to go! 🚀");

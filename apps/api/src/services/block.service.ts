@@ -1,5 +1,9 @@
+import type {
+  BlockStatus,
+  Prisma,
+  Visibility,
+} from "../db/generated/prisma/client.js";
 import { prisma } from "../db/prisma.js";
-import type { Prisma, BlockStatus, Visibility } from "../db/generated/prisma/client.js";
 
 export const blockService = {
   async findMany(params: {
@@ -9,9 +13,18 @@ export const blockService = {
     limit?: number;
     offset?: number;
     search?: string;
+    categorySlug?: string;
   }) {
-    const { status, visibility, creatorId, limit = 20, offset = 0, search } = params;
-    
+    const {
+      status,
+      visibility,
+      creatorId,
+      limit = 20,
+      offset = 0,
+      search,
+      categorySlug,
+    } = params;
+
     const where: Prisma.BlockWhereInput = {
       status,
       visibility,
@@ -23,6 +36,15 @@ export const blockService = {
             { description: { contains: search, mode: "insensitive" } },
           ]
         : undefined,
+      categories: categorySlug
+        ? {
+            some: {
+              category: {
+                slug: categorySlug,
+              },
+            },
+          }
+        : undefined,
     };
 
     return prisma.block.findMany({
@@ -33,11 +55,12 @@ export const blockService = {
         creator: {
           select: {
             displayName: true,
-            user: { select: { avatarUrl: true } }
-          }
+            user: { select: { avatarUrl: true } },
+          },
         },
         previews: true,
         tags: { include: { tag: true } },
+        categories: { include: { category: true } },
       },
       orderBy: { createdAt: "desc" },
     });
@@ -48,35 +71,38 @@ export const blockService = {
       where: { id },
       include: {
         creator: {
-          include: { user: { select: { avatarUrl: true, name: true } } }
+          include: { user: { select: { avatarUrl: true, name: true } } },
         },
         previews: true,
         registryDeps: true,
         npmDeps: true,
         tags: { include: { tag: true } },
+        categories: { include: { category: true } },
         _count: {
           select: { reviews: true },
-        }
+        },
       },
     });
   },
-  
+
   async findBySlug(slug: string) {
-      return prisma.block.findUnique({
-          where: { slug },
-          include: {
-            creator: {
-              include: { user: { select: { avatarUrl: true, name: true } } }
-            },
-            previews: true,
-            registryDeps: true,
-            npmDeps: true,
-            tags: { include: { tag: true } },
-            _count: {
-              select: { reviews: true },
-            }
-          }
-      })
+    return prisma.block.findUnique({
+      where: { slug },
+      include: {
+        creator: {
+          include: { user: { select: { avatarUrl: true, name: true } } },
+        },
+        previews: true,
+
+        registryDeps: true,
+        npmDeps: true,
+        tags: { include: { tag: true } },
+        categories: { include: { category: true } },
+        _count: {
+          select: { reviews: true },
+        },
+      },
+    });
   },
 
   async create(creatorId: string, data: Prisma.BlockCreateInput) {
@@ -98,5 +124,5 @@ export const blockService = {
     return prisma.block.delete({
       where: { id },
     });
-  }
+  },
 };

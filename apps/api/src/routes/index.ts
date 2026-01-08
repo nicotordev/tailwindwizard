@@ -1,5 +1,6 @@
 import { OpenAPIHono } from "@hono/zod-openapi";
 import blockApp from "./block.route.js";
+import categoryApp from "./category.route.js";
 import creatorApp from "./creator.route.js";
 import purchaseApp from "./purchase.route.js";
 import tagApp from "./tag.route.js";
@@ -11,6 +12,7 @@ appRouter.route("/users", userApp);
 appRouter.route("/creators", creatorApp);
 appRouter.route("/blocks", blockApp);
 appRouter.route("/tags", tagApp);
+appRouter.route("/categories", categoryApp);
 appRouter.route("/commerce", purchaseApp);
 
 export default appRouter;

@@ -4,8 +4,8 @@ import type Stripe from "stripe";
 import env from "../config/env.config.js";
 import { prisma } from "../db/prisma.js";
 import stripe from "../lib/stripe.js";
-import { purchaseService } from "../services/purchase.service.js";
 import { payoutService } from "../services/payout.service.js";
+import { purchaseService } from "../services/purchase.service.js";
 
 function getHeader(headers: Headers, name: string): string | null {
   // Headers are case-insensitive; use get()
@@ -74,7 +74,7 @@ export const stripeWebhookRoute = new Hono().post(
     try {
       // Handle events
       if (event.type === "checkout.session.completed") {
-        const session = event.data.object as Stripe.Checkout.Session;
+        const session = event.data.object;
 
         const purchaseId = session.metadata?.purchaseId;
         if (!purchaseId)
@@ -89,10 +89,7 @@ export const stripeWebhookRoute = new Hono().post(
 
         // Retrieve payment intent to get latest_charge (optional but useful)
         const pi = await stripe.paymentIntents.retrieve(paymentIntentId);
-        const latestChargeId =
-          typeof pi.latest_charge === "string"
-            ? pi.latest_charge
-            : (pi.latest_charge?.id ?? null);
+        const latestChargeId = pi.latest_charge as string | null;
 
         await prisma.purchase.update({
           where: { id: purchaseId },

@@ -1,7 +1,7 @@
-import type { Context } from "hono";
 import { getAuth } from "@hono/clerk-auth";
-import { reviewService } from "../services/review.service.js";
+import type { Context } from "hono";
 import { prisma } from "../db/prisma.js";
+import { reviewService } from "../services/review.service.js";
 
 export const reviewController = {
   async listByBlock(c: Context) {
@@ -45,7 +45,11 @@ export const reviewController = {
     // For now, we allow reviewing if we want, or strictly enforce purchase
     // if (!hasPurchase) return c.json({ message: "Purchase required to review" }, 403);
 
-    const body = await c.req.json();
+    const body = (await c.req.json()) as {
+      rating: number;
+      title: string;
+      body: string;
+    };
     const review = await reviewService.create({
       rating: body.rating,
       title: body.title,

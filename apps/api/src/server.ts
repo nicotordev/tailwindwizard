@@ -1,11 +1,12 @@
-import 'dotenv/config';
+import "dotenv/config";
+import { serve } from "@hono/node-server";
 import app from "./app.js";
 
-const port = 3000;
-console.log(`Server is running on port ${port}`);
+const port = process.env.PORT ? Number(process.env.PORT) : 3001;
+console.log(`Server is running on port ${port.toString()}`);
 
-export default {
-  port,
+// eslint-disable-next-line @typescript-eslint/no-unsafe-call
+serve({
   fetch: app.fetch,
-};
-
+  port: port,
+});

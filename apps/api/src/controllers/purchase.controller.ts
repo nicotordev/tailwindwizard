@@ -1,9 +1,9 @@
+import { getAuth } from "@hono/clerk-auth";
 import type { Context } from "hono";
 import type { ZodIssue } from "zod";
-import { getAuth } from "@hono/clerk-auth";
 import { prisma } from "../db/prisma.js";
-import { purchaseService } from "../services/purchase.service.js";
 import { CreateCheckoutSchema } from "../schemas/purchase.schema.js";
+import { purchaseService } from "../services/purchase.service.js";
 
 const RESPONSE_MESSAGES = {
   unauthorized: { message: "Unauthorized" },
@@ -85,7 +85,7 @@ async function getUserIdFromClerk(c: Context): Promise<string | null> {
 }
 
 async function parseCheckoutBody(c: Context) {
-  const body = await c.req.json().catch(() => null);
+  const body = (await c.req.json().catch(() => null)) as unknown;
   return CreateCheckoutSchema.safeParse(body);
 }
 

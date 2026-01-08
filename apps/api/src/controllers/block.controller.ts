@@ -1,26 +1,39 @@
-import type { Context } from "hono";
 import { getAuth } from "@hono/clerk-auth";
+import type { Context } from "hono";
+import type {
+  BlockStatus,
+  Prisma,
+  Visibility,
+} from "../db/generated/prisma/client.js";
+import { prisma } from "../db/prisma.js";
 import { blockService } from "../services/block.service.js";
 import { creatorService } from "../services/creator.service.js";
-import { prisma } from "../db/prisma.js";
-import type { Prisma, BlockStatus, Visibility } from "../db/generated/prisma/client.js";
 
 export const blockController = {
   async list(c: Context) {
-    const { status, visibility, search, limit, offset, creatorId } = c.req.query();
-    
-    const limitNum = limit ? parseInt(limit as string) : 20;
-    const offsetNum = offset ? parseInt(offset as string) : 0;
-    
+    const {
+      status,
+      visibility,
+      search,
+      limit,
+      offset,
+      creatorId,
+      categorySlug,
+    } = c.req.query();
+
+    const limitNum = limit ? parseInt(limit) : 20;
+    const offsetNum = offset ? parseInt(offset) : 0;
+
     const blocks = await blockService.findMany({
-      status: status as BlockStatus,
-      visibility: visibility as Visibility,
-      creatorId: creatorId as string,
-      search: search as string,
+      status: status as BlockStatus | undefined,
+      visibility: visibility as Visibility | undefined,
+      creatorId: creatorId,
+      search: search,
       limit: limitNum,
       offset: offsetNum,
+      categorySlug: categorySlug,
     });
-    
+
     return c.json(blocks, 200);
   },
 
@@ -56,7 +69,7 @@ export const blockController = {
     const creator = await creatorService.getCreatorByUserId(user.id);
     if (!creator) return c.json({ message: "Creator profile required" }, 403);
 
-    const body = await c.req.json();
+    const body = (await c.req.json()) as Prisma.BlockCreateInput;
 
     // Construct Prisma CreateInput
     // We expect body to match specific schema, but we need to connect Creator
@@ -99,7 +112,7 @@ export const blockController = {
       }
     }
 
-    const body = await c.req.json();
+    const body = (await c.req.json()) as Prisma.BlockUpdateInput;
     const updated = await blockService.update(id, body);
     return c.json(updated);
   },

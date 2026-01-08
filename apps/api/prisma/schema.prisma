@@ -339,7 +339,8 @@ model Block {
   npmDeps      BlockNpmDependency[]
 
   // Tags / categories
-  tags BlockTag[]
+  tags       BlockTag[]
+  categories BlockCategory[]
 
   // Moderation
   moderationEvents ModerationEvent[]
@@ -480,6 +481,28 @@ model BlockTag {
 
   @@unique([blockId, tagId])
   @@index([tagId])
+}
+
+model Category {
+  id        String   @id @default(cuid())
+  slug      String   @unique
+  name      String
+  icon      String?
+  createdAt DateTime @default(now())
+
+  blocks BlockCategory[]
+}
+
+model BlockCategory {
+  id      String @id @default(cuid())
+  blockId String
+  block   Block  @relation(fields: [blockId], references: [id], onDelete: Cascade)
+
+  categoryId String
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@unique([blockId, categoryId])
+  @@index([categoryId])
 }
 
 model ModerationEvent {

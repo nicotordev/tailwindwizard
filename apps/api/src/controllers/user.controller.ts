@@ -1,8 +1,7 @@
-import type { Context } from "hono";
 import { getAuth } from "@hono/clerk-auth";
+import type { Context } from "hono";
+import type { ApiKeyScope, Prisma } from "../db/generated/prisma/client.js";
 import { userService } from "../services/user.service.js";
-import type { ApiKeyScope } from "../db/generated/prisma/client.js";
-import { prisma } from "../db/prisma.js";
 
 
 export const userController = {
@@ -29,7 +28,7 @@ export const userController = {
     }
     const user = await userService.getOrCreateUser(auth.userId, "");
     
-    const body = await c.req.json();
+    const body = (await c.req.json()) as Prisma.UserUpdateInput;
     const updated = await userService.updateUser(user.id, body);
     return c.json(updated);
   },
@@ -63,7 +62,7 @@ export const userController = {
     }
     const user = await userService.getOrCreateUser(auth.userId, "");
 
-    const body = await c.req.json();
+    const body = (await c.req.json()) as { name: string; scope: string };
     const { name, scope } = body;
 
     const result = await userService.createApiKey(

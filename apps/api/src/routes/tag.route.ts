@@ -21,6 +21,6 @@ const listTagsRoute = createRoute({
   },
 });
 
-tagApp.openapi(listTagsRoute, tagController.list);
+tagApp.openapi(listTagsRoute, (c) => tagController.list(c));
 
 export default tagApp;

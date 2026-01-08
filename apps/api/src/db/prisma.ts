@@ -3,7 +3,7 @@ import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "./generated/prisma/client.js";
 
 function getPrismaClient() {
-  const connectionString = `${process.env.DATABASE_URL}`;
+  const connectionString = process.env.DATABASE_URL || "";
 
   const adapter = new PrismaPg({ connectionString });
   const prisma = new PrismaClient({
@@ -15,8 +15,8 @@ function getPrismaClient() {
 }
 
 declare global {
-  // eslint-disable-next-line no-var
-  var prisma: ReturnType<typeof getPrismaClient>;
+   
+  var prisma: ReturnType<typeof getPrismaClient> | undefined;
 }
 
 export const prisma =

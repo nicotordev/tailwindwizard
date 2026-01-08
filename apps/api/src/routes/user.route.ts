@@ -172,11 +172,11 @@ const revokeApiKeyRoute = createRoute({
 // Implementation Binding
 // --------------------------------------------------------------------------
 
-userApp.openapi(getMeRoute, userController.getMe);
-userApp.openapi(updateMeRoute, userController.updateMe);
-userApp.openapi(getMyPurchasesRoute, userController.getMyPurchases);
-userApp.openapi(getMyApiKeysRoute, userController.getMyApiKeys);
-userApp.openapi(createApiKeyRoute, userController.createApiKey);
-userApp.openapi(revokeApiKeyRoute, userController.revokeApiKey);
+userApp.openapi(getMeRoute, (c) => userController.getMe(c));
+userApp.openapi(updateMeRoute, (c) => userController.updateMe(c));
+userApp.openapi(getMyPurchasesRoute, (c) => userController.getMyPurchases(c));
+userApp.openapi(getMyApiKeysRoute, (c) => userController.getMyApiKeys(c));
+userApp.openapi(createApiKeyRoute, (c) => userController.createApiKey(c));
+userApp.openapi(revokeApiKeyRoute, (c) => userController.revokeApiKey(c));
 
 export default userApp;

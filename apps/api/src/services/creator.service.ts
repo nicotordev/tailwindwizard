@@ -1,5 +1,5 @@
-import { prisma } from "../db/prisma.js";
 import type { Prisma } from "../db/generated/prisma/client.js";
+import { prisma } from "../db/prisma.js";
 
 export const creatorService = {
   async getCreatorByUserId(userId: string) {
