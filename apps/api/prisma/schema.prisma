@@ -1,0 +1,794 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/db/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// -----------------------------
+// Enums
+// -----------------------------
+
+enum UserRole {
+  ADMIN
+  USER
+}
+
+enum AuthProvider {
+  CLERK
+}
+
+enum StripeAccountType {
+  EXPRESS
+  STANDARD
+  CUSTOM
+}
+
+enum StripeAccountStatus {
+  NOT_CONNECTED
+  PENDING
+  ENABLED
+  RESTRICTED
+  REJECTED
+}
+
+enum BlockType {
+  COMPONENT
+  SECTION
+  PAGE
+}
+
+enum BlockFramework {
+  REACT
+  VUE
+  SVELTE
+}
+
+enum StylingEngine {
+  TAILWIND
+  CSS
+}
+
+enum Visibility {
+  PRIVATE
+  UNLISTED
+  PUBLIC
+}
+
+enum BlockStatus {
+  DRAFT
+  SUBMITTED
+  APPROVED
+  REJECTED
+  PUBLISHED
+  UNPUBLISHED
+  ARCHIVED
+}
+
+enum ModerationDecision {
+  APPROVE
+  REJECT
+  REQUEST_CHANGES
+}
+
+enum RenderJobStatus {
+  QUEUED
+  RUNNING
+  SUCCEEDED
+  FAILED
+  CANCELED
+}
+
+enum PreviewViewport {
+  MOBILE
+  TABLET
+  DESKTOP
+}
+
+enum FileKind {
+  COMPONENT
+  STYLE
+  UTILS
+  README
+  ASSET
+  OTHER
+}
+
+enum CodeStorageKind {
+  INLINE_ENCRYPTED
+  OBJECT_STORAGE
+}
+
+enum CurrencyCode {
+  USD
+  EUR
+  CLP
+  GBP
+  MXN
+  ARS
+  BRL
+}
+
+enum PurchaseStatus {
+  PENDING
+  PAID
+  FAILED
+  CANCELED
+  REFUNDED
+  CHARGEBACK
+}
+
+enum DeliveryStatus {
+  NOT_READY
+  READY
+  REVOKED
+}
+
+enum LicenseType {
+  PERSONAL
+  TEAM
+  ENTERPRISE
+}
+
+enum LicenseStatus {
+  ACTIVE
+  REVOKED
+}
+
+enum RefundStatus {
+  NONE
+  REQUESTED
+  APPROVED
+  REJECTED
+  PROCESSED
+}
+
+enum DisputeStatus {
+  OPEN
+  NEEDS_RESPONSE
+  UNDER_REVIEW
+  WON
+  LOST
+  CLOSED
+}
+
+enum ReviewStatus {
+  VISIBLE
+  HIDDEN
+  REMOVED
+}
+
+enum ApiKeyScope {
+  READ_PUBLIC
+  DOWNLOAD_PURCHASED
+  ADMIN
+}
+
+enum WebhookProvider {
+  STRIPE
+}
+
+enum WebhookStatus {
+  RECEIVED
+  PROCESSED
+  FAILED
+  IGNORED
+}
+
+enum AuditActorType {
+  USER
+  SYSTEM
+}
+
+enum AuditAction {
+  USER_CREATE
+  USER_UPDATE
+  USER_DELETE
+
+  CREATOR_CONNECT_STRIPE
+  CREATOR_UPDATE_STRIPE
+
+  BLOCK_CREATE
+  BLOCK_UPDATE
+  BLOCK_SUBMIT
+  BLOCK_APPROVE
+  BLOCK_REJECT
+  BLOCK_PUBLISH
+  BLOCK_UNPUBLISH
+  BLOCK_ARCHIVE
+
+  RENDERJOB_CREATE
+  RENDERJOB_UPDATE
+
+  PURCHASE_CREATE
+  PURCHASE_PAID
+  PURCHASE_FAILED
+  PURCHASE_REFUNDED
+  PURCHASE_CHARGEBACK
+
+  LICENSE_REVOKE
+  DOWNLOAD_CREATE
+
+  REVIEW_CREATE
+  REVIEW_UPDATE
+  REVIEW_MODERATE
+
+  DISPUTE_CREATE
+  DISPUTE_UPDATE
+
+  WEBHOOK_RECEIVED
+  WEBHOOK_PROCESSED
+  WEBHOOK_FAILED
+}
+
+enum PlanTier {
+  FREE
+  PRO
+  TEAM
+  ENTERPRISE
+}
+
+// -----------------------------
+// Models
+// -----------------------------
+
+model User {
+  id             String       @id @default(cuid())
+  email          String       @unique
+  emailVerified  DateTime?
+  name           String?
+  avatarUrl      String?
+  role           UserRole     @default(USER)
+  authProvider   AuthProvider @default(CLERK)
+  externalAuthId String?      @unique // e.g., Clerk userId
+
+  // Creator profile (nullable: not everyone sells)
+  creator Creator?
+
+  // Buyer side
+  purchases Purchase[]
+  licenses  License[]
+  downloads Download[]
+  reviews   Review[]
+
+  // Platform subscriptions (optional)
+  planTier      PlanTier  @default(FREE)
+  planExpiresAt DateTime?
+
+  // Security / ops
+  apiKeys   ApiKey[]
+  auditLogs AuditLog[] @relation("AuditActorUser")
+
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  deletedAt        DateTime?
+  moderationEvents ModerationEvent[]
+
+  @@index([createdAt])
+  @@index([role])
+}
+
+model Creator {
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  displayName  String?
+  bio          String?
+  websiteUrl   String?
+  portfolioUrl String?
+  countryCode  String? // ISO-3166-1 alpha-2 (optional)
+
+  // Stripe Connect
+  stripeAccountId        String?             @unique
+  stripeAccountType      StripeAccountType   @default(EXPRESS)
+  stripeAccountStatus    StripeAccountStatus @default(NOT_CONNECTED)
+  stripeChargesEnabled   Boolean             @default(false)
+  stripePayoutsEnabled   Boolean             @default(false)
+  stripeDetailsSubmitted Boolean             @default(false)
+
+  // Compliance / moderation
+  isApprovedSeller Boolean   @default(false)
+  approvedAt       DateTime?
+  rejectedAt       DateTime?
+  rejectionReason  String?
+
+  blocks  Block[]
+  payouts Payout[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isApprovedSeller])
+  @@index([stripeAccountStatus])
+}
+
+model Block {
+  id            String         @id @default(cuid())
+  slug          String         @unique
+  title         String
+  description   String?
+  changelog     String?
+  type          BlockType      @default(COMPONENT)
+  framework     BlockFramework @default(REACT)
+  stylingEngine StylingEngine  @default(TAILWIND)
+
+  version    String      @default("1.0.0") // SemVer-ish
+  visibility Visibility  @default(PRIVATE)
+  status     BlockStatus @default(DRAFT)
+
+  // Pricing
+  currency       CurrencyCode @default(USD)
+  price          Decimal      @db.Decimal(10, 2)
+  platformFeeBps Int          @default(1500) // e.g. 15% in basis points (1500 = 15.00%)
+
+  // Ownership
+  creatorId String
+  creator   Creator @relation(fields: [creatorId], references: [id], onDelete: Restrict)
+
+  // Public preview assets (images/video), never code
+  previews PreviewAsset[]
+
+  // Private code payload
+  codeBundle CodeBundle?
+
+  // Dependencies metadata for DX
+  registryDeps BlockRegistryDependency[]
+  npmDeps      BlockNpmDependency[]
+
+  // Tags / categories
+  tags BlockTag[]
+
+  // Moderation
+  moderationEvents ModerationEvent[]
+  renderJobs       RenderJob[]
+
+  // Commerce
+  lineItems PurchaseLineItem[]
+  licenses  License[]
+  reviews   Review[]
+
+  // Counters (denormalized)
+  soldCount   Int   @default(0)
+  ratingAvg   Float @default(0)
+  ratingCount Int   @default(0)
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  publishedAt DateTime?
+  archivedAt  DateTime?
+
+  @@index([creatorId, status])
+  @@index([visibility, status])
+  @@index([publishedAt])
+  @@index([soldCount])
+}
+
+model CodeBundle {
+  id      String @id @default(cuid())
+  blockId String @unique
+  block   Block  @relation(fields: [blockId], references: [id], onDelete: Cascade)
+
+  storageKind CodeStorageKind @default(OBJECT_STORAGE)
+
+  // If OBJECT_STORAGE: where the encrypted bundle lives
+  objectKey    String? @unique // e.g. S3 key
+  objectRegion String?
+  objectBucket String?
+
+  // If INLINE_ENCRYPTED: for small payloads (not recommended)
+  encryptedJson String? @db.Text
+
+  // Hashes for integrity / traceability
+  sha256        String?
+  astScanPassed Boolean @default(false)
+  astScanReport String? @db.Text
+
+  // Watermark / buyer traceability strategy seed
+  watermarkStrategyVersion String @default("v1")
+
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+  blockFiles BlockFile[]
+
+  @@index([astScanPassed])
+}
+
+model BlockFile {
+  id           String     @id @default(cuid())
+  codeBundleId String
+  codeBundle   CodeBundle @relation(fields: [codeBundleId], references: [id], onDelete: Cascade)
+
+  path String
+  kind FileKind @default(OTHER)
+
+  // Stored only if INLINE_ENCRYPTED strategy; otherwise omit content and keep metadata.
+  encryptedContent String? @db.Text
+
+  createdAt DateTime @default(now())
+
+  @@unique([codeBundleId, path])
+  @@index([codeBundleId])
+}
+
+model PreviewAsset {
+  id      String @id @default(cuid())
+  blockId String
+  block   Block  @relation(fields: [blockId], references: [id], onDelete: Cascade)
+
+  viewport PreviewViewport
+  url      String // public CDN URL (WebP/PNG)
+  width    Int
+  height   Int
+
+  // Optional video/gif for interactions
+  videoUrl String?
+
+  // Optional watermark info
+  watermarked Boolean @default(true)
+
+  createdAt DateTime @default(now())
+
+  @@unique([blockId, viewport])
+  @@index([blockId])
+}
+
+model BlockRegistryDependency {
+  id      String @id @default(cuid())
+  blockId String
+  block   Block  @relation(fields: [blockId], references: [id], onDelete: Cascade)
+
+  // shadcn registry component name e.g. "button", "card"
+  name    String
+  version String?
+
+  @@unique([blockId, name])
+  @@index([blockId])
+}
+
+model BlockNpmDependency {
+  id      String @id @default(cuid())
+  blockId String
+  block   Block  @relation(fields: [blockId], references: [id], onDelete: Cascade)
+
+  name    String // e.g. "framer-motion"
+  version String? // e.g. "^11.0.0"
+  isDev   Boolean @default(false)
+
+  @@unique([blockId, name, isDev])
+  @@index([blockId])
+}
+
+model Tag {
+  id        String   @id @default(cuid())
+  slug      String   @unique
+  name      String
+  createdAt DateTime @default(now())
+
+  blocks BlockTag[]
+}
+
+model BlockTag {
+  id      String @id @default(cuid())
+  blockId String
+  block   Block  @relation(fields: [blockId], references: [id], onDelete: Cascade)
+
+  tagId String
+  tag   Tag    @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@unique([blockId, tagId])
+  @@index([tagId])
+}
+
+model ModerationEvent {
+  id      String @id @default(cuid())
+  blockId String
+  block   Block  @relation(fields: [blockId], references: [id], onDelete: Cascade)
+
+  decidedById String? // admin user id (nullable when system)
+  decidedBy   User?   @relation(fields: [decidedById], references: [id], onDelete: SetNull)
+
+  decision ModerationDecision
+  reason   String?            @db.Text
+  notes    String?            @db.Text
+
+  createdAt DateTime @default(now())
+
+  @@index([blockId, createdAt])
+  @@index([decidedById])
+}
+
+model RenderJob {
+  id      String @id @default(cuid())
+  blockId String
+  block   Block  @relation(fields: [blockId], references: [id], onDelete: Cascade)
+
+  status RenderJobStatus @default(QUEUED)
+
+  // Worker details (BullMQ/Redis job id, etc.)
+  queueName  String?
+  queueJobId String?
+  workerId   String?
+
+  // Execution metadata
+  startedAt  DateTime?
+  finishedAt DateTime?
+  error      String?   @db.Text
+  attempts   Int       @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([blockId, status])
+  @@index([status, createdAt])
+}
+
+// -----------------------------
+// Commerce: Purchase, License, Delivery
+// -----------------------------
+
+model Purchase {
+  id      String @id @default(cuid())
+  buyerId String
+  buyer   User   @relation(fields: [buyerId], references: [id], onDelete: Restrict)
+
+  status        PurchaseStatus @default(PENDING)
+  refundStatus  RefundStatus   @default(NONE)
+  disputeStatus DisputeStatus?
+
+  currency          CurrencyCode @default(USD)
+  subtotalAmount    Decimal      @db.Decimal(10, 2)
+  platformFeeAmount Decimal      @db.Decimal(10, 2)
+  stripeFeeAmount   Decimal      @db.Decimal(10, 2)
+  totalAmount       Decimal      @db.Decimal(10, 2)
+
+  // Stripe references
+  stripePaymentIntentId   String? @unique
+  stripeCheckoutSessionId String? @unique
+  stripeChargeId          String? @unique
+
+  paidAt       DateTime?
+  canceledAt   DateTime?
+  refundedAt   DateTime?
+  chargebackAt DateTime?
+
+  lineItems PurchaseLineItem[]
+  licenses  License[]
+  downloads Download[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  dispute   Dispute?
+  reviews   Review[]
+
+  @@index([buyerId, createdAt])
+  @@index([status, createdAt])
+}
+
+model PurchaseLineItem {
+  id         String   @id @default(cuid())
+  purchaseId String
+  purchase   Purchase @relation(fields: [purchaseId], references: [id], onDelete: Cascade)
+
+  blockId String
+  block   Block  @relation(fields: [blockId], references: [id], onDelete: Restrict)
+
+  licenseType LicenseType @default(PERSONAL)
+
+  unitPrice Decimal @db.Decimal(10, 2)
+  quantity  Int     @default(1)
+
+  createdAt DateTime @default(now())
+
+  @@unique([purchaseId, blockId, licenseType])
+  @@index([purchaseId])
+  @@index([blockId])
+}
+
+model License {
+  id         String   @id @default(cuid())
+  purchaseId String
+  purchase   Purchase @relation(fields: [purchaseId], references: [id], onDelete: Cascade)
+
+  buyerId String
+  buyer   User   @relation(fields: [buyerId], references: [id], onDelete: Restrict)
+
+  blockId String
+  block   Block  @relation(fields: [blockId], references: [id], onDelete: Restrict)
+
+  type   LicenseType   @default(PERSONAL)
+  status LicenseStatus @default(ACTIVE)
+
+  // Non-redistribution / anti-competitive license enforcement is policy-level,
+  // but we keep a reference to the license text version shown at purchase time.
+  eulaVersion String @default("v1")
+
+  // Delivery
+  deliveryStatus  DeliveryStatus @default(NOT_READY)
+  deliveryReadyAt DateTime?
+
+  // Unique buyer trace token (for watermarking headers / leak tracing)
+  transactionHash String @unique
+
+  revokedAt    DateTime?
+  revokeReason String?
+
+  downloads Download[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([buyerId, blockId, type, purchaseId])
+  @@index([buyerId, createdAt])
+  @@index([blockId, createdAt])
+}
+
+model Download {
+  id        String  @id @default(cuid())
+  licenseId String
+  license   License @relation(fields: [licenseId], references: [id], onDelete: Cascade)
+
+  purchaseId String
+  purchase   Purchase @relation(fields: [purchaseId], references: [id], onDelete: Cascade)
+
+  buyerId String
+  buyer   User   @relation(fields: [buyerId], references: [id], onDelete: Restrict)
+
+  // Optional: store the signed URL metadata if you generate it
+  signedUrlId String? @unique
+  ipAddress   String?
+  userAgent   String?
+
+  createdAt DateTime @default(now())
+
+  @@index([buyerId, createdAt])
+  @@index([licenseId, createdAt])
+}
+
+model Payout {
+  id        String  @id @default(cuid())
+  creatorId String
+  creator   Creator @relation(fields: [creatorId], references: [id], onDelete: Restrict)
+
+  currency CurrencyCode @default(USD)
+  amount   Decimal      @db.Decimal(10, 2)
+
+  // Stripe transfer/payout references
+  stripeTransferId String? @unique
+  stripePayoutId   String? @unique
+
+  // Payout schedule / batching metadata
+  periodStart DateTime?
+  periodEnd   DateTime?
+
+  createdAt DateTime  @default(now())
+  paidAt    DateTime?
+
+  @@index([creatorId, createdAt])
+}
+
+// -----------------------------
+// Disputes / Refunds / Chargebacks
+// -----------------------------
+
+model Dispute {
+  id         String   @id @default(cuid())
+  purchaseId String   @unique
+  purchase   Purchase @relation(fields: [purchaseId], references: [id], onDelete: Cascade)
+
+  status DisputeStatus @default(OPEN)
+
+  // Stripe dispute reference
+  stripeDisputeId String? @unique
+
+  reason   String?
+  evidence String? @db.Text
+
+  openedAt DateTime  @default(now())
+  closedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// -----------------------------
+// Reviews
+// -----------------------------
+
+model Review {
+  id      String @id @default(cuid())
+  blockId String
+  block   Block  @relation(fields: [blockId], references: [id], onDelete: Cascade)
+
+  buyerId String
+  buyer   User   @relation(fields: [buyerId], references: [id], onDelete: Cascade)
+
+  purchaseId String?
+  purchase   Purchase? @relation(fields: [purchaseId], references: [id], onDelete: SetNull)
+
+  rating Int
+  title  String?
+  body   String? @db.Text
+
+  status ReviewStatus @default(VISIBLE)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([blockId, buyerId])
+  @@index([blockId, createdAt])
+  @@index([buyerId, createdAt])
+}
+
+// -----------------------------
+// API Keys (CLI: npx tailwindwizard add <block-id>)
+// -----------------------------
+
+model ApiKey {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  name  String
+  scope ApiKeyScope @default(READ_PUBLIC)
+
+  // Store only hashed key in DB
+  keyHash    String    @unique
+  prefix     String // showable prefix like "twz_..."
+  lastUsedAt DateTime?
+
+  createdAt DateTime  @default(now())
+  revokedAt DateTime?
+
+  @@index([userId, createdAt])
+  @@index([scope])
+}
+
+// -----------------------------
+// Webhooks (Stripe)
+// -----------------------------
+
+model WebhookEvent {
+  id       String          @id @default(cuid())
+  provider WebhookProvider @default(STRIPE)
+  status   WebhookStatus   @default(RECEIVED)
+
+  // Idempotency key from provider
+  externalId String @unique // e.g. Stripe event id "evt_..."
+  eventType  String
+  payload    Json
+
+  receivedAt  DateTime  @default(now())
+  processedAt DateTime?
+  error       String?   @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([provider, status, receivedAt])
+  @@index([eventType, receivedAt])
+}
+
+// -----------------------------
+// Audit Log
+// -----------------------------
+
+model AuditLog {
+  id          String         @id @default(cuid())
+  actorType   AuditActorType @default(SYSTEM)
+  actorUserId String?
+  actorUser   User?          @relation("AuditActorUser", fields: [actorUserId], references: [id], onDelete: SetNull)
+
+  action     AuditAction
+  entityType String
+  entityId   String
+  metadata   Json?
+
+  createdAt DateTime @default(now())
+
+  @@index([actorUserId, createdAt])
+  @@index([action, createdAt])
+  @@index([entityType, entityId])
+}
