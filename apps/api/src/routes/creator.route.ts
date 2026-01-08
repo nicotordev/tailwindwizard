@@ -5,7 +5,7 @@ import {
   CreateCreatorSchema,
   CreatorSchema,
   UpdateCreatorSchema,
-} from "../schemas/creator.schema.js";
+} from "@tw/shared";
 
 const creatorApp = new OpenAPIHono();
 

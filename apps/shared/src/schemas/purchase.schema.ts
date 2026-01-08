@@ -1,9 +1,9 @@
 import { z } from "@hono/zod-openapi";
-import { LicenseType } from "../db/generated/prisma/client.js";
+import { LicenseType } from "../types/prisma.js";
 
 const LICENSE_TYPE_VALUES = Object.values(LicenseType) as [
   LicenseType,
-  ...LicenseType[],
+  ...LicenseType[]
 ];
 const LicenseTypeEnum = z.enum(LICENSE_TYPE_VALUES);
 

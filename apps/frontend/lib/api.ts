@@ -1,3 +1,4 @@
+import 'server-only';
 import axios from "axios";
 import type { paths } from "@/types/api";
 import { hc } from "hono/client";

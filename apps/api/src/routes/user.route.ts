@@ -8,7 +8,7 @@ import {
   UserPurchaseSchema as PurchaseSchema,
   UpdateUserSchema,
   UserSchema,
-} from "../schemas/user.schema.js";
+} from "@tw/shared";
 
 // Routes definition
 // GET /me

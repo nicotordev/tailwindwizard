@@ -40,7 +40,6 @@ export const payoutService = {
     for (const item of purchase.lineItems) {
       const block = item.block;
       const creator = block.creator;
-      if (!creator) throw new Error("Block.creator missing");
       if (creator.stripeAccountStatus !== "ENABLED")
         throw new Error("Creator Stripe account not enabled");
 

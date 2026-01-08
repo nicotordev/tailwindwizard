@@ -14,7 +14,7 @@ export default function FeaturedCategories() {
   return (
     <section className="relative py-24 bg-background overflow-hidden">
       {/* Background radial glow */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1000px] h-[1000px] bg-primary/5 rounded-full blur-[120px] -z-10" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-250 h-[1000px] bg-primary/5 rounded-full blur-[120px] -z-10" />
 
       <div className="mx-auto max-w-7xl px-6">
         <div className="flex flex-col md:flex-row justify-between items-end mb-16 gap-8">

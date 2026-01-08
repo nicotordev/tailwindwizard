@@ -800,7 +800,11 @@ export interface paths {
         /** List all categories */
         get: {
             parameters: {
-                query?: never;
+                query?: {
+                    page?: string;
+                    limit?: string;
+                    search?: string;
+                };
                 header?: never;
                 path?: never;
                 cookie?: never;

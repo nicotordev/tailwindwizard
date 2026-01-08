@@ -7,8 +7,8 @@ import {
   BlockSchema,
   CreateBlockSchema,
   UpdateBlockSchema,
-} from "../schemas/block.schema.js";
-import { CreateReviewSchema, ReviewSchema } from "../schemas/review.schema.js";
+} from "@tw/shared";
+import { CreateReviewSchema, ReviewSchema } from "@tw/shared";
 
 const blockApp = new OpenAPIHono();
 

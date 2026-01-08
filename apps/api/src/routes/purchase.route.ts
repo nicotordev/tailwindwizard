@@ -7,7 +7,7 @@ import {
   CreateCheckoutSchema,
   PurchaseSchema,
   LicenseListSchema,
-} from "../schemas/purchase.schema.js";
+} from "@tw/shared";
 
 // POST /purchase/checkout
 const checkoutRoute = createRoute({

@@ -1,15 +1,13 @@
 import { useQuery } from "@tanstack/react-query";
-import { apiClient } from "@/lib/api";
-import type { components } from "@/types/api";
+import {frontendApi} from "@/lib/frontend-api";
 
-type Category = components["schemas"]["Category"];
 
 export function useCategories() {
   const categoriesQuery = useQuery({
     queryKey: ["categories"],
     queryFn: async () => {
       try {
-        const response = await apiClient.GET("/api/v1/categories");
+        const response = await frontendApi.categories.list();
         // response.error is inferred as never by openapi-fetch if 200 is the only response
         return response.data;
       } catch (error) {
@@ -27,13 +25,7 @@ export function useCategory(slug: string) {
     queryKey: ["category", slug],
     queryFn: async () => {
       try {
-        const response = await apiClient.GET("/api/v1/categories/:slug", {
-          params: {
-            path: {
-              slug,
-            },
-          },
-        });
+        const response = await frontendApi.categories.identifier(slug);
         return response.data;
       } catch (error) {
         console.error("Error fetching category:", error);

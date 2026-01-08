@@ -1,6 +1,6 @@
 import { OpenAPIHono, createRoute, z } from "@hono/zod-openapi";
 import { tagController } from "../controllers/tag.controller.js";
-import { TagSchema } from "../schemas/tag.schema.js";
+import { TagSchema } from "@tw/shared";
 
 const listTagsRoute = createRoute({
   method: "get",

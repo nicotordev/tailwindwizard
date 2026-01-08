@@ -1,12 +1,19 @@
 import { OpenAPIHono, createRoute, z } from "@hono/zod-openapi";
+import { CategorySchema } from "@tw/shared";
 import { categoryController } from "../controllers/category.controller.js";
-import { CategorySchema } from "../schemas/category.schema.js";
 
 const listCategoriesRoute = createRoute({
   method: "get",
   path: "/",
   tags: ["Categories"],
   summary: "List all categories",
+  request: {
+    query: z.object({
+      page: z.string().optional(),
+      limit: z.string().optional(),
+      search: z.string().optional(),
+    }),
+  },
   responses: {
     200: {
       content: {

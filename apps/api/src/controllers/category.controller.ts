@@ -3,7 +3,12 @@ import { categoryService } from "../services/category.service.js";
 
 export const categoryController = {
   async list(c: Context) {
-    const categories = await categoryService.listAll();
+    const { page, limit, search } = c.req.query();
+    const categories = await categoryService.listAll({
+      page: page ? Number(page) : undefined,
+      limit: limit ? Number(limit) : undefined,
+      search,
+    });
     return c.json(categories, 200);
   },
 
