@@ -1,4 +1,3 @@
-"use client";
 import axios from "axios";
 import type { paths } from "@/types/api";
 import { hc } from "hono/client";
@@ -43,7 +42,7 @@ apiClient.use(authMiddleware);
  * @example
  * const res = await client.api.v1.users.me.$get();
  */
-export const honoClient = hc(API_URL);
+export const honoClient = hc<any>(API_URL);
 
 /**
  * Standard client export for convenience.

@@ -498,6 +498,47 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/blocks/random": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List random blocks */
+        get: {
+            parameters: {
+                query?: {
+                    limit?: string;
+                    visibility?: "PUBLIC" | "PRIVATE";
+                    creatorId?: string;
+                    categorySlug?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description List of random blocks */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Block"][];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/blocks/{id}": {
         parameters: {
             query?: never;

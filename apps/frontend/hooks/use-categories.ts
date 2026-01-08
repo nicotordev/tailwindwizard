@@ -1,5 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { apiClient } from "@/lib/api";
+import type { components } from "@/types/api";
+
+type Category = components["schemas"]["Category"];
 
 export function useCategories() {
   const categoriesQuery = useQuery({
@@ -7,6 +10,7 @@ export function useCategories() {
     queryFn: async () => {
       try {
         const response = await apiClient.GET("/api/v1/categories");
+        // response.error is inferred as never by openapi-fetch if 200 is the only response
         return response.data;
       } catch (error) {
         console.error("Error fetching categories:", error);
