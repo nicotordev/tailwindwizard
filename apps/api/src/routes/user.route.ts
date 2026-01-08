@@ -1,15 +1,18 @@
 import { OpenAPIHono, createRoute, z } from "@hono/zod-openapi";
 import { userController } from "../controllers/user.controller.js";
+import { requireAuth } from "../middleware/requireAuth.js";
 import {
-  UserSchema,
-  UpdateUserSchema,
   ApiKeySchema,
   CreateApiKeySchema,
   NewApiKeyResponseSchema,
   UserPurchaseSchema as PurchaseSchema,
+  UpdateUserSchema,
+  UserSchema,
 } from "../schemas/user.schema.js";
 
 const userApp = new OpenAPIHono();
+
+userApp.use("*", requireAuth);
 
 // --------------------------------------------------------------------------
 // Routes

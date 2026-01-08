@@ -1,14 +1,30 @@
 import { OpenAPIHono, createRoute, z } from "@hono/zod-openapi";
 import { blockController } from "../controllers/block.controller.js";
 import { reviewController } from "../controllers/review.controller.js";
+import { requireAuth } from "../middleware/requireAuth.js";
 import {
   BlockSchema,
   CreateBlockSchema,
   UpdateBlockSchema,
 } from "../schemas/block.schema.js";
-import { ReviewSchema, CreateReviewSchema } from "../schemas/review.schema.js";
+import { CreateReviewSchema, ReviewSchema } from "../schemas/review.schema.js";
 
 const blockApp = new OpenAPIHono();
+
+// Auth protection for mutations
+blockApp.use("/", async (c, next) => {
+  if (c.req.method === "POST") return requireAuth(c, next);
+  return next();
+});
+blockApp.use("/:id", async (c, next) => {
+  if (c.req.method === "PATCH" || c.req.method === "DELETE")
+    return requireAuth(c, next);
+  return next();
+});
+blockApp.use("/:id/reviews", async (c, next) => {
+  if (c.req.method === "POST") return requireAuth(c, next);
+  return next();
+});
 
 // --------------------------------------------------------------------------
 // Routes

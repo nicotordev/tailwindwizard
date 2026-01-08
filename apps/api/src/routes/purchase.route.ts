@@ -1,12 +1,15 @@
 import { OpenAPIHono, createRoute, z } from "@hono/zod-openapi";
 import { purchaseController } from "../controllers/purchase.controller.js";
+import { requireAuth } from "../middleware/requireAuth.js";
 import {
-  PurchaseSchema,
-  CreateCheckoutSchema,
   CheckoutResponseSchema,
+  CreateCheckoutSchema,
+  PurchaseSchema,
 } from "../schemas/purchase.schema.js";
 
 const purchaseApp = new OpenAPIHono();
+
+purchaseApp.use("*", requireAuth);
 
 const checkoutRoute = createRoute({
   method: "post",

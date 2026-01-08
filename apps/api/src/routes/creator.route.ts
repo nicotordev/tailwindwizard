@@ -1,12 +1,15 @@
 import { OpenAPIHono, createRoute, z } from "@hono/zod-openapi";
 import { creatorController } from "../controllers/creator.controller.js";
+import { requireAuth } from "../middleware/requireAuth.js";
 import {
-  CreatorSchema,
   CreateCreatorSchema,
+  CreatorSchema,
   UpdateCreatorSchema,
 } from "../schemas/creator.schema.js";
 
 const creatorApp = new OpenAPIHono();
+
+creatorApp.use("/me", requireAuth);
 
 // --------------------------------------------------------------------------
 // Routes
