@@ -5,7 +5,108 @@ import type {
 } from "../db/generated/prisma/client.js";
 import { prisma } from "../db/prisma.js";
 
+/* -------------------------------------------------------------------------- */
+/*                                   Types                                    */
+/* -------------------------------------------------------------------------- */
+
+export interface FindRandomParams {
+  visibility?: Visibility;
+  creatorId?: string;
+  limit?: number;
+  categorySlug?: string;
+}
+
+/* -------------------------------------------------------------------------- */
+/*                              Random utilities                              */
+/* -------------------------------------------------------------------------- */
+
+function pickRandomUnique<T>(arr: readonly T[], count: number): T[] {
+  const n = Math.min(count, arr.length);
+  const copy = arr.slice();
+
+  // Fisher–Yates (partial)
+  for (let i = 0; i < n; i += 1) {
+    const j = i + Math.floor(Math.random() * (copy.length - i));
+    const tmp = copy[i];
+    const copyJ = copy[j];
+
+    if (copyJ) copy[i] = copyJ;
+    if (tmp) copy[j] = tmp;
+  }
+
+  return copy.slice(0, n);
+}
+
+function shuffle<T>(arr: readonly T[]): T[] {
+  const copy = arr.slice();
+
+  for (let i = copy.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    const tmp = copy[i];
+    const copyJ = copy[j];
+    if (copyJ) copy[i] = copyJ;
+    if (tmp) copy[j] = tmp;
+  }
+
+  return copy;
+}
+
+/* -------------------------------------------------------------------------- */
+/*                                 Service                                    */
+/* -------------------------------------------------------------------------- */
+
 export const blockService = {
+  async findRandom(params: FindRandomParams) {
+    const { visibility, creatorId, limit = 10, categorySlug } = params;
+
+    const where: Prisma.BlockWhereInput = {
+      ...(visibility ? { visibility } : {}),
+      ...(creatorId ? { creatorId } : {}),
+      ...(categorySlug
+        ? {
+            categories: {
+              some: {
+                category: { slug: categorySlug },
+              },
+            },
+          }
+        : {}),
+    };
+
+    // 1) Fetch candidate IDs (cheap query)
+    const candidates = await prisma.block.findMany({
+      where,
+      select: { id: true },
+      take: 5000, // safety cap
+    });
+
+    const candidateIds = candidates.map((c) => c.id);
+    const pickedIds = pickRandomUnique(candidateIds, limit);
+
+    if (pickedIds.length === 0) {
+      return [];
+    }
+
+    // 2) Fetch selected blocks with relations
+    const items = await prisma.block.findMany({
+      where: { id: { in: pickedIds } },
+      include: {
+        creator: {
+          select: {
+            displayName: true,
+            user: { select: { avatarUrl: true } },
+          },
+        },
+        previews: true,
+        tags: { include: { tag: true } },
+        categories: { include: { category: true } },
+      },
+    });
+
+    // 3) Prisma does not preserve IN order → shuffle again
+    return shuffle(items).slice(0, limit);
+  },
+
   async findMany(params: {
     status?: BlockStatus;
     visibility?: Visibility;
@@ -29,7 +130,6 @@ export const blockService = {
       status,
       visibility,
       creatorId,
-      // Search by title or description
       OR: search
         ? [
             { title: { contains: search, mode: "insensitive" } },
@@ -39,9 +139,7 @@ export const blockService = {
       categories: categorySlug
         ? {
             some: {
-              category: {
-                slug: categorySlug,
-              },
+              category: { slug: categorySlug },
             },
           }
         : undefined,
@@ -51,6 +149,7 @@ export const blockService = {
       where,
       take: limit,
       skip: offset,
+      orderBy: { createdAt: "desc" },
       include: {
         creator: {
           select: {
@@ -62,7 +161,6 @@ export const blockService = {
         tags: { include: { tag: true } },
         categories: { include: { category: true } },
       },
-      orderBy: { createdAt: "desc" },
     });
   },
 
@@ -71,7 +169,9 @@ export const blockService = {
       where: { id },
       include: {
         creator: {
-          include: { user: { select: { avatarUrl: true, name: true } } },
+          include: {
+            user: { select: { avatarUrl: true, name: true } },
+          },
         },
         previews: true,
         registryDeps: true,
@@ -90,10 +190,11 @@ export const blockService = {
       where: { slug },
       include: {
         creator: {
-          include: { user: { select: { avatarUrl: true, name: true } } },
+          include: {
+            user: { select: { avatarUrl: true, name: true } },
+          },
         },
         previews: true,
-
         registryDeps: true,
         npmDeps: true,
         tags: { include: { tag: true } },
@@ -105,9 +206,7 @@ export const blockService = {
     });
   },
 
-  async create(creatorId: string, data: Prisma.BlockCreateInput) {
-    // Note: data.creator needs to be handled by the caller or passed structurally
-    // But typically we pass the relation connect in the controller
+  async create(_creatorId: string, data: Prisma.BlockCreateInput) {
     return prisma.block.create({
       data,
     });

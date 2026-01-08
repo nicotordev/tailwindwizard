@@ -2,8 +2,6 @@ import { OpenAPIHono, createRoute, z } from "@hono/zod-openapi";
 import { categoryController } from "../controllers/category.controller.js";
 import { CategorySchema } from "../schemas/category.schema.js";
 
-const categoryApp = new OpenAPIHono();
-
 const listCategoriesRoute = createRoute({
   method: "get",
   path: "/",
@@ -46,7 +44,10 @@ const getCategoryBySlugRoute = createRoute({
   },
 });
 
-categoryApp.openapi(listCategoriesRoute, (c) => categoryController.list(c));
-categoryApp.openapi(getCategoryBySlugRoute, (c) => categoryController.getBySlug(c));
+const categoryApp = new OpenAPIHono();
 
-export default categoryApp;
+const chainedApp = categoryApp
+  .openapi(listCategoriesRoute, (c) => categoryController.list(c))
+  .openapi(getCategoryBySlugRoute, (c) => categoryController.getBySlug(c));
+
+export default chainedApp;

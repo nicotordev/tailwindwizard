@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
 import { OpenAPIHono, createRoute, z } from "@hono/zod-openapi";
 import { blockController } from "../controllers/block.controller.js";
 import { reviewController } from "../controllers/review.controller.js";
@@ -16,9 +17,17 @@ blockApp.use("/", async (c, next) => {
   if (c.req.method === "POST") return requireAuth(c, next);
   return next();
 });
+
+blockApp.use("/random", async (c, next) => {
+  if (c.req.method === "POST") return requireAuth(c, next);
+  return next();
+});
+
 blockApp.use("/:id", async (c, next) => {
-  if (c.req.method === "PATCH" || c.req.method === "DELETE")
-    return requireAuth(c, next);
+  if (!c.req.path.includes("random")) {
+    if (c.req.method === "PATCH" || c.req.method === "DELETE")
+      return requireAuth(c, next);
+  }
   return next();
 });
 blockApp.use("/:id/reviews", async (c, next) => {
@@ -55,6 +64,31 @@ const listBlocksRoute = createRoute({
         },
       },
       description: "List of blocks",
+    },
+  },
+});
+
+const listRandomBlocksRoute = createRoute({
+  method: "get",
+  path: "/random",
+  tags: ["Blocks"],
+  summary: "List random blocks",
+  request: {
+    query: z.object({
+      limit: z.string().optional(),
+      visibility: z.enum(["PUBLIC", "PRIVATE"]).optional(),
+      creatorId: z.string().optional(),
+      categorySlug: z.string().optional(),
+    }),
+  },
+  responses: {
+    200: {
+      content: {
+        "application/json": {
+          schema: z.array(BlockSchema),
+        },
+      },
+      description: "List of random blocks",
     },
   },
 });
@@ -244,13 +278,14 @@ const createReviewRoute = createRoute({
 // Implementation
 // --------------------------------------------------------------------------
 
-blockApp.openapi(listBlocksRoute, (c) => blockController.list(c));
-blockApp.openapi(getBlockRoute, (c) => blockController.getById(c));
-blockApp.openapi(createBlockRoute, (c) => blockController.create(c));
-blockApp.openapi(updateBlockRoute, (c) => blockController.update(c));
-blockApp.openapi(deleteBlockRoute, (c) => blockController.delete(c));
+const chainedApp = blockApp
+  .openapi(listBlocksRoute, (c) => blockController.list(c))
+  .openapi(listRandomBlocksRoute, (c) => blockController.listRandom(c))
+  .openapi(getBlockRoute, (c) => blockController.getById(c))
+  .openapi(createBlockRoute, (c) => blockController.create(c))
+  .openapi(updateBlockRoute, (c) => blockController.update(c))
+  .openapi(deleteBlockRoute, (c) => blockController.delete(c))
+  .openapi(listReviewsRoute, (c) => reviewController.listByBlock(c))
+  .openapi(createReviewRoute, (c) => reviewController.create(c));
 
-blockApp.openapi(listReviewsRoute, (c) => reviewController.listByBlock(c));
-blockApp.openapi(createReviewRoute, (c) => reviewController.create(c));
-
-export default blockApp;
+export default chainedApp;

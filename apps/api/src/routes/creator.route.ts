@@ -134,9 +134,10 @@ const getByIdRoute = createRoute({
 // Implementation
 // --------------------------------------------------------------------------
 
-creatorApp.openapi(getMeRoute, (c) => creatorController.getMe(c));
-creatorApp.openapi(createMeRoute, (c) => creatorController.createMe(c));
-creatorApp.openapi(updateMeRoute, (c) => creatorController.updateMe(c));
-creatorApp.openapi(getByIdRoute, (c) => creatorController.getById(c));
+const chainedApp = creatorApp
+  .openapi(getMeRoute, (c) => creatorController.getMe(c))
+  .openapi(createMeRoute, (c) => creatorController.createMe(c))
+  .openapi(updateMeRoute, (c) => creatorController.updateMe(c))
+  .openapi(getByIdRoute, (c) => creatorController.getById(c));
 
-export default creatorApp;
+export default chainedApp;

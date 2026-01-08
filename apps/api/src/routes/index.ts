@@ -6,13 +6,12 @@ import purchaseApp from "./purchase.route.js";
 import tagApp from "./tag.route.js";
 import userApp from "./user.route.js";
 
-const appRouter = new OpenAPIHono();
-
-appRouter.route("/users", userApp);
-appRouter.route("/creators", creatorApp);
-appRouter.route("/blocks", blockApp);
-appRouter.route("/tags", tagApp);
-appRouter.route("/categories", categoryApp);
-appRouter.route("/commerce", purchaseApp);
+const appRouter = new OpenAPIHono()
+  .route("/users", userApp)
+  .route("/creators", creatorApp)
+  .route("/blocks", blockApp)
+  .route("/tags", tagApp)
+  .route("/categories", categoryApp)
+  .route("/commerce", purchaseApp);
 
 export default appRouter;

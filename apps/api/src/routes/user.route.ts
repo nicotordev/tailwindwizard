@@ -10,14 +10,7 @@ import {
   UserSchema,
 } from "../schemas/user.schema.js";
 
-const userApp = new OpenAPIHono();
-
-userApp.use("*", requireAuth);
-
-// --------------------------------------------------------------------------
-// Routes
-// --------------------------------------------------------------------------
-
+// Routes definition
 // GET /me
 const getMeRoute = createRoute({
   method: "get",
@@ -168,15 +161,17 @@ const revokeApiKeyRoute = createRoute({
   },
 });
 
-// --------------------------------------------------------------------------
-// Implementation Binding
-// --------------------------------------------------------------------------
+// App definition
+const userApp = new OpenAPIHono();
 
-userApp.openapi(getMeRoute, (c) => userController.getMe(c));
-userApp.openapi(updateMeRoute, (c) => userController.updateMe(c));
-userApp.openapi(getMyPurchasesRoute, (c) => userController.getMyPurchases(c));
-userApp.openapi(getMyApiKeysRoute, (c) => userController.getMyApiKeys(c));
-userApp.openapi(createApiKeyRoute, (c) => userController.createApiKey(c));
-userApp.openapi(revokeApiKeyRoute, (c) => userController.revokeApiKey(c));
+userApp.use("*", requireAuth);
 
-export default userApp;
+const chainedApp = userApp
+  .openapi(getMeRoute, (c) => userController.getMe(c))
+  .openapi(updateMeRoute, (c) => userController.updateMe(c))
+  .openapi(getMyPurchasesRoute, (c) => userController.getMyPurchases(c))
+  .openapi(getMyApiKeysRoute, (c) => userController.getMyApiKeys(c))
+  .openapi(createApiKeyRoute, (c) => userController.createApiKey(c))
+  .openapi(revokeApiKeyRoute, (c) => userController.revokeApiKey(c));
+
+export default chainedApp;

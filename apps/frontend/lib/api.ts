@@ -2,6 +2,7 @@ import axios from "axios";
 import type { paths } from "@/types/api";
 import { hc } from "hono/client";
 import createClient, { type Middleware } from "openapi-fetch";
+import type { AppType } from "tw-wizard-api/src/app";
 
 /**
  * Configuration for the API client.
@@ -42,7 +43,7 @@ apiClient.use(authMiddleware);
  * @example
  * const res = await client.api.v1.users.me.$get();
  */
-export const honoClient = hc<any>(API_URL);
+export const honoClient = hc<AppType>(API_URL);
 
 /**
  * Standard client export for convenience.

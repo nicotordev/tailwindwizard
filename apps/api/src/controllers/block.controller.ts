@@ -10,6 +10,21 @@ import { blockService } from "../services/block.service.js";
 import { creatorService } from "../services/creator.service.js";
 
 export const blockController = {
+  async listRandom(c: Context) {
+    const { limit, visibility, creatorId, categorySlug } = c.req.query();
+
+    const limitNum = limit ? parseInt(limit) : 10;
+
+    const blocks = await blockService.findRandom({
+      visibility: visibility as Visibility | undefined,
+      creatorId: creatorId,
+      limit: limitNum,
+      categorySlug: categorySlug,
+    });
+
+    return c.json(blocks, 200);
+  },
+
   async list(c: Context) {
     const {
       status,
@@ -69,7 +84,7 @@ export const blockController = {
     const creator = await creatorService.getCreatorByUserId(user.id);
     if (!creator) return c.json({ message: "Creator profile required" }, 403);
 
-    const body = (await c.req.json()) as Prisma.BlockCreateInput;
+    const body = await c.req.json<Prisma.BlockCreateInput>();
 
     // Construct Prisma CreateInput
     // We expect body to match specific schema, but we need to connect Creator
@@ -112,7 +127,7 @@ export const blockController = {
       }
     }
 
-    const body = (await c.req.json()) as Prisma.BlockUpdateInput;
+    const body = await c.req.json<Prisma.BlockUpdateInput>();
     const updated = await blockService.update(id, body);
     return c.json(updated);
   },

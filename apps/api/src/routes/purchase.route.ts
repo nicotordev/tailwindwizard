@@ -9,10 +9,6 @@ import {
   LicenseListSchema,
 } from "../schemas/purchase.schema.js";
 
-const purchaseApp = new OpenAPIHono();
-
-purchaseApp.use("*", requireAuth);
-
 // POST /purchase/checkout
 const checkoutRoute = createRoute({
   method: "post",
@@ -81,8 +77,13 @@ const myLicensesRoute = createRoute({
   },
 });
 
-purchaseApp.openapi(checkoutRoute, (c) => purchaseController.checkout(c));
-purchaseApp.openapi(getPurchaseRoute, (c) => purchaseController.getPurchase(c));
-purchaseApp.openapi(myLicensesRoute, (c) => purchaseController.myLicenses(c));
+const purchaseApp = new OpenAPIHono();
 
-export default purchaseApp;
+purchaseApp.use("*", requireAuth);
+
+const chainedApp = purchaseApp
+  .openapi(checkoutRoute, (c) => purchaseController.checkout(c))
+  .openapi(getPurchaseRoute, (c) => purchaseController.getPurchase(c))
+  .openapi(myLicensesRoute, (c) => purchaseController.myLicenses(c));
+
+export default chainedApp;

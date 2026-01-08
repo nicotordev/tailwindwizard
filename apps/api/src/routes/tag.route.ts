@@ -2,8 +2,6 @@ import { OpenAPIHono, createRoute, z } from "@hono/zod-openapi";
 import { tagController } from "../controllers/tag.controller.js";
 import { TagSchema } from "../schemas/tag.schema.js";
 
-const tagApp = new OpenAPIHono();
-
 const listTagsRoute = createRoute({
   method: "get",
   path: "/",
@@ -21,6 +19,9 @@ const listTagsRoute = createRoute({
   },
 });
 
-tagApp.openapi(listTagsRoute, (c) => tagController.list(c));
+const tagApp = new OpenAPIHono();
 
-export default tagApp;
+const chainedApp = tagApp
+  .openapi(listTagsRoute, (c) => tagController.list(c));
+
+export default chainedApp;
