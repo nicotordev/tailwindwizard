@@ -8,9 +8,9 @@
   "author": "Nicolas Torres < nicotordev@gmail.com > (https://nicotordev.com)",
   "homepage": "https://tailwindwizard.com",
   "scripts": {
-    "dev": "bun --watch src/server.ts",
-    "start": "bun src/server.ts",
-    "build": "tsc && bun build src/server.ts --outdir ./dist --target bun",
+    "dev": "pnpm typecheck && pnpm lint && bun --watch src/server.ts",
+    "start": "bun dist/server.js",
+    "build": "tsc && bun build src/server.ts --outdir ./dist --target bun --minify",
     "test": "bun test",
     "typecheck": "tsc --noEmit",
     "lint": "eslint src",
@@ -21,7 +21,7 @@
     "db:studio": "prisma studio"
   },
   "license": "ISC",
-  "packageManager": "bun@1.3.2",
+  "packageManager": "pnpm@10.24.0",
   "dependencies": {
     "@clerk/backend": "^2.29.1",
     "@hono-rate-limiter/cloudflare": "^0.2.2",

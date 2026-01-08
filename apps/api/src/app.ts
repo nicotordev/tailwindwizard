@@ -4,6 +4,9 @@ import { OpenAPIHono } from "@hono/zod-openapi";
 import { pinoLogger } from "hono-pino";
 import { cors } from "hono/cors";
 import { secureHeaders } from "hono/secure-headers";
+// Routes
+import appRouter from "./routes/index.js";
+
 
 const app = new OpenAPIHono<{ Bindings: NodeJS.ProcessEnv }>({
   defaultHook: (result, c) => {
@@ -36,8 +39,6 @@ app.use("/api/*", cors());
 // Clerk Auth
 app.use("*", clerkMiddleware());
 
-// Routes
-import appRouter from "./routes/index.js";
 app.route("/api/v1", appRouter);
 
 // Swagger UI
