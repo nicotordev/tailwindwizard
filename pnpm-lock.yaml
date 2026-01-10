@@ -4,6 +4,9 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+overrides:
+  hono: 4.11.3
+
 importers:
 
   .:
@@ -23,34 +26,37 @@ importers:
         version: 2.29.1(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       '@hono-rate-limiter/cloudflare':
         specifier: ^0.2.2
-        version: 0.2.2(@cloudflare/workers-types@4.20260108.0)(hono@4.10.6)
+        version: 0.2.2(@cloudflare/workers-types@4.20260108.0)(hono@4.11.3)
       '@hono/clerk-auth':
         specifier: ^3.0.3
-        version: 3.0.3(hono@4.10.6)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+        version: 3.0.3(hono@4.11.3)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       '@hono/node-server':
         specifier: ^1.19.7
-        version: 1.19.7(hono@4.10.6)
+        version: 1.19.7(hono@4.11.3)
       '@hono/swagger-ui':
         specifier: ^0.5.3
-        version: 0.5.3(hono@4.10.6)
+        version: 0.5.3(hono@4.11.3)
       '@hono/zod-openapi':
         specifier: 0.16.4
-        version: 0.16.4(hono@4.10.6)(zod@3.23.8)
+        version: 0.16.4(hono@4.11.3)(zod@3.23.8)
       '@prisma/adapter-pg':
         specifier: ^7.2.0
         version: 7.2.0
       '@prisma/client':
         specifier: ^7.2.0
         version: 7.2.0(prisma@7.2.0(@types/react@19.2.7)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(typescript@5.9.3)
+      '@tw/shared':
+        specifier: workspace:*
+        version: link:../shared
       dotenv:
         specifier: ^17.2.3
         version: 17.2.3
       hono:
-        specifier: ^4.6.14
-        version: 4.10.6
+        specifier: 4.11.3
+        version: 4.11.3
       hono-pino:
         specifier: ^0.10.3
-        version: 0.10.3(hono@4.10.6)(pino@10.1.0)
+        version: 0.10.3(hono@4.11.3)(pino@10.1.0)
       pg:
         specifier: ^8.16.3
         version: 8.16.3
@@ -178,6 +184,9 @@ importers:
       '@tanstack/react-query':
         specifier: ^5.90.16
         version: 5.90.16(react@19.2.3)
+      '@tw/shared':
+        specifier: workspace:*
+        version: link:../shared
       axios:
         specifier: ^1.13.2
         version: 1.13.2
@@ -290,6 +299,15 @@ importers:
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
+
+  apps/shared:
+    dependencies:
+      '@hono/zod-openapi':
+        specifier: 0.16.4
+        version: 0.16.4(hono@4.11.3)(zod@3.23.8)
+      zod:
+        specifier: 3.23.8
+        version: 3.23.8
 
 packages:
 
@@ -666,13 +684,13 @@ packages:
     resolution: {integrity: sha512-wMnqeV+cb5Wov2npLIMFtCVm3tiNMtqw9LhPWSzSMwHOzh2qbhI3mCS6s962fxcJ6UUNJhRqDbVMEsB/NinCIQ==}
     peerDependencies:
       '@cloudflare/workers-types': ^4.20240529.0
-      hono: ^4.4.8
+      hono: 4.11.3
 
   '@hono/clerk-auth@3.0.3':
     resolution: {integrity: sha512-N671mw3ulvxqxY8ou8D8ojVT7EKljXE6RjdC2egWExMcrQAglMSTvqvU096MbOT5zvWtc8QMo3SKiyTXn30BrQ==}
     engines: {node: '>=16.x.x'}
     peerDependencies:
-      hono: '>=3.0.0'
+      hono: 4.11.3
 
   '@hono/eslint-config@2.0.4':
     resolution: {integrity: sha512-LwDvMi409A1OM2Xhv/sS2X9ebEm7DKsr+Anlg2a15CSQcrMA4EyS6+pdzTaDKGDLeGf9OKlSAsZK5YX2PW7syA==}
@@ -684,30 +702,30 @@ packages:
     resolution: {integrity: sha512-Shz/KjlIeAhfiuE93NDKVdZ7HdBVLQAfdbaXEaoAVO3ic9ibRSLGIQGkcBbFyuLr+7/1D5ZCINM8B+6IvXeMtw==}
     engines: {node: '>=18.14.1'}
     peerDependencies:
-      hono: ^4
+      hono: 4.11.3
 
   '@hono/node-server@1.19.7':
     resolution: {integrity: sha512-vUcD0uauS7EU2caukW8z5lJKtoGMokxNbJtBiwHgpqxEXokaHCBkQUmCHhjFB1VUTWdqj25QoMkMKzgjq+uhrw==}
     engines: {node: '>=18.14.1'}
     peerDependencies:
-      hono: ^4
+      hono: 4.11.3
 
   '@hono/swagger-ui@0.5.3':
     resolution: {integrity: sha512-Hn90DOOJ62ICJQplQvCDVpi9Jcn6EhtRaiffyJIS53wA5RmRLtMCDQGVc0bor8vQD7JIwpkweWjs+3cycp+IvA==}
     peerDependencies:
-      hono: '>=4.0.0'
+      hono: 4.11.3
 
   '@hono/zod-openapi@0.16.4':
     resolution: {integrity: sha512-mnF6GthBaKex0D5PsY/4lYNtkaGJNE38bjeUI//EUqq7Ee4TNm2su35IUiFH4HcmJp5fWYMLyOJOpjnkClzEGw==}
     engines: {node: '>=16.0.0'}
     peerDependencies:
-      hono: '>=4.3.6'
+      hono: 4.11.3
       zod: 3.*
 
   '@hono/zod-validator@0.3.0':
     resolution: {integrity: sha512-7XcTk3yYyk6ldrO/VuqsroE7stvDZxHJQcpATRAyha8rUxJNBPV3+6waDrARfgEqxOVlzIadm3/6sE/dPseXgQ==}
     peerDependencies:
-      hono: '>=3.9.0'
+      hono: 4.11.3
       zod: ^3.19.1
 
   '@hookform/resolvers@5.2.2':
@@ -2867,12 +2885,8 @@ packages:
     resolution: {integrity: sha512-n0RNPIFOoq25Fg8b4D5gus4sVqI0z+8I17ibl96+p43d07UnZ0EMM/It0qSgfc7UtaC+XP5FkFmRHwBp6owsNA==}
     engines: {node: '>=18'}
     peerDependencies:
-      hono: '>=4.0.0'
+      hono: 4.11.3
       pino: '>=7.1.0'
-
-  hono@4.10.6:
-    resolution: {integrity: sha512-BIdolzGpDO9MQ4nu3AUuDwHZZ+KViNm+EZ75Ae55eMXMqLVhDFqEMXxtUe9Qh8hjL+pIna/frs2j6Y2yD5Ua/g==}
-    engines: {node: '>=16.9.0'}
 
   hono@4.11.3:
     resolution: {integrity: sha512-PmQi306+M/ct/m5s66Hrg+adPnkD5jiO6IjA7WhWw0gSBSo1EcRegwuI1deZ+wd5pzCGynCcn2DprnE4/yEV4w==}
@@ -4535,16 +4549,16 @@ snapshots:
 
   '@floating-ui/utils@0.2.10': {}
 
-  '@hono-rate-limiter/cloudflare@0.2.2(@cloudflare/workers-types@4.20260108.0)(hono@4.10.6)':
+  '@hono-rate-limiter/cloudflare@0.2.2(@cloudflare/workers-types@4.20260108.0)(hono@4.11.3)':
     dependencies:
       '@cloudflare/workers-types': 4.20260108.0
-      hono: 4.10.6
+      hono: 4.11.3
 
-  '@hono/clerk-auth@3.0.3(hono@4.10.6)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)':
+  '@hono/clerk-auth@3.0.3(hono@4.11.3)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)':
     dependencies:
       '@clerk/backend': 2.29.1(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       '@clerk/types': 4.101.10(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
-      hono: 4.10.6
+      hono: 4.11.3
     transitivePeerDependencies:
       - react
       - react-dom
@@ -4565,35 +4579,23 @@ snapshots:
       - eslint-plugin-import
       - supports-color
 
-  '@hono/node-server@1.19.6(hono@4.10.6)':
+  '@hono/node-server@1.19.6(hono@4.11.3)':
     dependencies:
-      hono: 4.10.6
+      hono: 4.11.3
 
-  '@hono/node-server@1.19.7(hono@4.10.6)':
+  '@hono/node-server@1.19.7(hono@4.11.3)':
     dependencies:
-      hono: 4.10.6
+      hono: 4.11.3
 
-  '@hono/swagger-ui@0.5.3(hono@4.10.6)':
+  '@hono/swagger-ui@0.5.3(hono@4.11.3)':
     dependencies:
-      hono: 4.10.6
-
-  '@hono/zod-openapi@0.16.4(hono@4.10.6)(zod@3.23.8)':
-    dependencies:
-      '@asteasolutions/zod-to-openapi': 7.3.4(zod@3.23.8)
-      '@hono/zod-validator': 0.3.0(hono@4.10.6)(zod@3.23.8)
-      hono: 4.10.6
-      zod: 3.23.8
+      hono: 4.11.3
 
   '@hono/zod-openapi@0.16.4(hono@4.11.3)(zod@3.23.8)':
     dependencies:
       '@asteasolutions/zod-to-openapi': 7.3.4(zod@3.23.8)
       '@hono/zod-validator': 0.3.0(hono@4.11.3)(zod@3.23.8)
       hono: 4.11.3
-      zod: 3.23.8
-
-  '@hono/zod-validator@0.3.0(hono@4.10.6)(zod@3.23.8)':
-    dependencies:
-      hono: 4.10.6
       zod: 3.23.8
 
   '@hono/zod-validator@0.3.0(hono@4.11.3)(zod@3.23.8)':
@@ -4825,13 +4827,13 @@ snapshots:
       '@electric-sql/pglite': 0.3.2
       '@electric-sql/pglite-socket': 0.0.6(@electric-sql/pglite@0.3.2)
       '@electric-sql/pglite-tools': 0.2.7(@electric-sql/pglite@0.3.2)
-      '@hono/node-server': 1.19.6(hono@4.10.6)
+      '@hono/node-server': 1.19.6(hono@4.11.3)
       '@mrleebo/prisma-ast': 0.12.1
       '@prisma/get-platform': 6.8.2
       '@prisma/query-plan-executor': 6.18.0
       foreground-child: 3.3.1
       get-port-please: 3.1.2
-      hono: 4.10.6
+      hono: 4.11.3
       http-status-codes: 2.3.0
       pathe: 2.0.3
       proper-lockfile: 4.1.2
@@ -6966,13 +6968,11 @@ snapshots:
     dependencies:
       hermes-estree: 0.25.1
 
-  hono-pino@0.10.3(hono@4.10.6)(pino@10.1.0):
+  hono-pino@0.10.3(hono@4.11.3)(pino@10.1.0):
     dependencies:
       defu: 6.1.4
-      hono: 4.10.6
+      hono: 4.11.3
       pino: 10.1.0
-
-  hono@4.10.6: {}
 
   hono@4.11.3: {}
 

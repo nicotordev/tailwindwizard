@@ -5,17 +5,17 @@ interface TailwindBlock {
   type: 'component' | 'section' | 'page';
   framework: 'react'; // Extensible a 'vue' o 'svelte' en el futuro
   styling_engine: 'tailwind';
-  
+
   // Dependencias críticas para la instalación automática
   registry_dependencies: string; // Componentes base de Shadcn requeridos (ej. ["button", "card", "avatar"])
   npm_dependencies: string; // Paquetes externos (ej. ["framer-motion", "lucide-react", "recharts"])
-  
+
   // Contenido del Código (Encriptado en reposo)
   files: {
     path: string; // ej. "components/pricing-card.tsx"
     content: string;
   };
-  
+
   // Metadatos de Visualización (Público)
   preview_assets: {
     desktop_url: string;

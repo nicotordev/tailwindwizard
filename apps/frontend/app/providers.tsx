@@ -1,6 +1,6 @@
 "use client";
-import { QueryClientProvider } from "@tanstack/react-query";
-import { QueryClient } from "@tanstack/react-query";
+import { ClerkProvider } from "@clerk/nextjs";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 export default function Providers({ children }: { children: React.ReactNode }) {
   const queryClient = new QueryClient({
@@ -15,6 +15,25 @@ export default function Providers({ children }: { children: React.ReactNode }) {
     },
   });
   return (
-    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    <ClerkProvider
+      appearance={{
+        variables: {
+          colorPrimary: "hsl(263, 70%, 50%)",
+          borderRadius: "0.8rem",
+          fontFamily: "var(--font-sans)",
+        },
+        elements: {
+          card: "bg-card border border-border shadow-xl",
+          navbar: "bg-card border-r border-border",
+          userButtonPopoverCard:
+            "bg-card border border-border shadow-xl backdrop-blur-xl",
+          userButtonPopoverActionButton: "hover:bg-accent transition-colors",
+          userButtonPopoverActionButtonText: "text-foreground font-medium",
+          userButtonPopoverFooter: "hidden", // Hide "Secured by Clerk"
+        },
+      }}
+    >
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    </ClerkProvider>
   );
 }

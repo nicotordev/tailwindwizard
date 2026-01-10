@@ -98,6 +98,7 @@ enum FileKind {
 
 enum CodeStorageKind {
   INLINE_ENCRYPTED
+  INLINE_PLAIN
   OBJECT_STORAGE
 }
 
@@ -407,6 +408,7 @@ model BlockFile {
 
   // Stored only if INLINE_ENCRYPTED strategy; otherwise omit content and keep metadata.
   encryptedContent String? @db.Text
+  content          String? @db.Text
 
   createdAt DateTime @default(now())
 

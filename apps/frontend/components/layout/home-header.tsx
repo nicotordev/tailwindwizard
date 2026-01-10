@@ -1,24 +1,26 @@
-import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import {
-  NavigationMenu,
-  NavigationMenuItem,
-  NavigationMenuLink,
-  NavigationMenuList,
-} from "@/components/ui/navigation-menu";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  NavigationMenu,
+  NavigationMenuItem,
+  NavigationMenuLink,
+  NavigationMenuList,
+} from "@/components/ui/navigation-menu";
 import { Separator } from "@/components/ui/separator";
+import { SignedIn, SignedOut, UserButton } from "@clerk/nextjs";
 import { Menu, Sparkles } from "lucide-react";
+import Link from "next/link";
 import Logo from "../logo";
+
 
 export default function HomeHeader() {
   return (
-    <header className="sticky top-0 left-0 z-50 w-full border-b bg-background/75 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <header className="sticky top-0 left-0 z-50 w-full border-b bg-background/75 backdrop-blur supports-backdrop-filter:bg-background/60">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
         {/* Left: Brand */}
         <div className="flex items-center gap-3">
@@ -77,22 +79,32 @@ export default function HomeHeader() {
         </nav>
 
         {/* Right: CTAs + mobile menu */}
-        <div className="flex items-center gap-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="hidden sm:inline-flex"
-            asChild
-          >
-            <Link href="/sell">
-              <Sparkles className="mr-2 h-4 w-4" aria-hidden="true" />
-              Start selling
-            </Link>
-          </Button>
-
-          <Button size="sm" className="hidden sm:inline-flex" asChild>
-            <Link href="/market">Explore blocks</Link>
-          </Button>
+        <div className="flex items-center gap-4">
+          <div className="hidden items-center gap-3 md:flex">
+            <SignedOut>
+              <Button variant="ghost" size="sm" asChild>
+                <Link href="/auth/sign-in">Sign in</Link>
+              </Button>
+              <Button size="sm" asChild className="group">
+                <Link href="/auth/sign-up" className="flex items-center gap-2">
+                  <Sparkles className="h-4 w-4 transition-transform group-hover:rotate-12" />
+                  Get started
+                </Link>
+              </Button>
+            </SignedOut>
+            <SignedIn>
+              <Button variant="ghost" size="sm" asChild>
+                <Link href="/dashboard">Dashboard</Link>
+              </Button>
+              <UserButton
+                appearance={{
+                  elements: {
+                    userButtonAvatarBox: "h-9 w-9",
+                  },
+                }}
+              />
+            </SignedIn>
+          </div>
 
           {/* Mobile dropdown */}
           <DropdownMenu>
@@ -138,16 +150,50 @@ export default function HomeHeader() {
 
               <Separator />
 
-              <DropdownMenuItem asChild>
-                <Link href="/login" className="cursor-pointer">
-                  Sign in
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link href="/signup" className="cursor-pointer">
-                  Create account
-                </Link>
-              </DropdownMenuItem>
+              <SignedOut>
+                <DropdownMenuItem asChild>
+                  <Link
+                    href="/auth/sign-in"
+                    className="cursor-pointer font-medium"
+                  >
+                    Sign in
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link
+                    href="/auth/sign-up"
+                    className="cursor-pointer font-medium text-primary"
+                  >
+                    Create account
+                  </Link>
+                </DropdownMenuItem>
+              </SignedOut>
+
+              <SignedIn>
+                <DropdownMenuItem asChild>
+                  <Link
+                    href="/dashboard"
+                    className="cursor-pointer font-medium"
+                  >
+                    Dashboard
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem className="p-0">
+                  <div className="flex h-full w-full items-center px-2 py-1.5 ring-offset-background transition-colors focus:bg-accent focus:text-accent-foreground">
+                    <UserButton
+                      appearance={{
+                        elements: {
+                          userButtonTrigger: "w-full focus:shadow-none",
+                          userButtonBox:
+                            "flex-row-reverse w-full justify-between",
+                          userButtonOuterIdentifier: "text-sm font-medium",
+                        },
+                      }}
+                      showName
+                    />
+                  </div>
+                </DropdownMenuItem>
+              </SignedIn>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
