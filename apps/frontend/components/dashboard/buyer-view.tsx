@@ -85,7 +85,7 @@ export function BuyerView() {
                 key={license.id}
                 className="group relative overflow-hidden bg-card/40 backdrop-blur-xl border-border/50 transition-all duration-300 hover:shadow-2xl hover:shadow-primary/10 hover:-translate-y-1 rounded-3xl"
               >
-                <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                <div className="absolute inset-0 bg-linear-to-br from-primary/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                 <CardHeader>
                   <div className="flex justify-between items-start">
                     <CardTitle className="text-xl font-bold">

@@ -5,10 +5,12 @@ import creatorApp from "./creator.route.js";
 import purchaseApp from "./purchase.route.js";
 import tagApp from "./tag.route.js";
 import userApp from "./user.route.js";
+import adminApp from "./admin.route.js";
 
 const appRouter = new OpenAPIHono()
   .route("/users", userApp)
   .route("/creators", creatorApp)
+  .route("/admin", adminApp)
   .route("/blocks", blockApp)
   .route("/tags", tagApp)
   .route("/categories", categoryApp)

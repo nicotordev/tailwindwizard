@@ -4,7 +4,32 @@ import type { Prisma } from "../db/generated/prisma/client.js";
 import { prisma } from "../db/prisma.js";
 import { creatorService } from "../services/creator.service.js";
 
+import { blockService } from "../services/block.service.js";
+
 export const creatorController = {
+  async getMyBlocks(c: Context) {
+    const auth = getAuth(c);
+    if (!auth?.userId) {
+      return c.json({ message: "Unauthorized" }, 401);
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { externalAuthId: auth.userId },
+      include: { creator: true },
+    });
+
+    if (!user || !user.creator) {
+      return c.json({ message: "Creator profile not found" }, 404);
+    }
+
+    const blocks = await blockService.findMany({
+      creatorId: user.creator.id,
+      limit: 100, // Reasonable limit
+    });
+
+    return c.json(blocks);
+  },
+
   async getMe(c: Context) {
     const auth = getAuth(c);
     if (!auth?.userId) {

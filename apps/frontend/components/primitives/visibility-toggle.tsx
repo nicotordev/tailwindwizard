@@ -1,9 +1,9 @@
 "use client"
 
 import * as React from "react"
-import { 
-  Eye, 
-  EyeOff, 
+import {
+  Eye,
+  EyeOff,
   Link as LinkIcon,
   Check,
   ChevronDown
@@ -44,19 +44,19 @@ const visibilityConfig: Record<Visibility, { label: string; description: string;
   },
 }
 
-export function VisibilityToggle({ 
-  value, 
-  onChange, 
+export function VisibilityToggle({
+  value,
+  onChange,
   disabled,
-  className 
+  className
 }: VisibilityToggleProps) {
   const selected = visibilityConfig[value]
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button 
-          variant="outline" 
+        <Button
+          variant="outline"
           className={cn("justify-between gap-2 px-3", className)}
           disabled={disabled}
         >
@@ -67,7 +67,7 @@ export function VisibilityToggle({
           <ChevronDown className="size-4 opacity-50" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" className="w-[240px]">
+      <DropdownMenuContent align="start" className="w-60">
         {(Object.entries(visibilityConfig) as [Visibility, typeof selected][]).map(([key, config]) => (
           <DropdownMenuItem
             key={key}

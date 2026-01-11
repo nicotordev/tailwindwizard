@@ -245,6 +245,19 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/creators/me/blocks": {
+        parameters: { query?: never; header?: never; path?: never; cookie?: never; };
+        get: {
+            parameters: { query?: never; header?: never; path?: never; cookie?: never; };
+            responses: {
+                200: {
+                    headers: { [name: string]: unknown; };
+                    content: { "application/json": components["schemas"]["Block"][]; };
+                };
+                401: { headers: { [name: string]: unknown; }; content?: never; };
+            };
+        };
+    },
     "/api/v1/creators/me": {
         parameters: {
             query?: never;
@@ -416,6 +429,45 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/moderation": {
+        parameters: { query?: never; header?: never; path?: never; cookie?: never; };
+        get: {
+            parameters: { query?: never; header?: never; path?: never; cookie?: never; };
+            responses: {
+                200: {
+                    headers: { [name: string]: unknown; };
+                    content: { "application/json": components["schemas"]["Block"][]; };
+                };
+                401: { headers: { [name: string]: unknown; }; content?: never; };
+            };
+        };
+    },
+    "/api/v1/admin/moderation/{blockId}/decide": {
+        parameters: { query?: never; header?: never; path: { blockId: string; }; cookie?: never; };
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: { blockId: string; };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        decision: "APPROVE" | "REJECT" | "REQUEST_CHANGES";
+                        notes?: string;
+                    };
+                };
+            };
+            responses: {
+                200: {
+                    headers: { [name: string]: unknown; };
+                    content: { "application/json": { success: boolean; }; };
+                };
+                401: { headers: { [name: string]: unknown; }; content?: never; };
+            };
+        };
+    },
     "/api/v1/blocks": {
         parameters: {
             query?: never;

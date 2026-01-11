@@ -6,6 +6,6 @@ export async function POST(req: NextRequest) {
   const body = await req.json();
   const result = await apiClient.POST("/api/v1/creators/onboarding", {
     body,
-  } as any);
+  });
   return handleApiResponse(result);
 }

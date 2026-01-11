@@ -26,6 +26,6 @@ export async function PATCH(
       path: { id },
     },
     body,
-  } as any);
+  });
   return handleApiResponse(result);
 }

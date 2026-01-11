@@ -17,7 +17,7 @@ export function handleApiResponse<T, E>({
   return NextResponse.json(data);
 }
 
-export function getQueryParams(req: NextRequest) {
+export function getQueryParams(req: NextRequest): Record<string, string> {
   const { searchParams } = new URL(req.url);
   return Object.fromEntries(searchParams.entries());
 }

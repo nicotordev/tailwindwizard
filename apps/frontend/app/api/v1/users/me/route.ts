@@ -11,6 +11,6 @@ export async function PATCH(req: NextRequest) {
   const body = await req.json();
   const result = await apiClient.PATCH("/api/v1/users/me", {
     body,
-  } as any);
+  });
   return handleApiResponse(result);
 }

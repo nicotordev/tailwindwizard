@@ -7,6 +7,7 @@ import {
   UpdateCreatorSchema,
   CreatorOnboardingSchema,
   CreatorOnboardingResponseSchema,
+  BlockSchema,
 } from "@tw/shared";
 
 const creatorApp = new OpenAPIHono();
@@ -17,6 +18,30 @@ creatorApp.use("/me/*", requireAuth);
 // --------------------------------------------------------------------------
 // Routes
 // --------------------------------------------------------------------------
+
+// GET /me/blocks
+const getMyBlocksRoute = createRoute({
+  method: "get",
+  path: "/me/blocks",
+  tags: ["Creator"],
+  summary: "Get my blocks",
+  responses: {
+    200: {
+      content: {
+        "application/json": {
+          schema: z.array(BlockSchema),
+        },
+      },
+      description: "List of my blocks",
+    },
+    401: {
+      description: "Unauthorized",
+    },
+    404: {
+      description: "Creator profile not found",
+    },
+  },
+});
 
 // GET /me
 const getMeRoute = createRoute({
@@ -168,6 +193,7 @@ const getByIdRoute = createRoute({
 // --------------------------------------------------------------------------
 
 const chainedApp = creatorApp
+  .openapi(getMyBlocksRoute, (c) => creatorController.getMyBlocks(c))
   .openapi(getMeRoute, (c) => creatorController.getMe(c))
   .openapi(onboardMeRoute, (c) => creatorController.onboardMe(c))
   .openapi(createMeRoute, (c) => creatorController.createMe(c))

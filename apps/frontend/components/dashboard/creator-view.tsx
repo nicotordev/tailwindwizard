@@ -52,7 +52,7 @@ export function CreatorView() {
       {/* Top Status Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card className="bg-card/40 backdrop-blur-xl border-border/50 rounded-3xl overflow-hidden relative group">
-          <div className="absolute inset-0 bg-gradient-to-br from-creator/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+          <div className="absolute inset-0 bg-linear-to-br from-creator/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-semibold tracking-tight text-muted-foreground uppercase">
               Revenue Engine
@@ -79,7 +79,7 @@ export function CreatorView() {
         </Card>
 
         <Card className="bg-card/40 backdrop-blur-xl border-border/50 rounded-3xl overflow-hidden relative group">
-          <div className="absolute inset-0 bg-gradient-to-br from-creator/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+          <div className="absolute inset-0 bg-linear-to-br from-creator/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 text-muted-foreground uppercase">
             <CardTitle className="text-sm font-semibold tracking-tight">
               Vault Balance
@@ -97,7 +97,7 @@ export function CreatorView() {
         </Card>
 
         <Card className="bg-card/40 backdrop-blur-xl border-border/50 rounded-3xl overflow-hidden relative group">
-          <div className="absolute inset-0 bg-gradient-to-br from-creator/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+          <div className="absolute inset-0 bg-linear-to-br from-creator/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 text-muted-foreground uppercase">
             <CardTitle className="text-sm font-semibold tracking-tight">
               Magic Sold
@@ -115,7 +115,7 @@ export function CreatorView() {
         </Card>
 
         <Card className="bg-card/40 backdrop-blur-xl border-border/50 rounded-3xl overflow-hidden relative group">
-          <div className="absolute inset-0 bg-gradient-to-br from-creator/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+          <div className="absolute inset-0 bg-linear-to-br from-creator/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 text-muted-foreground uppercase">
             <CardTitle className="text-sm font-semibold tracking-tight">
               Active Spells
@@ -157,7 +157,7 @@ export function CreatorView() {
           <Card className="bg-card/30 backdrop-blur-md border-border/40 rounded-[2rem] overflow-hidden shadow-sm">
             {blocksLoading ? (
               <CardContent className="p-6">
-                <Skeleton className="h-[300px] w-full rounded-2xl" />
+                <Skeleton className="h-75 w-full rounded-2xl" />
               </CardContent>
             ) : !blocks?.length ? (
               <CardContent className="p-0">
