@@ -27,4 +27,25 @@ export const frontendApi = {
     random: (): Promise<AxiosResponse<Schema["Block"]>> =>
       axiosClient.get("/api/v1/blocks/random"),
   },
+
+  users: {
+    updateMe: (
+      data: Schema["UpdateUser"]
+    ): Promise<AxiosResponse<Schema["User"]>> =>
+      axiosClient.patch("/api/v1/users/me", data),
+  },
+
+  creators: {
+    onboard: (data: {
+      returnUrl: string;
+      refreshUrl: string;
+    }): Promise<AxiosResponse<{ url: string }>> =>
+      axiosClient.post("/api/v1/creators/onboarding", data),
+    
+    createMe: (data: Schema["CreateCreator"]): Promise<AxiosResponse<Schema["Creator"]>> =>
+      axiosClient.post("/api/v1/creators/me", data),
+      
+    getMe: (): Promise<AxiosResponse<Schema["Creator"]>> => 
+      axiosClient.get("/api/v1/creators/me"),
+  },
 };

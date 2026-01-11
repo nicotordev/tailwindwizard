@@ -5,11 +5,14 @@ import {
   CreateCreatorSchema,
   CreatorSchema,
   UpdateCreatorSchema,
+  CreatorOnboardingSchema,
+  CreatorOnboardingResponseSchema,
 } from "@tw/shared";
 
 const creatorApp = new OpenAPIHono();
 
 creatorApp.use("/me", requireAuth);
+creatorApp.use("/me/*", requireAuth);
 
 // --------------------------------------------------------------------------
 // Routes
@@ -35,6 +38,36 @@ const getMeRoute = createRoute({
     },
     404: {
       description: "Not found",
+    },
+  },
+});
+
+// POST /me/onboarding
+const onboardMeRoute = createRoute({
+  method: "post",
+  path: "/me/onboarding",
+  tags: ["Creator"],
+  summary: "Onboard with Stripe",
+  request: {
+    body: {
+      content: {
+        "application/json": {
+          schema: CreatorOnboardingSchema,
+        },
+      },
+    },
+  },
+  responses: {
+    200: {
+      content: {
+        "application/json": {
+          schema: CreatorOnboardingResponseSchema,
+        },
+      },
+      description: "Onboarding Link",
+    },
+    401: {
+      description: "Unauthorized",
     },
   },
 });
@@ -136,6 +169,7 @@ const getByIdRoute = createRoute({
 
 const chainedApp = creatorApp
   .openapi(getMeRoute, (c) => creatorController.getMe(c))
+  .openapi(onboardMeRoute, (c) => creatorController.onboardMe(c))
   .openapi(createMeRoute, (c) => creatorController.createMe(c))
   .openapi(updateMeRoute, (c) => creatorController.updateMe(c))
   .openapi(getByIdRoute, (c) => creatorController.getById(c));

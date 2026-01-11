@@ -89,4 +89,35 @@ export const creatorController = {
     if (!creator) return c.json({ message: "Creator not found" }, 404);
     return c.json(creator);
   },
+
+  async onboardMe(c: Context) {
+    const auth = getAuth(c);
+    if (!auth?.userId) {
+      return c.json({ message: "Unauthorized" }, 401);
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { externalAuthId: auth.userId },
+    });
+
+    if (!user) {
+      return c.json({ message: "User not found" }, 404);
+    }
+
+    const body = (await c.req.json()) as {
+      returnUrl: string;
+      refreshUrl: string;
+    };
+
+    try {
+      const result = await creatorService.onboardCreator(
+        user.id,
+        body.returnUrl,
+        body.refreshUrl
+      );
+      return c.json(result);
+    } catch (error: any) {
+      return c.json({ message: error.message }, 400);
+    }
+  },
 };

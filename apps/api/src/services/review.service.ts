@@ -22,7 +22,8 @@ export const reviewService = {
       data,
     });
 
-    const blockId = data.block?.connect?.id;
+    const blockId = data.block.connect?.id;
+    
     if (blockId) {
       // Update Block denormalized ratings
       const aggregations = await prisma.review.aggregate({
@@ -34,8 +35,8 @@ export const reviewService = {
       await prisma.block.update({
         where: { id: blockId },
         data: {
-          ratingAvg: aggregations._avg.rating || 0,
-          ratingCount: aggregations._count.rating || 0,
+          ratingAvg: aggregations._avg.rating ?? 0,
+          ratingCount: aggregations._count.rating,
         },
       });
     }

@@ -2,7 +2,6 @@ import SignInForm from "@/components/auth/sign-in-form";
 import SignUpForm from "@/components/auth/sign-up-form";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, ArrowRight, Shield, Sparkles, Wand2 } from "lucide-react";
-import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import type { ReactElement } from "react";
@@ -48,16 +47,9 @@ export default async function AuthPage({
       <div className="mx-auto flex min-h-screen max-w-7xl items-center justify-center px-4 py-12 sm:px-6">
         <div className="grid w-full max-w-6xl grid-cols-1 overflow-hidden rounded-[2.5rem] border border-border/60 bg-card/45 shadow-2xl backdrop-blur-2xl xl:grid-cols-2">
           {/* Left: Product narrative aligned with the briefing */}
-          <div className="relative hidden flex-col justify-between overflow-hidden p-12 xl:flex">
+          <div className="relative hidden flex-col justify-between overflow-hidden p-12 xl:flex border-r border-border/60">
             {/* Visual layer */}
             <div className="absolute inset-0 -z-10">
-              <Image
-                src="/wizard_portal_illustration.png"
-                alt="TailwindWizard portal preview"
-                fill
-                className="object-cover opacity-55 scale-105"
-                priority
-              />
               <div className="absolute inset-0 bg-linear-to-tr from-background via-background/60 to-transparent" />
               <div className="absolute inset-0 bg-linear-to-b from-transparent via-transparent to-background/75" />
             </div>
@@ -142,7 +134,7 @@ export default async function AuthPage({
               </div>
             </div>
 
-            <div className="relative mt-auto flex flex-wrap items-center gap-4">
+            <div className="relative mt-4 flex flex-wrap items-center gap-4">
               <Button size="lg" className="rounded-2xl px-8" asChild>
                 <Link href="/market" className="flex items-center gap-2">
                   Explore marketplace <ArrowRight className="h-5 w-5" />

@@ -26,3 +26,17 @@ export const CreateCreatorSchema = z
   .openapi("CreateCreator");
 
 export const UpdateCreatorSchema = CreateCreatorSchema.openapi("UpdateCreator");
+
+export const CreatorOnboardingSchema = z.object({
+  returnUrl: z.string().url(),
+  refreshUrl: z.string().url(),
+});
+
+export const CreatorOnboardingResponseSchema = z.object({
+  url: z.string().url(),
+});
+
+export type Creator = z.infer<typeof CreatorSchema>;
+export type CreateCreatorInput = z.infer<typeof CreateCreatorSchema>;
+export type UpdateCreatorInput = z.infer<typeof UpdateCreatorSchema>;
+export type CreatorOnboardingInput = z.infer<typeof CreatorOnboardingSchema>;

@@ -12,12 +12,12 @@ export default function UserProfilePage() {
       <main className="flex-1 relative isolate overflow-hidden">
         {/* Background: similar to Auth but more subtle */}
         <div className="pointer-events-none absolute inset-0 -z-10 bg-background" />
-        <div className="pointer-events-none absolute left-1/2 top-[-10%] -z-10 h-[600px] w-[600px] -translate-x-1/2 rounded-full bg-primary/10 blur-[150px]" />
-        
+        <div className="pointer-events-none absolute left-1/2 top-[-10%] -z-10 h-150 w-150 -translate-x-1/2 rounded-full bg-primary/10 blur-[150px]" />
+
         <div className="mx-auto max-w-7xl px-6 py-10">
           <div className="mb-8">
-            <Link 
-              href="/" 
+            <Link
+              href="/"
               className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
               <ArrowLeft className="h-4 w-4" />
@@ -33,8 +33,8 @@ export default function UserProfilePage() {
           </div>
 
           <div className="flex justify-center md:justify-start">
-            <UserProfile 
-              path="/profile" 
+            <UserProfile
+              path="/profile"
               routing="path"
               appearance={{
                 variables: {

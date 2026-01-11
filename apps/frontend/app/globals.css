@@ -38,6 +38,11 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
+
+  /* Role Specific Colors */
+  --color-creator: var(--creator);
+  --color-builder: var(--builder);
+
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -94,6 +99,10 @@
   --sidebar-accent-foreground: oklch(0.45 0.18 290);
   --sidebar-border: oklch(0.9 0.02 290);
   --sidebar-ring: oklch(0.45 0.18 290);
+
+  /* Role Colors - Light Mode */
+  --creator: oklch(0.55 0.25 290);
+  --builder: oklch(0.6 0.2 210);
 }
 
 .dark {
@@ -139,6 +148,10 @@
   --sidebar-accent-foreground: oklch(0.98 0.01 290);
   --sidebar-border: oklch(0.35 0.08 285);
   --sidebar-ring: oklch(0.7 0.16 235);
+
+  /* Role Colors - Dark Mode */
+  --creator: oklch(0.65 0.2 290);
+  --builder: oklch(0.7 0.15 210);
 }
 
 @layer base {
