@@ -1,16 +1,11 @@
 import { apiClient } from "@/lib/api";
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
+import { handleApiResponse } from "../../proxy-utils";
 
 export async function POST(req: NextRequest) {
   const body = await req.json();
-
-  const { data, error } = await apiClient.POST("/api/v1/creators/me/onboarding", {
+  const result = await apiClient.POST("/api/v1/creators/onboarding", {
     body,
-  });
-
-  if (error) {
-    return NextResponse.json(error, { status: 500 });
-  }
-
-  return NextResponse.json(data);
+  } as any);
+  return handleApiResponse(result);
 }

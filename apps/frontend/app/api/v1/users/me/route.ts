@@ -1,16 +1,16 @@
 import { apiClient } from "@/lib/api";
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
+import { handleApiResponse } from "../../proxy-utils";
+
+export async function GET() {
+  const result = await apiClient.GET("/api/v1/users/me");
+  return handleApiResponse(result);
+}
 
 export async function PATCH(req: NextRequest) {
   const body = await req.json();
-
-  const { data, error } = await apiClient.PATCH("/api/v1/users/me", {
+  const result = await apiClient.PATCH("/api/v1/users/me", {
     body,
-  });
-
-  if (error) {
-    return NextResponse.json(error, { status: 500 });
-  }
-
-  return NextResponse.json(data);
+  } as any);
+  return handleApiResponse(result);
 }

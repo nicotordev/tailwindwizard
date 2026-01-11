@@ -1,5 +1,6 @@
 import OnboardingWizard from "@/components/onboarding/onboarding-wizard";
 import { Badge } from "@/components/ui/badge";
+import { serializeClerkUser } from "@/utils/serialization";
 import { currentUser } from "@clerk/nextjs/server";
 import { ArrowLeft, Shield, Sparkles, Wand2 } from "lucide-react";
 import Link from "next/link";
@@ -18,13 +19,11 @@ export default async function OnboardingPage() {
   }
 
   // Serialize user data for Client Component
-  const serializedUser = {
-    id: user.id,
-    firstName: user.firstName,
-    lastName: user.lastName,
-    email: user.emailAddresses[0]?.emailAddress,
-    imageUrl: user.imageUrl,
-  };
+  const serializedUser = serializeClerkUser(user);
+
+  if (!serializedUser) {
+    redirect("/sign-in");
+  }
 
   return (
     <main className="relative isolate min-h-screen overflow-hidden bg-background text-foreground">

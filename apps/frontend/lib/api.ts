@@ -4,6 +4,7 @@ import type { paths } from "@/types/api";
 import { hc } from "hono/client";
 import createClient, { type Middleware } from "openapi-fetch";
 import type { AppType } from "tw-wizard-api/src/app";
+import { auth } from "@clerk/nextjs/server";
 
 /**
  * Configuration for the API client.
@@ -17,6 +18,15 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
  */
 const authMiddleware: Middleware = {
   async onRequest({ request }) {
+    try {
+      const { getToken } = await auth();
+      const token = await getToken();
+      if (token) {
+        request.headers.set("Authorization", `Bearer ${token}`);
+      }
+    } catch (_e) {
+      // Not in a request context where auth() is available, or not logged in
+    }
     return request;
   },
 };
@@ -25,9 +35,6 @@ const authMiddleware: Middleware = {
  * apiClient
  * Typed client based on openapi-typescript paths.
  * Provides full type-safety for all /api/v1 routes defined in the OpenAPI schema.
- *
- * @example
- * const { data, error } = await apiClient.GET("/api/v1/users/me");
  */
 export const apiClient = createClient<paths>({
   baseUrl: API_URL,
@@ -39,12 +46,23 @@ apiClient.use(authMiddleware);
 /**
  * honoClient
  * Hono RPC Client for end-to-end type safety between frontend and backend.
- * Connects directly to the Hono instance for a fluent, chained API experience.
- *
- * @example
- * const res = await client.api.v1.users.me.$get();
  */
 export const honoClient = hc<AppType>(API_URL);
+
+/**
+ * getAuthedHonoClient
+ * Returns a Hono client with the current user's token in the Authorization header.
+ */
+export async function getAuthedHonoClient() {
+  const { getToken } = await auth();
+  const token = await getToken();
+  
+  return hc<AppType>(API_URL, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+}
 
 /**
  * Standard client export for convenience.
@@ -53,12 +71,17 @@ export const client = honoClient;
 
 /**
  * Legacy API support (Axios-based)
- * Uses NEXT_PUBLIC_BASE_URL for the base path.
  */
 export const api = {
-  getClient: () => {
+  getClient: async () => {
+    const { getToken } = await auth();
+    const token = await getToken();
+    
     return axios.create({
       baseURL: process.env.NEXT_PUBLIC_BASE_URL || `${API_URL}/api/v1`,
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
     });
   },
 };

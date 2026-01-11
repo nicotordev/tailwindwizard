@@ -45,6 +45,7 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import * as z from "zod";
 import { frontendApi } from "@/lib/frontend-api";
+import type { SerializedUser } from "@/utils/serialization";
 
 const onboardingSchema = z.object({
   role: z.enum(["CREATOR", "BUILDER"]),
@@ -75,18 +76,13 @@ const PRESET_CATEGORIES = [
   { id: "animated", name: "Animated", icon: Sparkles },
 ];
 
-interface InitialUser {
-  firstName: string | null;
-  lastName: string | null;
-  email: string | undefined;
-  imageUrl: string;
+export interface OnBoardingWizardProps {
+  initialUser: SerializedUser;
 }
 
 export default function OnboardingWizard({
   initialUser,
-}: {
-  initialUser: InitialUser;
-}) {
+}: OnBoardingWizardProps) {
   const [step, setStep] = useState<
     "role" | "profile" | "interests" | "payment"
   >("role");
@@ -97,14 +93,14 @@ export default function OnboardingWizard({
     resolver: zodResolver(onboardingSchema),
     defaultValues: {
       role: "BUILDER",
-      displayName: initialUser?.firstName || "",
+      displayName: initialUser.firstName || "",
       bio: "",
       country: "CL",
       websiteUrl: "",
       githubUsername: "",
       twitterUsername: "",
       interests: [],
-      imageUrl: initialUser?.imageUrl || "",
+      imageUrl: initialUser.imageUrl || "",
     },
   });
 

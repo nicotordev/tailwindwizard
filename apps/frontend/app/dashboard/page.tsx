@@ -1,6 +1,7 @@
 import { DashboardShell } from "@/components/dashboard/dashboard-shell";
 import { currentUser } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
+import { serializeClerkUser } from "@/utils/serialization";
 
 export default async function DashboardPage() {
   const user = await currentUser();
@@ -16,10 +17,11 @@ export default async function DashboardPage() {
     redirect("/admin");
   }
 
-  return (
-    <DashboardShell
-      user={JSON.parse(JSON.stringify(user))}
-      isCreator={isCreator}
-    />
-  );
+  const serializedUser = serializeClerkUser(user);
+
+  if (!serializedUser) {
+    redirect("/sign-in");
+  }
+
+  return <DashboardShell user={serializedUser} isCreator={isCreator} />;
 }

@@ -1,11 +1,11 @@
 import { apiClient } from "@/lib/api";
 import { NextRequest } from "next/server";
-import { handleApiResponse, getQueryParams } from "../proxy-utils";
+import { handleApiResponse, getQueryParams } from "../../proxy-utils";
 
 export async function GET(req: NextRequest) {
-  const result = await apiClient.GET("/api/v1/categories", {
+  const result = await apiClient.GET("/api/v1/creator/blocks", {
     params: {
-      query: getQueryParams(req),
+      query: getQueryParams(req) as any,
     },
   });
   return handleApiResponse(result);

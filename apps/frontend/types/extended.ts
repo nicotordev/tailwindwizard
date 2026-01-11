@@ -37,15 +37,16 @@ export interface RenderJob {
   error?: string | null;
 }
 
+// We extend Purchase but ensure we don't conflict with generated type
 export interface ExtendedPurchase extends Purchase {
-  // Ensure lineItems is typed if missing in generated
-  lineItems?: {
+  // Use compatible types or optional additions
+  lineItems?: Array<{
     block: {
       id: string;
       title: string;
       slug: string;
     };
     licenseType?: string;
-    amount?: number;
-  }[];
+    amount?: number | string; 
+  }>;
 }

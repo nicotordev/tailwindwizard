@@ -3,6 +3,7 @@
 Based on the "Operational Marketplace" philosophy. The UI must function as a visual state machine reflecting the Prisma schema roles (`USER`, `CREATOR`, `ADMIN`) and entity states.
 
 ## 0. Core Primitives (Base Components)
+
 Create these first to avoid logic duplication.
 
 - [x] **Status Badges**
@@ -21,6 +22,7 @@ Create these first to avoid logic duplication.
 ---
 
 ## 1. Dashboard (The Core Hub) `GET /dashboard`
+
 Contextual home page based on user role.
 
 - [x] **Routing Logic**
@@ -30,6 +32,7 @@ Contextual home page based on user role.
   - [x] Render `BuyerDashboard` for standard users.
 
 ### Buyer Dashboard View
+
 - [x] **My Blocks Section**
   - [x] Fetch User Licenses.
   - [x] Display list/grid of purchased blocks.
@@ -42,6 +45,7 @@ Contextual home page based on user role.
   - [x] List purchased blocks that haven't been reviewed yet.
 
 ### Creator Dashboard View
+
 - [x] **Status Cards (Top)**
   - [x] Stripe Connect Status (`isApprovedSeller`, `stripeAccountStatus`).
   - [x] Pending Earnings / Balance.
@@ -56,22 +60,24 @@ Contextual home page based on user role.
 ---
 
 ## 2. Purchases & Library
+
 "Netflix" style view for purchased content.
 
-- [ ] **Library Page** `GET /purchases/library`
-  - [ ] Grid view of all active Licenses.
-  - [ ] Filtering/Search.
-  - [ ] Access to Downloads/CLI tokens.
-- [ ] **Order Detail** `GET /purchases/orders/[id]`
-  - [ ] Line items display.
-  - [ ] Payment status.
-  - [ ] Refund/Dispute status visibility.
+- [x] **Library Page** `GET /purchases/library`
+  - [x] Grid view of all active Licenses.
+  - [x] Filtering/Search.
+  - [x] Access to Downloads/CLI tokens.
+- [x] **Order Detail** `GET /purchases/orders/[id]`
+  - [x] Line items display.
+  - [x] Payment status.
+  - [x] Refund/Dispute status visibility.
 
 ---
 
 ## 3. Creator Workflow (CMS)
 
 ### Block Management `GET /creator/blocks`
+
 - [ ] **Data Table**
   - [ ] Columns: Title, Status, Price, Rating, Sales.
   - [ ] **Visual State Machine:**
@@ -82,6 +88,7 @@ Contextual home page based on user role.
     - `PUBLISHED`: Show Analytics.
 
 ### Create Block Wizard `GET /creator/blocks/new`
+
 - [ ] **Step 1: Metadata** (Title, Desc, Slug, Tags, Category).
 - [ ] **Step 2: Pricing** (Price, Currency, License Type).
 - [ ] **Step 3: Code Upload** (Handle `CodeBundle` upload).
@@ -89,6 +96,7 @@ Contextual home page based on user role.
 - [ ] **Step 5: Submit** (Change status to `SUBMITTED`).
 
 ### Block Detail `GET /creator/blocks/[id]`
+
 - [ ] **State-Dependent Layout**
   - [ ] **Draft:** Full edit form.
   - [ ] **Submitted:** Progress tracker for moderation.
@@ -100,6 +108,7 @@ Contextual home page based on user role.
 ## 4. Marketplace Public View
 
 ### Explore `GET /explore`
+
 - [ ] **Filters**
   - [ ] Framework (React, Vue, etc.).
   - [ ] Styling Engine (Tailwind, CSS).
@@ -108,6 +117,7 @@ Contextual home page based on user role.
 - [ ] **Important:** Never expose `codeBundle` here.
 
 ### Product Page `GET /block/[slug]`
+
 - [ ] **Hero Section**
   - [ ] `PreviewAsset` gallery (Desktop/Mobile/Tablet viewports).
 - [ ] **Info Column**
@@ -123,6 +133,7 @@ Contextual home page based on user role.
 ---
 
 ## 5. Admin Panel `GET /admin`
+
 Internal tools for platform management.
 
 - [ ] **Layout:** Sidebar navigation for Admin sections.
@@ -142,12 +153,13 @@ Internal tools for platform management.
 ---
 
 ## 6. Integration Roadmap (BFF/API)
+
 Ensure these endpoints are ready in `apps/frontend/lib/frontend-api.ts`:
 
-- [ ] `users.getMe` (Include role/creator status).
-- [ ] `licenses.list` (For library).
-- [ ] `purchases.list` (For history).
-- [ ] `blocks.listMyBlocks` (For creator).
-- [ ] `blocks.create` / `blocks.update`.
-- [ ] `render.status` (For checking preview generation).
-- [ ] `admin.moderationList` / `admin.decide`.
+- [x] `users.getMe` (Include role/creator status).
+- [x] `licenses.list` (For library).
+- [x] `purchases.list` (For history).
+- [x] `blocks.listMyBlocks` (For creator).
+- [x] `blocks.create` / `blocks.update`.
+- [x] `render.status` (For checking preview generation).
+- [x] `admin.moderationList` / `admin.decide`.
