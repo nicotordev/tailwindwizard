@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { useQuery } from "@tanstack/react-query";
 import { MarketNavbar } from "@/components/navbar";
 import { MarketHero } from "@/components/market-hero";
 import { MarketActions } from "@/components/market-actions";
@@ -9,14 +10,11 @@ import { ItemTable, type SortKey, type SortState } from "@/components/item-table
 import { MarketSidebar } from "@/components/sidebar";
 import { MarketPagination } from "@/components/pagination";
 import { MarketFooter } from "@/components/footer";
-import {
-  marketData,
-  marketTabs,
-  marketGames,
-  type MarketItem,
-  type MarketTabKey,
-} from "@/lib/data";
+import { frontendApi } from "@/lib/frontend-api";
+import { marketGames } from "@/lib/data";
 import { useIsMobile } from "@/hooks/use-mobile";
+import type { MarketItem } from "@/lib/data";
+import type { Block } from "@/types/extended";
 
 const PAGE_SIZE = 4;
 
@@ -33,19 +31,60 @@ function sortItems(items: MarketItem[], sort: SortState) {
   });
 }
 
+function mapBlockToMarketItem(block: Block): MarketItem {
+  return {
+    id: block.id,
+    name: block.title,
+    game: block.categories?.[0]?.category?.name ?? "General",
+    quantity: block.soldCount ?? 0,
+    priceUSD: typeof block.price === "string" ? parseFloat(block.price) : block.price,
+    iconURL: block.previews?.[0]?.url,
+  };
+}
+
 export default function MarketPage() {
-  const [activeTab, setActiveTab] = React.useState<MarketTabKey>("economia");
+  const [activeTab, setActiveTab] = React.useState<string>("economia");
   const [query, setQuery] = React.useState("");
   const [sort, setSort] = React.useState<SortState>({
     key: "name",
     direction: "asc",
   });
   const [page, setPage] = React.useState(1);
-  const [isLoading, setIsLoading] = React.useState(false);
-  const loadingRef = React.useRef<number | null>(null);
   const isMobile = useIsMobile();
 
-  const items = marketData[activeTab];
+  const { data: categoriesData } = useQuery({
+    queryKey: ["categories"],
+    queryFn: async () => {
+      const res = await frontendApi.categories.list();
+      return res.data;
+    },
+  });
+
+  const { data: blocksData, isLoading: isLoadingBlocks } = useQuery({
+    queryKey: ["blocks", activeTab],
+    queryFn: async () => {
+      const res = await frontendApi.blocks.list({
+        categorySlug: activeTab,
+        status: "PUBLISHED",
+        visibility: "PUBLIC",
+      });
+      return res.data;
+    },
+  });
+
+  const tabs = React.useMemo(() => {
+    if (!categoriesData) return [];
+    return categoriesData.map(cat => ({
+      value: cat.slug,
+      label: cat.name
+    }));
+  }, [categoriesData]);
+
+  const items = React.useMemo(() => {
+    if (!blocksData) return [];
+    return blocksData.map(mapBlockToMarketItem);
+  }, [blocksData]);
+
   const filteredItems = React.useMemo(() => {
     const term = query.trim().toLowerCase();
     if (!term) return items;
@@ -56,6 +95,7 @@ export default function MarketPage() {
     () => sortItems(filteredItems, sort),
     [filteredItems, sort]
   );
+  
   const totalPages = Math.max(1, Math.ceil(sortedItems.length / PAGE_SIZE));
   const pagedItems = React.useMemo(() => {
     const start = (page - 1) * PAGE_SIZE;
@@ -66,19 +106,9 @@ export default function MarketPage() {
     if (page > totalPages) setPage(1);
   }, [page, totalPages]);
 
-  React.useEffect(() => {
-    return () => {
-      if (loadingRef.current) window.clearTimeout(loadingRef.current);
-    };
-  }, []);
-
   const handleTabChange = (value: string) => {
-    const next = value as MarketTabKey;
-    setActiveTab(next);
+    setActiveTab(value);
     setPage(1);
-    setIsLoading(true);
-    if (loadingRef.current) window.clearTimeout(loadingRef.current);
-    loadingRef.current = window.setTimeout(() => setIsLoading(false), 250);
   };
 
   const handleSort = (key: SortKey) => {
@@ -110,11 +140,11 @@ export default function MarketPage() {
             <MarketTabs
               value={activeTab}
               onChange={handleTabChange}
-              tabs={marketTabs}
+              tabs={tabs.length > 0 ? tabs : []}
             />
             <ItemTable
               items={pagedItems}
-              isLoading={isLoading}
+              isLoading={isLoadingBlocks}
               isMobile={isMobile}
               sort={sort}
               onSort={handleSort}
@@ -139,3 +169,4 @@ export default function MarketPage() {
     </div>
   );
 }
+

@@ -21,8 +21,8 @@ const axiosClient = axios.create({
  * Generic helper to reduce boilerplate for standard resource endpoints
  */
 const createResource = <T>(path: string) => ({
-  list: (): Promise<AxiosResponse<T[]>> =>
-    axiosClient.get(`/api/v1/${path}`),
+  list: (params?: any): Promise<AxiosResponse<T[]>> =>
+    axiosClient.get(`/api/v1/${path}`, { params }),
   identifier: (identifier: string): Promise<AxiosResponse<T>> =>
     axiosClient.get(`/api/v1/${path}/${identifier}`),
 });

@@ -1,10 +1,8 @@
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import type { MarketTabKey } from "@/lib/data";
-
-type MarketTab = { value: MarketTabKey; label: string };
+type MarketTab = { value: string; label: string };
 
 type MarketTabsProps = {
-  value: MarketTabKey;
+  value: string;
   onChange: (value: string) => void;
   tabs: MarketTab[];
 };

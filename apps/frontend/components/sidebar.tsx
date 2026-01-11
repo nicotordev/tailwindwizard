@@ -91,7 +91,7 @@ function SidebarContent({ search, onSearchChange, games }: Omit<MarketSidebarPro
                     <Grid2X2 className="size-4 opacity-50" />
                     {game}
                   </span>
-                  <Badge variant="ghost" className="text-[10px] h-5 opacity-0 group-hover:opacity-100 transition-opacity">View</Badge>
+                  <Badge variant="outline" className="text-[10px] h-5 opacity-0 group-hover:opacity-100 transition-opacity">View</Badge>
                 </button>
               ))}
             </div>
