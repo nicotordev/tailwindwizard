@@ -6,6 +6,8 @@ const EnvSchema = z.object({
   STRIPE_SECRET_KEY: z.string().min(1),
   STRIPE_WEBHOOK_SECRET: z.string().min(1),
   FRONTEND_URL: z.string().url(),
+  ONESIGNAL_APP_ID: z.string().min(1).optional(),
+  ONESIGNAL_API_KEY: z.string().min(1).optional(),
 });
 
 const parsed = EnvSchema.safeParse(process.env);
@@ -19,6 +21,8 @@ const env = {
   stripeSecretKey: parsed.data.STRIPE_SECRET_KEY,
   stripeWebhookSecret: parsed.data.STRIPE_WEBHOOK_SECRET,
   frontendUrl: parsed.data.FRONTEND_URL,
+  oneSignalAppId: parsed.data.ONESIGNAL_APP_ID,
+  oneSignalApiKey: parsed.data.ONESIGNAL_API_KEY,
 } as const;
 
 export default env;

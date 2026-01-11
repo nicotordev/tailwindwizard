@@ -32,10 +32,10 @@ export default function HeroSection() {
 
           <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
             <Button size="lg" asChild>
-              <Link href="/market">Explore the marketplace</Link>
+              <Link href="/explore">Explore the Block Library</Link>
             </Button>
             <Button size="lg" variant="secondary" asChild>
-              <Link href="/sell">Start selling blocks</Link>
+              <Link href="/sell">Start selling Blocks</Link>
             </Button>
           </div>
         </div>

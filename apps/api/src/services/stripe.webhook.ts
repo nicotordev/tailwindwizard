@@ -3,7 +3,8 @@ import { Hono } from "hono";
 import type Stripe from "stripe";
 import env from "../config/env.config.js";
 import { prisma } from "../db/prisma.js";
-import stripe from "../lib/stripe.js";
+import stripe, { stripeMetadataKeys } from "../lib/stripe.js";
+import { notificationService } from "../services/notification.service.js";
 import { payoutService } from "../services/payout.service.js";
 import { purchaseService } from "../services/purchase.service.js";
 
@@ -76,7 +77,7 @@ export const stripeWebhookRoute = new Hono().post(
       if (event.type === "checkout.session.completed") {
         const session = event.data.object;
 
-        const purchaseId = session.metadata?.purchaseId;
+        const purchaseId = session.metadata?.[stripeMetadataKeys.purchaseId];
         if (!purchaseId)
           throw new Error("Missing purchaseId in session.metadata");
 
@@ -107,6 +108,47 @@ export const stripeWebhookRoute = new Hono().post(
         // Transfers to creators (seller side)
         await payoutService.transferToCreatorsForPurchase(purchaseId);
 
+        const purchase = await prisma.purchase.findUnique({
+          where: { id: purchaseId },
+          include: {
+            buyer: { select: { id: true } },
+            lineItems: {
+              include: {
+                block: {
+                  include: {
+                    creator: { select: { userId: true } },
+                  },
+                },
+              },
+            },
+          },
+        });
+
+        if (purchase) {
+          const itemCount = purchase.lineItems.length;
+
+          try {
+            await notificationService.notifyPurchaseCompleted({
+              buyerId: purchase.buyerId,
+              purchaseId: purchase.id,
+              itemCount,
+            });
+
+            const creatorUserId =
+              purchase.lineItems[0]?.block.creator.userId ?? null;
+
+            if (creatorUserId) {
+              await notificationService.notifyCreatorSale({
+                creatorUserId,
+                purchaseId: purchase.id,
+                itemCount,
+              });
+            }
+          } catch (notifyError) {
+            console.error("Notification dispatch failed:", notifyError);
+          }
+        }
+
         await prisma.webhookEvent.update({
           where: { externalId: event.id },
           data: { status: "PROCESSED", processedAt: new Date() },
@@ -123,12 +165,24 @@ export const stripeWebhookRoute = new Hono().post(
         const obj = event.data.object as { metadata?: Record<string, string> };
         const metadata = obj.metadata;
 
-        const purchaseId = metadata?.purchaseId;
+        const purchaseId = metadata?.[stripeMetadataKeys.purchaseId];
         if (purchaseId) {
           await prisma.purchase.update({
             where: { id: purchaseId },
             data: { status: "FAILED", updatedAt: new Date() },
           });
+        }
+
+        const buyerId = metadata?.[stripeMetadataKeys.buyerId];
+        if (buyerId) {
+          try {
+            await notificationService.notifyPurchaseFailed({
+              buyerId,
+              purchaseId,
+            });
+          } catch (notifyError) {
+            console.error("Notification dispatch failed:", notifyError);
+          }
         }
 
         await prisma.webhookEvent.update({

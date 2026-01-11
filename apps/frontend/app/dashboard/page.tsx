@@ -1,5 +1,5 @@
 import { DashboardShell } from "@/components/dashboard/dashboard-shell";
-import { currentUser } from "@clerk/nextjs/server";
+import { createClerkClient, currentUser } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { serializeClerkUser } from "@/utils/serialization";
 
@@ -12,11 +12,22 @@ export default async function DashboardPage() {
 
   const role = user.publicMetadata?.role as string | undefined;
   const isCreator = !!user.publicMetadata?.isCreator;
+  const userId = user.id;
+  const isAdmin = role === "ADMIN";
+  const couldBeAdmin = process.env.ADMIN_EMAILS?.split(",").includes(
+    user.emailAddresses[0].emailAddress
+  );
 
-  if (role === "ADMIN") {
-    redirect("/admin");
+  if (couldBeAdmin && !isAdmin) {
+    const clerkClient = createClerkClient({
+      secretKey: process.env.CLERK_SECRET_KEY,
+      publishableKey: process.env.CLERK_PUBLISHABLE_KEY,
+    });
+    await clerkClient.users.updateUser(userId, {
+      publicMetadata: { role: "ADMIN" },
+    });
   }
-
+  
   const serializedUser = serializeClerkUser(user);
 
   if (!serializedUser) {

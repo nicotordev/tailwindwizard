@@ -11,6 +11,7 @@ import {
   LogOut,
   ChevronLeft,
   ChevronRight,
+  Bell,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -56,6 +57,12 @@ const navItems: NavItem[] = [
     title: "Settings",
     href: "/dashboard/settings",
     icon: Settings,
+    role: "all",
+  },
+  {
+    title: "Notifications",
+    href: "/dashboard/notifications",
+    icon: Bell,
     role: "all",
   },
 ];

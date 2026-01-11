@@ -1,6 +1,7 @@
 "use client";
 import { ClerkProvider } from "@clerk/nextjs";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { OneSignalProvider } from "@/components/notifications/onesignal-provider";
 
 export default function Providers({ children }: { children: React.ReactNode }) {
   const queryClient = new QueryClient({
@@ -33,7 +34,10 @@ export default function Providers({ children }: { children: React.ReactNode }) {
         },
       }}
     >
-      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+      <QueryClientProvider client={queryClient}>
+        <OneSignalProvider />
+        {children}
+      </QueryClientProvider>
     </ClerkProvider>
   );
 }

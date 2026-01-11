@@ -4,9 +4,17 @@ import { prisma } from "../db/prisma.js";
 
 export const userService = {
   async getOrCreateUser(externalAuthId: string, email: string) {
+    const updateData: Prisma.UserUpdateInput = {
+      externalAuthId,
+    };
+
+    if (email) {
+      updateData.email = email;
+    }
+
     return prisma.user.upsert({
       where: { externalAuthId },
-      update: {},
+      update: updateData,
       create: {
         externalAuthId,
         email,
@@ -30,6 +38,24 @@ export const userService = {
       where: { id },
       data,
     });
+  },
+
+  async getNotificationTarget(userId: string) {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        externalAuthId: true,
+        email: true,
+      },
+    });
+
+    if (!user?.externalAuthId) return null;
+
+    return {
+      externalUserId: user.externalAuthId,
+      email: user.email,
+    };
   },
 
   async getUserPurchases(userId: string) {

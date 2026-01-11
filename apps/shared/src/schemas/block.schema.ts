@@ -91,7 +91,9 @@ export const CreateBlockSchema = z
     description: z.string().optional(),
     type: z.enum(["COMPONENT", "SECTION", "PAGE"]).default("COMPONENT"),
     price: z.number().min(0),
-    currency: z.enum(["USD", "EUR", "CLP", "GBP", "MXN", "ARS", "BRL"]).default("USD"),
+    currency: z
+      .enum(["USD", "EUR", "CLP", "GBP", "MXN", "ARS", "BRL"])
+      .default("USD"),
     framework: z.enum(["REACT", "VUE", "SVELTE"]).default("REACT"),
     stylingEngine: z.enum(["TAILWIND", "CSS"]).default("TAILWIND"),
     visibility: z.enum(["PRIVATE", "UNLISTED", "PUBLIC"]).default("PRIVATE"),
@@ -123,3 +125,8 @@ export const GetMyBlocksQuerySchema = z
 
 export const UpdateBlockSchema =
   CreateBlockSchema.partial().openapi("UpdateBlock");
+
+export type Block = z.infer<typeof BlockSchema>;
+export type CreateBlockInput = z.infer<typeof CreateBlockSchema>;
+export type UpdateBlockInput = z.infer<typeof UpdateBlockSchema>;
+export type PreviewAsset = z.infer<typeof PreviewAssetSchema>;

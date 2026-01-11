@@ -13,3 +13,5 @@ export const CategorySchema = z
       .optional(),
   })
   .openapi("Category");
+
+export type Category = z.infer<typeof CategorySchema>;

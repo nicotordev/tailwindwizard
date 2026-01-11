@@ -14,3 +14,5 @@ export const LicenseSchema = z
     block: BlockSchema.optional(),
   })
   .openapi("License");
+
+export type License = z.infer<typeof LicenseSchema>;

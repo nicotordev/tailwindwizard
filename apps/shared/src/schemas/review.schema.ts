@@ -23,3 +23,6 @@ export const CreateReviewSchema = z
     body: z.string().optional(),
   })
   .openapi("CreateReview");
+
+export type Review = z.infer<typeof ReviewSchema>;
+export type CreateReviewInput = z.infer<typeof CreateReviewSchema>;

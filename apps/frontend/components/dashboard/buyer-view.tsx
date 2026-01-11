@@ -73,7 +73,7 @@ export function BuyerView() {
             icon={Package}
             variant="hero"
             action={{
-              label: "Discover Magic",
+              label: "Browse the Marketplace",
               href: "/market",
               icon: Sparkles,
             }}

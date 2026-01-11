@@ -11,9 +11,6 @@ export const userController = {
       return c.json({ message: "Unauthorized" }, 401);
     }
 
-    // In a real app, email would come from session claims or a separate Clerk API call if not in DB
-    // For now, we assume if it's the first time, we might fail or need email from token
-    // But let's assume the user exists or we can get email from claims if configured in Clerk
     const email = (auth.sessionClaims.email as string) || "";
 
     if (process.env.ADMIN_EMAILS?.split(",").includes(email)) {
@@ -32,7 +29,14 @@ export const userController = {
     if (!auth?.userId) {
       return c.json({ message: "Unauthorized" }, 401);
     }
+
     const user = await userService.getOrCreateUser(auth.userId, "");
+
+    if (process.env.ADMIN_EMAILS?.split(",").includes(user.email)) {
+      await clerkClient.users.updateUser(auth.userId, {
+        publicMetadata: { role: "admin" },
+      });
+    }
 
     const body = await c.req.json<Prisma.UserUpdateInput>();
     const updated = await userService.updateUser(user.id, body);

@@ -12,3 +12,5 @@ export const TagSchema = z
       .optional(),
   })
   .openapi("Tag");
+
+export type Tag = z.infer<typeof TagSchema>;

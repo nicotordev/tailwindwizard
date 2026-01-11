@@ -64,3 +64,8 @@ export const UserPurchaseSchema = z
       .optional(),
   })
   .openapi("Purchase");
+
+export type User = z.infer<typeof UserSchema>;
+export type UpdateUserInput = z.infer<typeof UpdateUserSchema>;
+export type ApiKey = z.infer<typeof ApiKeySchema>;
+export type CreateApiKeyInput = z.infer<typeof CreateApiKeySchema>;

@@ -231,6 +231,21 @@ export const blockService = {
     });
   },
 
+  async getCreatorUserId(blockId: string) {
+    const block = await prisma.block.findUnique({
+      where: { id: blockId },
+      select: {
+        creator: {
+          select: {
+            userId: true,
+          },
+        },
+      },
+    });
+
+    return block?.creator.userId ?? null;
+  },
+
   async delete(id: string) {
     return prisma.block.delete({
       where: { id },

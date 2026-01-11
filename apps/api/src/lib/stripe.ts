@@ -14,4 +14,10 @@ export const stripe = new Stripe(env.stripeSecretKey, {
   },
 });
 
+export const stripeMetadataKeys = {
+  purchaseId: "purchaseId",
+  buyerId: "buyerId",
+  creatorId: "creatorId",
+} as const;
+
 export default stripe;

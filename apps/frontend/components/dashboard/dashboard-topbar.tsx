@@ -1,9 +1,9 @@
 "use client";
 
 import { UserButton } from "@clerk/nextjs";
-import { Bell, Search } from "lucide-react";
+import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+import { NotificationsMenu } from "@/components/notifications/notifications-menu";
 
 export function DashboardTopBar() {
   return (
@@ -19,10 +19,7 @@ export function DashboardTopBar() {
 
       {/* Right side */}
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" className="relative text-muted-foreground rounded-full hover:bg-primary/5">
-          <Bell className="h-5 w-5" />
-          <span className="absolute top-2 right-2 h-2 w-2 rounded-full bg-primary" />
-        </Button>
+        <NotificationsMenu />
         <div className="h-8 w-px bg-border mx-2" />
         <UserButton
           afterSignOutUrl="/"

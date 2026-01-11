@@ -8,6 +8,7 @@ import type {
 import { prisma } from "../db/prisma.js";
 import { blockService } from "../services/block.service.js";
 import { creatorService } from "../services/creator.service.js";
+import { notificationService } from "../services/notification.service.js";
 
 export const blockController = {
   async listRandom(c: Context) {
@@ -96,6 +97,18 @@ export const blockController = {
     };
 
     const block = await blockService.create(creator.id, input);
+
+    try {
+      await notificationService.notifyBlockStatus({
+        creatorUserId: creator.userId,
+        blockId: block.id,
+        blockTitle: block.title,
+        status: block.status,
+      });
+    } catch (notifyError) {
+      console.error("Notification dispatch failed:", notifyError);
+    }
+
     return c.json(block, 201);
   },
 
@@ -128,7 +141,25 @@ export const blockController = {
     }
 
     const body = await c.req.json<Prisma.BlockUpdateInput>();
+    const previousStatus = existing.status;
     const updated = await blockService.update(id, body);
+
+    if (updated.status !== previousStatus) {
+      const creatorUserId = await blockService.getCreatorUserId(updated.id);
+      if (creatorUserId) {
+        try {
+          await notificationService.notifyBlockStatus({
+            creatorUserId,
+            blockId: updated.id,
+            blockTitle: updated.title,
+            status: updated.status,
+          });
+        } catch (notifyError) {
+          console.error("Notification dispatch failed:", notifyError);
+        }
+      }
+    }
+
     return c.json(updated);
   },
 

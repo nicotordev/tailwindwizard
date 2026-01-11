@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, ShoppingBag } from "lucide-react";
 import Link from "next/link";
 
 export default function HomeCta() {
@@ -48,7 +48,9 @@ export default function HomeCta() {
               className="border-background/20 hover:bg-background/10 rounded-2xl bg-transparent"
               asChild
             >
-              <Link href="/market">Browse Library</Link>
+              <Link href="/market">
+                Browse the Marketplace <ShoppingBag className="h-5 w-5" />
+              </Link>
             </Button>
           </div>
         </div>

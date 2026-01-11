@@ -50,9 +50,19 @@ const listBlocksRoute = createRoute({
       limit: z.string().optional(),
       offset: z.string().optional(),
       search: z.string().optional(),
-      status: z.enum(["PUBLISHED", "DRAFT"]).optional(),
+      status: z
+        .enum([
+          "DRAFT",
+          "SUBMITTED",
+          "APPROVED",
+          "REJECTED",
+          "PUBLISHED",
+          "UNPUBLISHED",
+          "ARCHIVED",
+        ])
+        .optional(),
       creatorId: z.string().optional(),
-      visibility: z.enum(["PUBLIC", "PRIVATE"]).optional(),
+      visibility: z.enum(["PUBLIC", "PRIVATE", "UNLISTED"]).optional(),
       categorySlug: z.string().optional(),
     }),
   },

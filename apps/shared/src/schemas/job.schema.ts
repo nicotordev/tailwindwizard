@@ -10,3 +10,5 @@ export const RenderJobSchema = z
     error: z.string().nullable().optional(),
   })
   .openapi("RenderJob");
+
+export type RenderJob = z.infer<typeof RenderJobSchema>;

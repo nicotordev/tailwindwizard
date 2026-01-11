@@ -15,11 +15,6 @@
   "dependencies": {
     "stripe": "^20.1.2"
   },
-  "pnpm": {
-    "overrides": {
-      "hono": "4.11.3"
-    }
-  },
   "overrides": {
     "hono": "4.11.3"
   },

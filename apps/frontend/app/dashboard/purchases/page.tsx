@@ -41,8 +41,8 @@ export default async function PurchasesPage() {
           icon={ShoppingCart}
           variant="hero"
           action={{
-            label: "Explore marketplace",
-            href: "/market",
+            label: "Explore the Marketplace",
+            href: "/dashboard/market",
           }}
         />
       ) : (

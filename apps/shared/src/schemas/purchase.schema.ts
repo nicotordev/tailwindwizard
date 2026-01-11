@@ -57,3 +57,8 @@ export const LicenseListSchema = z
     expiresAt: z.string().or(z.date()).nullable(),
   })
   .openapi("LicenseList");
+
+export type Purchase = z.infer<typeof PurchaseSchema>;
+export type ExtendedPurchase = z.infer<typeof ExtendedPurchaseSchema>;
+export type CreateCheckoutInput = z.infer<typeof CreateCheckoutSchema>;
+export type LicenseListEntry = z.infer<typeof LicenseListSchema>;
