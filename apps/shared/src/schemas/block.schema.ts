@@ -97,6 +97,8 @@ export const CreateBlockSchema = z
     framework: z.enum(["REACT", "VUE", "SVELTE"]).default("REACT"),
     stylingEngine: z.enum(["TAILWIND", "CSS"]).default("TAILWIND"),
     visibility: z.enum(["PRIVATE", "UNLISTED", "PUBLIC"]).default("PRIVATE"),
+    categoryId: z.string().optional(),
+    tags: z.array(z.string()).optional(),
   })
   .openapi("CreateBlock");
 

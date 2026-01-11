@@ -85,16 +85,41 @@ export const blockController = {
     const creator = await creatorService.getCreatorByUserId(user.id);
     if (!creator) return c.json({ message: "Creator profile required" }, 403);
 
-    const body = await c.req.json<Prisma.BlockCreateInput>();
+    const body = await c.req.json();
+    const { categoryId, tags, ...rest } = body;
 
     // Construct Prisma CreateInput
     // We expect body to match specific schema, but we need to connect Creator
     const input: Prisma.BlockCreateInput = {
-      ...body,
+      ...rest,
       creator: { connect: { id: creator.id } },
       // Defaults
       status: "DRAFT",
     };
+
+    if (categoryId) {
+      input.categories = {
+        create: {
+          categoryId: categoryId,
+        },
+      };
+    }
+
+    if (tags && Array.isArray(tags)) {
+      input.tags = {
+        create: tags.map((tagName: string) => ({
+          tag: {
+            connectOrCreate: {
+              where: { slug: tagName.toLowerCase().replace(/\s+/g, "-") },
+              create: {
+                name: tagName,
+                slug: tagName.toLowerCase().replace(/\s+/g, "-"),
+              },
+            },
+          },
+        })),
+      };
+    }
 
     const block = await blockService.create(creator.id, input);
 

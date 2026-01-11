@@ -164,6 +164,13 @@ export function BlockWizard() {
         framework: draft.framework,
         stylingEngine: draft.stylingEngine,
         visibility: draft.visibility,
+        categoryId: draft.categoryId || undefined,
+        tags: draft.tags
+          ? draft.tags
+              .split(",")
+              .map((t) => t.trim())
+              .filter(Boolean)
+          : undefined,
       };
 
       const response = await frontendApi.blocks.create(payload);
