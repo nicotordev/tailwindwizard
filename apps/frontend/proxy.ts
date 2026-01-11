@@ -14,13 +14,13 @@ export default clerkMiddleware(async (auth, req) => {
   }
   if (adminMatcher(req)) {
     await auth.protect({
-      role: "admin",
+      role: "ADMIN",
     });
     return NextResponse.next();
   }
   if (marketRoutes(req)) {
     await auth.protect({
-      role: "user",
+      role: "USER",
     });
     return NextResponse.next();
   }

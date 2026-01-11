@@ -18,6 +18,6 @@ export function handleApiResponse<T, E>({
 }
 
 export function getQueryParams(req: NextRequest): Record<string, string> {
-  const { searchParams } = new URL(req.url);
+  const { searchParams } = req.nextUrl.clone();
   return Object.fromEntries(searchParams.entries());
 }

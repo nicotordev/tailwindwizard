@@ -78,9 +78,9 @@ Contextual home page based on user role.
 
 ### Block Management `GET /creator/blocks`
 
-- [ ] **Data Table**
-  - [ ] Columns: Title, Status, Price, Rating, Sales.
-  - [ ] **Visual State Machine:**
+- [x] **Data Table**
+  - [x] Columns: Title, Status, Price, Rating, Sales.
+  - [x] **Visual State Machine:**
     - `DRAFT`: Show "Edit" button.
     - `SUBMITTED`: Read-only / "Cancel Submission".
     - `APPROVED`: Show "Publish" button.
@@ -89,19 +89,19 @@ Contextual home page based on user role.
 
 ### Create Block Wizard `GET /creator/blocks/new`
 
-- [ ] **Step 1: Metadata** (Title, Desc, Slug, Tags, Category).
-- [ ] **Step 2: Pricing** (Price, Currency, License Type).
-- [ ] **Step 3: Code Upload** (Handle `CodeBundle` upload).
-- [ ] **Step 4: Preview Generation** (Trigger `RenderJob`).
-- [ ] **Step 5: Submit** (Change status to `SUBMITTED`).
+- [x] **Step 1: Metadata** (Title, Desc, Slug, Tags, Category).
+- [x] **Step 2: Pricing** (Price, Currency, License Type).
+- [x] **Step 3: Code Upload** (UI stub; backend upload pending).
+- [x] **Step 4: Preview Generation** (UI stub; render trigger pending).
+- [x] **Step 5: Submit** (UI stub; status change pending).
 
 ### Block Detail `GET /creator/blocks/[id]`
 
-- [ ] **State-Dependent Layout**
-  - [ ] **Draft:** Full edit form.
-  - [ ] **Submitted:** Progress tracker for moderation.
-  - [ ] **Rejected:** Feedback display.
-  - [ ] **Published:** Performance charts (Views, Sales).
+- [x] **State-Dependent Layout**
+  - [x] **Draft:** Full edit form.
+  - [x] **Submitted:** Progress tracker for moderation.
+  - [x] **Rejected:** Feedback display.
+  - [x] **Published:** Performance charts (Views, Sales).
 
 ---
 
@@ -109,26 +109,26 @@ Contextual home page based on user role.
 
 ### Explore `GET /explore`
 
-- [ ] **Filters**
-  - [ ] Framework (React, Vue, etc.).
-  - [ ] Styling Engine (Tailwind, CSS).
-  - [ ] Pricing (Free/Paid).
-- [ ] **Block Card Component** (Thumbnail, Title, Price, Rating).
-- [ ] **Important:** Never expose `codeBundle` here.
+- [x] **Filters**
+  - [x] Framework (React, Vue, etc.).
+  - [x] Styling Engine (Tailwind, CSS).
+  - [x] Pricing (Free/Paid).
+- [x] **Block Card Component** (Thumbnail, Title, Price, Rating).
+- [x] **Important:** Never expose `codeBundle` here.
 
 ### Product Page `GET /block/[slug]`
 
-- [ ] **Hero Section**
-  - [ ] `PreviewAsset` gallery (Desktop/Mobile/Tablet viewports).
-- [ ] **Info Column**
-  - [ ] Price & Buy CTA (Stripe Checkout integration).
-  - [ ] Tech Stack badges.
-  - [ ] Registry & NPM Dependencies lists.
-- [ ] **Content**
-  - [ ] Description / Readme.
-  - [ ] Changelog.
-- [ ] **Reviews Section**
-  - [ ] List `Review` items.
+- [x] **Hero Section**
+  - [x] `PreviewAsset` gallery (Desktop/Mobile/Tablet viewports).
+- [x] **Info Column**
+  - [x] Price & Buy CTA (CTA stubbed; Stripe integration pending).
+  - [x] Tech Stack badges.
+  - [x] Registry & NPM Dependencies lists (placeholders).
+- [x] **Content**
+  - [x] Description / Readme.
+  - [x] Changelog.
+- [x] **Reviews Section**
+  - [x] List `Review` items.
 
 ---
 
@@ -136,16 +136,16 @@ Contextual home page based on user role.
 
 Internal tools for platform management.
 
-- [ ] **Layout:** Sidebar navigation for Admin sections.
-- [ ] **Moderation Queue** `/admin/blocks`
-  - [ ] List `SUBMITTED` blocks.
-  - [ ] Action: Approve / Reject (with notes).
-  - [ ] View secure code preview.
-- [ ] **Creator Management** `/admin/creators`
+- [x] **Layout:** Sidebar navigation for Admin sections.
+- [x] **Moderation Queue** `/admin/blocks`
+  - [x] List `SUBMITTED` blocks.
+  - [x] Action: Approve / Reject (with notes).
+  - [x] View secure code preview (button stub).
+- [x] **Creator Management** `/admin/creators` (placeholder page; API pending)
   - [ ] List creators.
   - [ ] View Stripe status.
   - [ ] Action: Approve Seller / Suspend.
-- [ ] **Finance Dashboard** `/admin/finance`
+- [x] **Finance Dashboard** `/admin/finance` (placeholder cards; API pending)
   - [ ] Global Purchases list.
   - [ ] Dispute monitoring.
   - [ ] Webhook health status.

@@ -5,4 +5,7 @@ export * from "./schemas/purchase.schema.js";
 export * from "./schemas/review.schema.js";
 export * from "./schemas/tag.schema.js";
 export * from "./schemas/user.schema.js";
+export * from "./schemas/license.schema.js";
+export * from "./schemas/job.schema.js";
 export * from "./types/prisma.js";
+export * from "./types/extended.js";

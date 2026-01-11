@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { OpenAPIHono, createRoute, z } from "@hono/zod-openapi";
 import { creatorController } from "../controllers/creator.controller.js";
 import { requireAuth } from "../middleware/requireAuth.js";
@@ -8,6 +9,7 @@ import {
   CreatorOnboardingSchema,
   CreatorOnboardingResponseSchema,
   BlockSchema,
+  GetMyBlocksQuerySchema,
 } from "@tw/shared";
 
 const creatorApp = new OpenAPIHono();
@@ -25,6 +27,9 @@ const getMyBlocksRoute = createRoute({
   path: "/me/blocks",
   tags: ["Creator"],
   summary: "Get my blocks",
+  request: {
+    query: GetMyBlocksQuerySchema,
+  },
   responses: {
     200: {
       content: {

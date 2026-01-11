@@ -65,16 +65,11 @@ export const creatorService = {
       const account = await stripe.accounts.create({
         type: "express",
         email: creator.user.email,
-        country: creator.countryCode || undefined,
+        country: creator.countryCode ?? undefined,
         business_profile: {
-          url: creator.websiteUrl || undefined,
-          product_description: creator.bio || undefined,
-          name: creator.displayName || undefined,
-        },
-        settings: {
-          dashboard: {
-            display_name: creator.displayName || undefined,
-          },
+          url: creator.websiteUrl ?? undefined,
+          product_description: creator.bio ?? undefined,
+          name: creator.displayName ?? undefined,
         },
         capabilities: {
           card_payments: { requested: true },

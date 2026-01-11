@@ -38,7 +38,7 @@ app.use("/api/*", cors());
 // Clerk Auth
 app.use("*", clerkMiddleware());
 
-const routes = app.route("/api/v1", appRouter);
+export const routes = app.route("/api/v1", appRouter);
 
 // Swagger UI
 app.get("/ui", swaggerUI({ url: "/doc" }));

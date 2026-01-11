@@ -13,6 +13,17 @@ export const creatorController = {
       return c.json({ message: "Unauthorized" }, 401);
     }
 
+    const {
+      status,
+      type,
+      framework,
+      stylingEngine,
+      visibility,
+      q,
+      page,
+      limit,
+    } = c.req.valid("query" as never) as any;
+
     const user = await prisma.user.findUnique({
       where: { externalAuthId: auth.userId },
       include: { creator: true },
@@ -24,7 +35,14 @@ export const creatorController = {
 
     const blocks = await blockService.findMany({
       creatorId: user.creator.id,
-      limit: 100, // Reasonable limit
+      status,
+      type,
+      framework,
+      stylingEngine,
+      visibility,
+      search: q,
+      limit,
+      offset: (page - 1) * limit,
     });
 
     return c.json(blocks);
@@ -81,10 +99,7 @@ export const creatorController = {
       return c.json({ message: "Creator profile already exists" }, 409);
     }
 
-    const body = (await c.req.json()) as unknown as Omit<
-      Prisma.CreatorCreateInput,
-      "user"
-    >;
+    const body = c.req.valid("json" as never) as any;
     const creator = await creatorService.createCreator(user.id, body);
     return c.json(creator, 201);
   },
@@ -103,13 +118,13 @@ export const creatorController = {
       return c.json({ message: "User not found" }, 404);
     }
 
-    const body = (await c.req.json()) as unknown as Prisma.CreatorUpdateInput;
+    const body = c.req.valid("json" as never) as any;
     const updated = await creatorService.updateCreator(user.id, body);
     return c.json(updated);
   },
 
   async getById(c: Context) {
-    const id = c.req.param("id");
+    const { id } = c.req.valid("param" as never) as any;
     const creator = await creatorService.getCreatorBySlug(id);
     if (!creator) return c.json({ message: "Creator not found" }, 404);
     return c.json(creator);
@@ -129,20 +144,20 @@ export const creatorController = {
       return c.json({ message: "User not found" }, 404);
     }
 
-    const body = (await c.req.json()) as {
-      returnUrl: string;
-      refreshUrl: string;
-    };
+    const { returnUrl, refreshUrl } = c.req.valid("json" as never) as any;
 
     try {
       const result = await creatorService.onboardCreator(
         user.id,
-        body.returnUrl,
-        body.refreshUrl
+        returnUrl,
+        refreshUrl
       );
       return c.json(result);
-    } catch (error: any) {
-      return c.json({ message: error.message }, 400);
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        return c.json({ message: error.message }, 400);
+      }
+      return c.json({ message: "An unknown error occurred" }, 400);
     }
   },
 };

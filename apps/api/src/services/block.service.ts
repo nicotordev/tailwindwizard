@@ -1,6 +1,9 @@
 import type {
+  BlockFramework,
   BlockStatus,
+  BlockType,
   Prisma,
+  StylingEngine,
   Visibility,
 } from "../db/generated/prisma/client.js";
 import { prisma } from "../db/prisma.js";
@@ -110,6 +113,9 @@ export const blockService = {
   async findMany(params: {
     status?: BlockStatus;
     visibility?: Visibility;
+    type?: BlockType;
+    framework?: BlockFramework;
+    stylingEngine?: StylingEngine;
     creatorId?: string;
     limit?: number;
     offset?: number;
@@ -119,6 +125,9 @@ export const blockService = {
     const {
       status,
       visibility,
+      type,
+      framework,
+      stylingEngine,
       creatorId,
       limit = 20,
       offset = 0,
@@ -129,6 +138,9 @@ export const blockService = {
     const where: Prisma.BlockWhereInput = {
       status,
       visibility,
+      type,
+      framework,
+      stylingEngine,
       creatorId,
       OR: search
         ? [

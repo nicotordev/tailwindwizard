@@ -1,6 +1,6 @@
 import { apiClient } from "@/lib/api";
 import { NextRequest } from "next/server";
-import { handleApiResponse } from "../../../../../proxy-utils";
+import { handleApiResponse } from "../../../../proxy-utils";
 
 export async function POST(
   req: NextRequest,

@@ -13,8 +13,26 @@ export const PurchaseSchema = z
     status: z.string(),
     totalAmount: z.number().or(z.string()),
     currency: z.string(),
+    createdAt: z.string().or(z.date()).optional(),
+    updatedAt: z.string().or(z.date()).optional(),
   })
   .openapi("Purchase");
+
+export const ExtendedPurchaseSchema = PurchaseSchema.extend({
+  lineItems: z
+    .array(
+      z.object({
+        block: z.object({
+          id: z.string(),
+          title: z.string(),
+          slug: z.string(),
+        }),
+        licenseType: LicenseTypeEnum.optional(),
+        amount: z.number().or(z.string()).optional(),
+      })
+    )
+    .optional(),
+}).openapi("ExtendedPurchase");
 
 export const CreateCheckoutSchema = z
   .object({

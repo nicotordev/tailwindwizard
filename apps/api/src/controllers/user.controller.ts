@@ -34,7 +34,7 @@ export const userController = {
     }
     const user = await userService.getOrCreateUser(auth.userId, "");
 
-    const body = (await c.req.json()) as Prisma.UserUpdateInput;
+    const body = await c.req.json<Prisma.UserUpdateInput>();
     const updated = await userService.updateUser(user.id, body);
     return c.json(updated);
   },
@@ -68,7 +68,7 @@ export const userController = {
     }
     const user = await userService.getOrCreateUser(auth.userId, "");
 
-    const body = (await c.req.json()) as { name: string; scope: string };
+    const body = await c.req.json<{ name: string; scope: string }>();
     const { name, scope } = body;
 
     const result = await userService.createApiKey(

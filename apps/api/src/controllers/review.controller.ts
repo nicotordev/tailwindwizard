@@ -45,11 +45,11 @@ export const reviewController = {
     // For now, we allow reviewing if we want, or strictly enforce purchase
     // if (!hasPurchase) return c.json({ message: "Purchase required to review" }, 403);
 
-    const body = (await c.req.json()) as {
+    const body = await c.req.json<{
       rating: number;
       title: string;
       body: string;
-    };
+    }>();
     const review = await reviewService.create({
       rating: body.rating,
       title: body.title,

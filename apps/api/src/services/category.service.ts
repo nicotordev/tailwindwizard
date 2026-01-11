@@ -2,7 +2,7 @@ import { prisma } from "../db/prisma.js";
 
 export const categoryService = {
   async listAll(options?: { page?: number; limit?: number; search?: string }) {
-    const { page = 1, limit = 50, search } = options || {};
+    const { page = 1, limit = 50, search } = options ?? {};
     const skip = (page - 1) * limit;
 
     return prisma.category.findMany({

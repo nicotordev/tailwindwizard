@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { prisma } from '../db/prisma';
+import { prisma } from '../db/prisma.js';
 
 const INDIVIDUAL_DIR = path.resolve(process.cwd(), 'individual');
 
@@ -13,7 +13,7 @@ async function main() {
   }
 
   const files = fs.readdirSync(INDIVIDUAL_DIR).filter(f => f.endsWith('.html'));
-  console.log(`Found ${files.length} HTML files.`);
+  console.log(`Found ${files.length.toString()} HTML files.`);
 
   // 1. Ensure Creator (and User)
   const systemEmail = 'system@tailwindwizard.com';
@@ -127,7 +127,7 @@ async function main() {
 }
 
 main()
-  .catch(e => {
+  .catch((e: unknown) => {
     console.error(e);
     process.exit(1);
   })

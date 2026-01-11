@@ -32,6 +32,7 @@ import {
   Wallet,
 } from "lucide-react";
 import { EmptyState } from "../primitives/empty-state";
+import Link from "next/link";
 
 export function CreatorView() {
   const { data: creator, isLoading: creatorLoading } = useQuery({
@@ -148,9 +149,12 @@ export function CreatorView() {
             <Button
               size="sm"
               className="bg-creator hover:bg-creator/90 text-white rounded-xl shadow-lg shadow-creator/20 group"
+              asChild
             >
-              <Plus className="size-4 mr-2 transition-transform group-hover:rotate-90" />
-              Forge New Block
+              <Link href="/dashboard/blocks/new">
+                <Plus className="size-4 mr-2 transition-transform group-hover:rotate-90" />
+                Forge New Block
+              </Link>
             </Button>
           </div>
 
@@ -168,7 +172,7 @@ export function CreatorView() {
                   icon={Sparkles}
                   action={{
                     label: "Create First Block",
-                    onClick: () => {}, // TODO: Navigate to create wizard
+                    href: "/dashboard/blocks/new",
                     icon: Plus,
                   }}
                 />
@@ -221,8 +225,11 @@ export function CreatorView() {
                     <Button
                       variant="link"
                       className="text-xs text-muted-foreground hover:text-creator h-auto p-0 gap-1"
+                      asChild
                     >
-                      Manage all artifacts <ArrowRight className="size-3" />
+                      <Link href="/dashboard/blocks">
+                        Manage all artifacts <ArrowRight className="size-3" />
+                      </Link>
                     </Button>
                   </div>
                 )}

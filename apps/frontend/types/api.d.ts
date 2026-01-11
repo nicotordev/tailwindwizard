@@ -246,18 +246,64 @@ export interface paths {
         trace?: never;
     };
     "/api/v1/creators/me/blocks": {
-        parameters: { query?: never; header?: never; path?: never; cookie?: never; };
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get my blocks */
         get: {
-            parameters: { query?: never; header?: never; path?: never; cookie?: never; };
-            responses: {
-                200: {
-                    headers: { [name: string]: unknown; };
-                    content: { "application/json": components["schemas"]["Block"][]; };
+            parameters: {
+                query?: {
+                    status?: "DRAFT" | "SUBMITTED" | "APPROVED" | "REJECTED" | "PUBLISHED" | "UNPUBLISHED" | "ARCHIVED";
+                    type?: "COMPONENT" | "SECTION" | "PAGE";
+                    framework?: "REACT" | "VUE" | "SVELTE";
+                    stylingEngine?: "TAILWIND" | "CSS";
+                    visibility?: "PRIVATE" | "UNLISTED" | "PUBLIC";
+                    q?: string;
+                    page?: number | null;
+                    limit?: number | null;
                 };
-                401: { headers: { [name: string]: unknown; }; content?: never; };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description List of my blocks */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Block"][];
+                    };
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Creator profile not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
             };
         };
-    },
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/creators/me": {
         parameters: {
             query?: never;
@@ -384,6 +430,61 @@ export interface paths {
         };
         trace?: never;
     };
+    "/api/v1/creators/me/onboarding": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Onboard with Stripe */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        /** Format: uri */
+                        returnUrl: string;
+                        /** Format: uri */
+                        refreshUrl: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description Onboarding Link */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** Format: uri */
+                            url: string;
+                        };
+                    };
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/creators/{id}": {
         parameters: {
             query?: never;
@@ -430,44 +531,360 @@ export interface paths {
         trace?: never;
     };
     "/api/v1/admin/moderation": {
-        parameters: { query?: never; header?: never; path?: never; cookie?: never; };
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List submitted blocks */
         get: {
-            parameters: { query?: never; header?: never; path?: never; cookie?: never; };
-            responses: {
-                200: {
-                    headers: { [name: string]: unknown; };
-                    content: { "application/json": components["schemas"]["Block"][]; };
+            parameters: {
+                query?: {
+                    status?: "PENDING" | "APPROVED" | "REJECTED";
+                    page?: string;
+                    limit?: string;
                 };
-                401: { headers: { [name: string]: unknown; }; content?: never; };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description List of submitted blocks */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: components["schemas"]["Block"][];
+                            meta: components["schemas"]["PaginationMeta"];
+                        };
+                    };
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
             };
         };
-    },
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/moderation/{blockId}/decide": {
-        parameters: { query?: never; header?: never; path: { blockId: string; }; cookie?: never; };
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Make moderation decision */
         post: {
             parameters: {
                 query?: never;
                 header?: never;
-                path: { blockId: string; };
+                path: {
+                    blockId: string;
+                };
                 cookie?: never;
             };
             requestBody?: {
                 content: {
                     "application/json": {
+                        /** @enum {string} */
                         decision: "APPROVE" | "REJECT" | "REQUEST_CHANGES";
                         notes?: string;
                     };
                 };
             };
             responses: {
+                /** @description Decision recorded */
                 200: {
-                    headers: { [name: string]: unknown; };
-                    content: { "application/json": { success: boolean; }; };
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            success: boolean;
+                        };
+                    };
                 };
-                401: { headers: { [name: string]: unknown; }; content?: never; };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
             };
         };
-    },
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/users": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List users */
+        get: {
+            parameters: {
+                query?: {
+                    q?: string;
+                    role?: "ADMIN" | "USER";
+                    page?: string;
+                    limit?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description List of users */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: components["schemas"]["User"][];
+                            meta: components["schemas"]["PaginationMeta"];
+                        };
+                    };
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/users/{userId}/role": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Update user role */
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    userId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        role: "ADMIN" | "USER";
+                    };
+                };
+            };
+            responses: {
+                /** @description User role updated */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["User"];
+                    };
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        trace?: never;
+    };
+    "/api/v1/admin/creators": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List creators */
+        get: {
+            parameters: {
+                query?: {
+                    status?: "pending" | "approved" | "rejected";
+                    page?: string;
+                    limit?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description List of creators */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: (components["schemas"]["Creator"] & {
+                                user?: components["schemas"]["User"];
+                            })[];
+                            meta: components["schemas"]["PaginationMeta"];
+                        };
+                    };
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/creators/{creatorId}/review": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Review creator application */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    creatorId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        action: "APPROVE" | "REJECT";
+                        reason?: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description Creator reviewed */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Creator"];
+                    };
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/blocks": {
         parameters: {
             query?: never;
@@ -1146,36 +1563,6 @@ export interface components {
              */
             scope: "READ_PUBLIC" | "DOWNLOAD_PURCHASED" | "ADMIN";
         };
-        Creator: {
-            id: string;
-            userId: string;
-            displayName: string | null;
-            bio: string | null;
-            websiteUrl: string | null;
-            portfolioUrl: string | null;
-            countryCode: string | null;
-            stripeAccountStatus: string;
-            isApprovedSeller: boolean;
-            createdAt: string;
-        };
-        CreateCreator: {
-            displayName?: string;
-            bio?: string;
-            /** Format: uri */
-            websiteUrl?: string;
-            /** Format: uri */
-            portfolioUrl?: string;
-            countryCode?: string;
-        };
-        UpdateCreator: {
-            displayName?: string;
-            bio?: string;
-            /** Format: uri */
-            websiteUrl?: string;
-            /** Format: uri */
-            portfolioUrl?: string;
-            countryCode?: string;
-        };
         PreviewAsset: {
             id: string;
             /** @enum {string} */
@@ -1234,6 +1621,42 @@ export interface components {
             updatedAt: string;
             publishedAt: string | unknown;
         };
+        Creator: {
+            id: string;
+            userId: string;
+            displayName: string | null;
+            bio: string | null;
+            websiteUrl: string | null;
+            portfolioUrl: string | null;
+            countryCode: string | null;
+            stripeAccountStatus: string;
+            isApprovedSeller: boolean;
+            createdAt: string;
+        };
+        CreateCreator: {
+            displayName?: string;
+            bio?: string;
+            /** Format: uri */
+            websiteUrl?: string;
+            /** Format: uri */
+            portfolioUrl?: string;
+            countryCode?: string;
+        };
+        UpdateCreator: {
+            displayName?: string;
+            bio?: string;
+            /** Format: uri */
+            websiteUrl?: string;
+            /** Format: uri */
+            portfolioUrl?: string;
+            countryCode?: string;
+        };
+        PaginationMeta: {
+            total: number;
+            page: number;
+            limit: number;
+            totalPages: number;
+        };
         CreateBlock: {
             title: string;
             slug: string;
@@ -1248,7 +1671,7 @@ export interface components {
              * @default USD
              * @enum {string}
              */
-            currency: "USD";
+            currency: "USD" | "EUR" | "CLP" | "GBP" | "MXN" | "ARS" | "BRL";
             /**
              * @default REACT
              * @enum {string}
@@ -1263,7 +1686,7 @@ export interface components {
              * @default PRIVATE
              * @enum {string}
              */
-            visibility: "PRIVATE" | "PUBLIC";
+            visibility: "PRIVATE" | "UNLISTED" | "PUBLIC";
         };
         UpdateBlock: {
             title?: string;
@@ -1279,7 +1702,7 @@ export interface components {
              * @default USD
              * @enum {string}
              */
-            currency: "USD";
+            currency: "USD" | "EUR" | "CLP" | "GBP" | "MXN" | "ARS" | "BRL";
             /**
              * @default REACT
              * @enum {string}
@@ -1294,7 +1717,7 @@ export interface components {
              * @default PRIVATE
              * @enum {string}
              */
-            visibility: "PRIVATE" | "PUBLIC";
+            visibility: "PRIVATE" | "UNLISTED" | "PUBLIC";
         };
         Review: {
             id: string;

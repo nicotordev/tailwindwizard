@@ -10,7 +10,7 @@ import { auth } from "@clerk/nextjs/server";
  * Configuration for the API client.
  * Using NEXT_PUBLIC_API_URL as the primary base for all requests.
  */
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
+const API_URL = process.env.BACKEND_URL || "http://localhost:3001";
 
 /**
  * Auth middleware for injecting tokens (e.g. from Clerk or session)

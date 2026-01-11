@@ -91,12 +91,35 @@ export const CreateBlockSchema = z
     description: z.string().optional(),
     type: z.enum(["COMPONENT", "SECTION", "PAGE"]).default("COMPONENT"),
     price: z.number().min(0),
-    currency: z.enum(["USD"]).default("USD"), // limit for now
+    currency: z.enum(["USD", "EUR", "CLP", "GBP", "MXN", "ARS", "BRL"]).default("USD"),
     framework: z.enum(["REACT", "VUE", "SVELTE"]).default("REACT"),
     stylingEngine: z.enum(["TAILWIND", "CSS"]).default("TAILWIND"),
-    visibility: z.enum(["PRIVATE", "PUBLIC"]).default("PRIVATE"),
+    visibility: z.enum(["PRIVATE", "UNLISTED", "PUBLIC"]).default("PRIVATE"),
   })
   .openapi("CreateBlock");
+
+export const GetMyBlocksQuerySchema = z
+  .object({
+    status: z
+      .enum([
+        "DRAFT",
+        "SUBMITTED",
+        "APPROVED",
+        "REJECTED",
+        "PUBLISHED",
+        "UNPUBLISHED",
+        "ARCHIVED",
+      ])
+      .optional(),
+    type: z.enum(["COMPONENT", "SECTION", "PAGE"]).optional(),
+    framework: z.enum(["REACT", "VUE", "SVELTE"]).optional(),
+    stylingEngine: z.enum(["TAILWIND", "CSS"]).optional(),
+    visibility: z.enum(["PRIVATE", "UNLISTED", "PUBLIC"]).optional(),
+    q: z.string().optional(),
+    page: z.coerce.number().optional().default(1),
+    limit: z.coerce.number().optional().default(20),
+  })
+  .openapi("GetMyBlocksQuery");
 
 export const UpdateBlockSchema =
   CreateBlockSchema.partial().openapi("UpdateBlock");

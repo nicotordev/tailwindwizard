@@ -120,11 +120,8 @@ export const stripeWebhookRoute = new Hono().post(
         event.type === "payment_intent.payment_failed"
       ) {
         // Best-effort: mark purchase FAILED if we can resolve purchaseId from metadata.
-        const obj = event.data.object;
-        const metadata =
-          typeof obj === "object" && obj !== null && "metadata" in obj
-            ? (obj as { metadata?: Record<string, string> }).metadata
-            : undefined;
+        const obj = event.data.object as { metadata?: Record<string, string> };
+        const metadata = obj.metadata;
 
         const purchaseId = metadata?.purchaseId;
         if (purchaseId) {
