@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "prebuild": "pnpm --filter @tw/shared build",
     "gen:api": "openapi-typescript http://localhost:3001/doc -o ./types/api.d.ts"
   },
   "dependencies": {
