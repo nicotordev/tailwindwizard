@@ -57,6 +57,7 @@
     "react-day-picker": "^9.13.0",
     "react-dom": "19.2.3",
     "react-hook-form": "^7.70.0",
+    "react-icons": "^5.5.0",
     "react-onesignal": "^3.4.6",
     "react-resizable-panels": "^4.3.1",
     "react-use": "^17.6.0",
@@ -64,6 +65,7 @@
     "sharp": "^0.34.5",
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.4.0",
+    "tech-stack-icons": "^3.3.2",
     "vaul": "^1.1.2",
     "world-countries": "^5.1.0",
     "zod": "3.23.8"

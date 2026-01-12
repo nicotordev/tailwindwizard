@@ -91,9 +91,9 @@ Contextual home page based on user role.
 
 - [x] **Step 1: Metadata** (Title, Desc, Slug, Tags, Category).
 - [x] **Step 2: Pricing** (Price, Currency, License Type).
-- [x] **Step 3: Code Upload** (UI stub; backend upload pending).
-- [x] **Step 4: Preview Generation** (UI stub; render trigger pending).
-- [x] **Step 5: Submit** (UI stub; status change pending).
+- [x] **Step 3: Code Upload** (Bundle upload wired).
+- [x] **Step 4: Preview Generation** (Render job queued).
+- [x] **Step 5: Submit** (Status change wired).
 
 ### Block Detail `GET /creator/blocks/[id]`
 
