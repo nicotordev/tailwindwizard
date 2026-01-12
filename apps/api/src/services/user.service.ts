@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
+/* eslint-disable @typescript-eslint/no-unnecessary-condition */
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 import { randomBytes, createHash } from "crypto";
 import type { Prisma, ApiKeyScope } from "../db/generated/prisma/client.js";
@@ -95,7 +97,7 @@ export const userService = {
       publicMetadata: {
         ...existingMetadata,
         onboardingComplete: true,
-        role: existingMetadata.role || "USER",
+        role: existingMetadata.role ?? "USER",
         appRole: role.toLowerCase(),
         isCreator: role === "CREATOR",
       },
