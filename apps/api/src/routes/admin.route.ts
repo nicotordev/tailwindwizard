@@ -1,11 +1,17 @@
 import { OpenAPIHono, createRoute, z } from "@hono/zod-openapi";
-import { BlockSchema, CreatorSchema, UserSchema } from "@tw/shared";
+import {
+  BlockSchema,
+  CreatorSchema,
+  UserSchema,
+  CategorySchema,
+  TagSchema,
+} from "@tw/shared";
 import { adminController } from "../controllers/admin.controller.js";
-import { requireAuth } from "../middleware/requireAuth.js";
+import { requireAdmin } from "../middleware/requireAdmin.js";
 
 const adminApp = new OpenAPIHono();
 
-adminApp.use("*", requireAuth);
+adminApp.use("*", requireAdmin);
 
 const PaginationMeta = z
   .object({
@@ -15,6 +21,24 @@ const PaginationMeta = z
     totalPages: z.number(),
   })
   .openapi("PaginationMeta");
+
+const UnauthorizedResponse = {
+  description: "Unauthorized",
+  content: {
+    "application/json": {
+      schema: z.object({ message: z.string() }),
+    },
+  },
+};
+
+const ForbiddenResponse = {
+  description: "Forbidden",
+  content: {
+    "application/json": {
+      schema: z.object({ message: z.string() }),
+    },
+  },
+};
 
 // GET /moderation
 const listModerationRoute = createRoute({
@@ -41,8 +65,8 @@ const listModerationRoute = createRoute({
       },
       description: "List of submitted blocks",
     },
-    401: { description: "Unauthorized" },
-    403: { description: "Forbidden" },
+    401: UnauthorizedResponse,
+    403: ForbiddenResponse,
   },
 });
 
@@ -76,8 +100,8 @@ const decideRoute = createRoute({
       },
       description: "Decision recorded",
     },
-    401: { description: "Unauthorized" },
-    403: { description: "Forbidden" },
+    401: UnauthorizedResponse,
+    403: ForbiddenResponse,
   },
 });
 
@@ -107,8 +131,8 @@ const listUsersRoute = createRoute({
       },
       description: "List of users",
     },
-    401: { description: "Unauthorized" },
-    403: { description: "Forbidden" },
+    401: UnauthorizedResponse,
+    403: ForbiddenResponse,
   },
 });
 
@@ -141,8 +165,8 @@ const updateUserRoleRoute = createRoute({
       },
       description: "User role updated",
     },
-    401: { description: "Unauthorized" },
-    403: { description: "Forbidden" },
+    401: UnauthorizedResponse,
+    403: ForbiddenResponse,
   },
 });
 
@@ -164,17 +188,15 @@ const listCreatorsRoute = createRoute({
       content: {
         "application/json": {
           schema: z.object({
-            data: z.array(
-              CreatorSchema.extend({ user: UserSchema.optional() })
-            ),
+            data: z.array(CreatorSchema.extend({ user: UserSchema.optional() })),
             meta: PaginationMeta,
           }),
         },
       },
       description: "List of creators",
     },
-    401: { description: "Unauthorized" },
-    403: { description: "Forbidden" },
+    401: UnauthorizedResponse,
+    403: ForbiddenResponse,
   },
 });
 
@@ -208,8 +230,277 @@ const reviewCreatorRoute = createRoute({
       },
       description: "Creator reviewed",
     },
-    401: { description: "Unauthorized" },
-    403: { description: "Forbidden" },
+    401: UnauthorizedResponse,
+    403: ForbiddenResponse,
+  },
+});
+
+// --- Category Management ---
+const listCategoriesRoute = createRoute({
+  method: "get",
+  path: "/categories",
+  tags: ["Admin"],
+  summary: "List all categories",
+  responses: {
+    200: {
+      content: { "application/json": { schema: z.array(CategorySchema) } },
+      description: "List of categories",
+    },
+    401: UnauthorizedResponse,
+    403: ForbiddenResponse,
+  },
+});
+
+const createCategoryRoute = createRoute({
+  method: "post",
+  path: "/categories",
+  tags: ["Admin"],
+  summary: "Create a new category",
+  request: {
+    body: {
+      content: {
+        "application/json": {
+          schema: z.object({
+            name: z.string(),
+            slug: z.string(),
+            description: z.string().optional(),
+            icon: z.string().optional(),
+            priority: z.number().optional(),
+            isFeatured: z.boolean().optional(),
+          }),
+        },
+      },
+    },
+  },
+  responses: {
+    201: {
+      content: { "application/json": { schema: CategorySchema } },
+      description: "Category created",
+    },
+    401: UnauthorizedResponse,
+    403: ForbiddenResponse,
+  },
+});
+
+const updateCategoryRoute = createRoute({
+  method: "patch",
+  path: "/categories/{id}",
+  tags: ["Admin"],
+  summary: "Update a category",
+  request: {
+    params: z.object({ id: z.string() }),
+    body: {
+      content: {
+        "application/json": {
+          schema: z.object({
+            name: z.string().optional(),
+            slug: z.string().optional(),
+            description: z.string().optional(),
+            icon: z.string().optional(),
+            priority: z.number().optional(),
+            isFeatured: z.boolean().optional(),
+          }),
+        },
+      },
+    },
+  },
+  responses: {
+    200: {
+      content: { "application/json": { schema: CategorySchema } },
+      description: "Category updated",
+    },
+    401: UnauthorizedResponse,
+    403: ForbiddenResponse,
+  },
+});
+
+const deleteCategoryRoute = createRoute({
+  method: "delete",
+  path: "/categories/{id}",
+  tags: ["Admin"],
+  summary: "Delete a category",
+  request: { params: z.object({ id: z.string() }) },
+  responses: {
+    200: {
+      content: {
+        "application/json": { schema: z.object({ success: z.boolean() }) },
+      },
+      description: "Category deleted",
+    },
+    401: UnauthorizedResponse,
+    403: ForbiddenResponse,
+  },
+});
+
+// --- Tag Management ---
+const listTagsRoute = createRoute({
+  method: "get",
+  path: "/tags",
+  tags: ["Admin"],
+  summary: "List all tags",
+  responses: {
+    200: {
+      content: { "application/json": { schema: z.array(TagSchema) } },
+      description: "List of tags",
+    },
+    401: UnauthorizedResponse,
+    403: ForbiddenResponse,
+  },
+});
+
+const createTagRoute = createRoute({
+  method: "post",
+  path: "/tags",
+  tags: ["Admin"],
+  summary: "Create a new tag",
+  request: {
+    body: {
+      content: {
+        "application/json": {
+          schema: z.object({
+            name: z.string(),
+            slug: z.string(),
+            description: z.string().optional(),
+          }),
+        },
+      },
+    },
+  },
+  responses: {
+    201: {
+      content: { "application/json": { schema: TagSchema } },
+      description: "Tag created",
+    },
+    401: UnauthorizedResponse,
+    403: ForbiddenResponse,
+  },
+});
+
+const updateTagRoute = createRoute({
+  method: "patch",
+  path: "/tags/{id}",
+  tags: ["Admin"],
+  summary: "Update a tag",
+  request: {
+    params: z.object({ id: z.string() }),
+    body: {
+      content: {
+        "application/json": {
+          schema: z.object({
+            name: z.string().optional(),
+            slug: z.string().optional(),
+            description: z.string().optional(),
+          }),
+        },
+      },
+    },
+  },
+  responses: {
+    200: {
+      content: { "application/json": { schema: TagSchema } },
+      description: "Tag updated",
+    },
+    401: UnauthorizedResponse,
+    403: ForbiddenResponse,
+  },
+});
+
+const deleteTagRoute = createRoute({
+  method: "delete",
+  path: "/tags/{id}",
+  tags: ["Admin"],
+  summary: "Delete a tag",
+  request: { params: z.object({ id: z.string() }) },
+  responses: {
+    200: {
+      content: {
+        "application/json": { schema: z.object({ success: z.boolean() }) },
+      },
+      description: "Tag deleted",
+    },
+    401: UnauthorizedResponse,
+    403: ForbiddenResponse,
+  },
+});
+
+// --- Finance / Commerce ---
+
+const listPurchasesRoute = createRoute({
+  method: "get",
+  path: "/purchases",
+  tags: ["Admin"],
+  summary: "List all purchases",
+  request: {
+    query: z.object({
+      status: z.string().optional(),
+      page: z.string().optional().default("1"),
+      limit: z.string().optional().default("20"),
+    }),
+  },
+  responses: {
+    200: {
+      content: {
+        "application/json": {
+          schema: z.object({
+            data: z.array(z.any()),
+            meta: PaginationMeta,
+          }),
+        },
+      },
+      description: "List of purchases",
+    },
+    401: UnauthorizedResponse,
+    403: ForbiddenResponse,
+  },
+});
+
+const getWebhookStatsRoute = createRoute({
+  method: "get",
+  path: "/finance/webhooks",
+  tags: ["Admin"],
+  summary: "Get webhook health stats",
+  responses: {
+    200: {
+      content: {
+        "application/json": {
+          schema: z.object({
+            last24h: z.object({
+              total: z.number(),
+              failed: z.number(),
+              pending: z.number(),
+              successRate: z.number(),
+            }),
+            lastEvents: z.array(z.any()),
+          }),
+        },
+      },
+      description: "Webhook stats",
+    },
+    401: UnauthorizedResponse,
+    403: ForbiddenResponse,
+  },
+});
+
+const getDashboardStatsRoute = createRoute({
+  method: "get",
+  path: "/stats",
+  tags: ["Admin"],
+  summary: "Get dashboard stats",
+  responses: {
+    200: {
+      content: {
+        "application/json": {
+          schema: z.object({
+            pendingBlocks: z.number(),
+            totalCreators: z.number(),
+            totalRevenue: z.number(),
+          }),
+        },
+      },
+      description: "Dashboard stats",
+    },
+    401: UnauthorizedResponse,
+    403: ForbiddenResponse,
   },
 });
 
@@ -219,6 +510,17 @@ const chainedApp = adminApp
   .openapi(listUsersRoute, (c) => adminController.listUsers(c))
   .openapi(updateUserRoleRoute, (c) => adminController.updateUserRole(c))
   .openapi(listCreatorsRoute, (c) => adminController.listCreators(c))
-  .openapi(reviewCreatorRoute, (c) => adminController.reviewCreator(c));
+  .openapi(reviewCreatorRoute, (c) => adminController.reviewCreator(c))
+  .openapi(listCategoriesRoute, (c) => adminController.listCategories(c))
+  .openapi(createCategoryRoute, (c) => adminController.createCategory(c))
+  .openapi(updateCategoryRoute, (c) => adminController.updateCategory(c))
+  .openapi(deleteCategoryRoute, (c) => adminController.deleteCategory(c))
+  .openapi(listTagsRoute, (c) => adminController.listTags(c))
+  .openapi(createTagRoute, (c) => adminController.createTag(c))
+  .openapi(updateTagRoute, (c) => adminController.updateTag(c))
+  .openapi(deleteTagRoute, (c) => adminController.deleteTag(c))
+  .openapi(listPurchasesRoute, (c) => adminController.listPurchases(c))
+  .openapi(getWebhookStatsRoute, (c) => adminController.getWebhookStats(c))
+  .openapi(getDashboardStatsRoute, (c) => adminController.getDashboardStats(c));
 
 export default chainedApp;

@@ -1,9 +1,10 @@
 import { clerkMiddleware } from "@hono/clerk-auth";
 import { swaggerUI } from "@hono/swagger-ui";
 import { OpenAPIHono } from "@hono/zod-openapi";
-import { cors } from "hono/cors";
-import { secureHeaders } from "hono/secure-headers";
 import { pinoLogger } from "hono-pino";
+import { cors } from "hono/cors";
+import { logger } from "hono/logger";
+import { secureHeaders } from "hono/secure-headers";
 // Routes
 import appRouter from "./routes/index.js";
 
@@ -21,12 +22,22 @@ const app = new OpenAPIHono<{ Bindings: NodeJS.ProcessEnv }>({
   },
 });
 
-// Logger
+// Logging
+app.use("*", logger());
 app.use(
   "*",
   pinoLogger({
     pino: {
       level: "info",
+      transport:
+        process.env.NODE_ENV === "development"
+          ? {
+              target: "pino-pretty",
+              options: {
+                colorize: true,
+              },
+            }
+          : undefined,
     },
   })
 );

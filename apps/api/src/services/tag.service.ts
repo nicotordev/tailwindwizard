@@ -17,4 +17,23 @@ export const tagService = {
       where: { slug },
     });
   },
+
+  async create(data: { name: string; slug: string }) {
+    return prisma.tag.create({
+      data,
+    });
+  },
+
+  async update(id: string, data: { name?: string; slug?: string }) {
+    return prisma.tag.update({
+      where: { id },
+      data,
+    });
+  },
+
+  async delete(id: string) {
+    return prisma.tag.delete({
+      where: { id },
+    });
+  },
 };

@@ -36,9 +36,39 @@ export const categoryService = {
     });
   },
 
-  async create(data: { name: string; slug: string; icon?: string }) {
+  async create(data: {
+    name: string;
+    slug: string;
+    icon?: string;
+    description?: string;
+    priority?: number;
+    isFeatured?: boolean;
+  }) {
     return prisma.category.create({
       data,
+    });
+  },
+
+  async update(
+    id: string,
+    data: {
+      name?: string;
+      slug?: string;
+      icon?: string;
+      description?: string;
+      priority?: number;
+      isFeatured?: boolean;
+    }
+  ) {
+    return prisma.category.update({
+      where: { id },
+      data,
+    });
+  },
+
+  async delete(id: string) {
+    return prisma.category.delete({
+      where: { id },
     });
   },
 };

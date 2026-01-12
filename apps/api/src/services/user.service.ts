@@ -26,13 +26,6 @@ export const userService = {
     });
   },
 
-  async getUser(id: string) {
-    return prisma.user.findUnique({
-      where: { id },
-      include: { creator: true },
-    });
-  },
-
   async updateUser(id: string, data: Prisma.UserUpdateInput) {
     return prisma.user.update({
       where: { id },
