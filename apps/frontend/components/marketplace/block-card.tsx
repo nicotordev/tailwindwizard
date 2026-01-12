@@ -1,4 +1,5 @@
 import Link from "next/link"
+import Image from "next/image"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Money } from "@/components/primitives/formatters"
@@ -14,11 +15,12 @@ export function BlockCard({ block }: { block: Block }) {
         <CardHeader className="space-y-4">
           <div className="relative h-40 w-full overflow-hidden rounded-2xl border border-border/40 bg-muted/30">
             {preview?.url ? (
-              <img
+              <Image
                 src={preview.url}
                 alt={`${block.title} preview`}
-                className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                loading="lazy"
+                fill
+                className="object-cover transition-transform duration-500 group-hover:scale-105"
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
               />
             ) : (
               <div className="flex h-full w-full items-center justify-center text-muted-foreground/40">

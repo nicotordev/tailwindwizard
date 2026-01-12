@@ -36,13 +36,13 @@ function SidebarContent({ search, onSearchChange, games }: Omit<MarketSidebarPro
       <Card className="rounded-[1.5rem] border-border/50 bg-card/40 backdrop-blur-sm overflow-hidden">
         <CardContent className="space-y-4 p-5">
           <div>
-            <div className="text-sm font-bold font-heading uppercase tracking-wider text-foreground/70">Advanced</div>
+            <div className="text-sm font-bold font-heading uppercase tracking-wider text-foreground/70">Refine Search</div>
             <p className="text-xs text-muted-foreground mt-1">Refine your marketplace view.</p>
           </div>
           <Accordion type="single" collapsible className="w-full">
             <AccordionItem value="filters" className="border-none">
               <AccordionTrigger className="py-2 text-sm font-semibold hover:no-underline hover:text-primary transition-colors">
-                Strategic Filters
+                Market Filters
               </AccordionTrigger>
               <AccordionContent className="space-y-4 pt-2">
                 <div className="space-y-2">
@@ -57,19 +57,19 @@ function SidebarContent({ search, onSearchChange, games }: Omit<MarketSidebarPro
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Render engine</span>
-                  <Select defaultValue="playwright">
-                    <SelectTrigger className="w-full h-9 rounded-lg bg-muted/20 border-border/40"><SelectValue placeholder="Engine" /></SelectTrigger>
+                  <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Framework Version</span>
+                  <Select defaultValue="react-19">
+                    <SelectTrigger className="w-full h-9 rounded-lg bg-muted/20 border-border/40"><SelectValue placeholder="Version" /></SelectTrigger>
                     <SelectContent className="rounded-xl">
-                      <SelectItem value="playwright">Playwright</SelectItem>
-                      <SelectItem value="satori">Satori</SelectItem>
-                      <SelectItem value="hybrid">Hybrid</SelectItem>
+                      <SelectItem value="react-19">React 19</SelectItem>
+                      <SelectItem value="react-18">React 18</SelectItem>
+                      <SelectItem value="nextjs">Next.js</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="flex items-center gap-2 text-[10px] font-bold text-emerald-500 uppercase tracking-widest bg-emerald-500/5 px-2 py-1 rounded-md border border-emerald-500/10">
                   <ShieldCheck className="size-3.5" />
-                  AST Validation Active
+                  Verified Assets Only
                 </div>
               </AccordionContent>
             </AccordionItem>
@@ -77,11 +77,11 @@ function SidebarContent({ search, onSearchChange, games }: Omit<MarketSidebarPro
         </CardContent>
       </Card>
 
-      <Card className="rounded-[1.5rem] border-border/50 bg-card/40 backdrop-blur-sm overflow-hidden">
+      <Card className="rounded-[1.5rem] border-border/50 bg-card/40 backdrop-blur-xl overflow-hidden">
         <CardContent className="space-y-4 p-5">
           <div>
             <div className="text-sm font-bold font-heading uppercase tracking-wider text-foreground/70">Categories</div>
-            <p className="text-xs text-muted-foreground mt-1">Priority market segments.</p>
+            <p className="text-xs text-muted-foreground mt-1">Filter by industry segment.</p>
           </div>
           <ScrollArea className="h-48 pr-3">
             <div className="space-y-2">

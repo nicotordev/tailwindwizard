@@ -1,10 +1,19 @@
 import { getAuth } from "@hono/clerk-auth";
 import type { Context } from "hono";
-import type { Prisma } from "../db/generated/prisma/client.js";
 import { prisma } from "../db/prisma.js";
 import { creatorService } from "../services/creator.service.js";
-
 import { blockService } from "../services/block.service.js";
+import type {
+  CreateCreatorInput,
+  UpdateCreatorInput,
+  CreatorOnboardingInput,
+  GetMyBlocksQuery,
+  BlockStatus,
+  BlockType,
+  BlockFramework,
+  StylingEngine,
+  Visibility,
+} from "@tw/shared";
 
 export const creatorController = {
   async getMyBlocks(c: Context) {
@@ -13,6 +22,7 @@ export const creatorController = {
       return c.json({ message: "Unauthorized" }, 401);
     }
 
+    const query = c.req.query() as unknown as GetMyBlocksQuery;
     const {
       status,
       type,
@@ -22,7 +32,7 @@ export const creatorController = {
       q,
       page,
       limit,
-    } = c.req.valid("query" as never) as any;
+    } = query;
 
     const user = await prisma.user.findUnique({
       where: { externalAuthId: auth.userId },
@@ -35,14 +45,14 @@ export const creatorController = {
 
     const blocks = await blockService.findMany({
       creatorId: user.creator.id,
-      status,
-      type,
-      framework,
-      stylingEngine,
-      visibility,
+      status: status as BlockStatus | undefined,
+      type: type as BlockType | undefined,
+      framework: framework as BlockFramework | undefined,
+      stylingEngine: stylingEngine as StylingEngine | undefined,
+      visibility: visibility as Visibility | undefined,
       search: q,
-      limit,
-      offset: (page - 1) * limit,
+      limit: limit,
+      offset: page && limit ? (page - 1) * limit : undefined,
     });
 
     return c.json(blocks);
@@ -54,16 +64,6 @@ export const creatorController = {
       return c.json({ message: "Unauthorized" }, 401);
     }
 
-    // We assume the user exists in our DB (synced via user.controller or webhooks)
-    // But we need to map Clerk ID to our internal User ID
-    // Ideally we should have a helper or middleware that attaches the internal User object
-    // For now, we query by externalAuthId (Clerk ID) via the User relation,
-    // BUT the creator service expects internal userId or we need to adjust it.
-
-    // Let's adjust logic: We need to find the internal user first.
-    // Or we can query Creator where user.externalAuthId = auth.userId
-
-    // For simplicity, let's look up the user first.
     const user = await prisma.user.findUnique({
       where: { externalAuthId: auth.userId },
     });
@@ -99,7 +99,7 @@ export const creatorController = {
       return c.json({ message: "Creator profile already exists" }, 409);
     }
 
-    const body = c.req.valid("json" as never) as any;
+    const body = await c.req.json<CreateCreatorInput>();
     const creator = await creatorService.createCreator(user.id, body);
     return c.json(creator, 201);
   },
@@ -118,13 +118,13 @@ export const creatorController = {
       return c.json({ message: "User not found" }, 404);
     }
 
-    const body = c.req.valid("json" as never) as any;
+    const body = await c.req.json<UpdateCreatorInput>();
     const updated = await creatorService.updateCreator(user.id, body);
     return c.json(updated);
   },
 
   async getById(c: Context) {
-    const { id } = c.req.valid("param" as never) as any;
+    const id = c.req.param("id");
     const creator = await creatorService.getCreatorBySlug(id);
     if (!creator) return c.json({ message: "Creator not found" }, 404);
     return c.json(creator);
@@ -144,7 +144,7 @@ export const creatorController = {
       return c.json({ message: "User not found" }, 404);
     }
 
-    const { returnUrl, refreshUrl } = c.req.valid("json" as never) as any;
+    const { returnUrl, refreshUrl } = await c.req.json<CreatorOnboardingInput>();
 
     try {
       const result = await creatorService.onboardCreator(

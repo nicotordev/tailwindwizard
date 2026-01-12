@@ -1,9 +1,9 @@
 import Link from "next/link"
+import Image from "next/image"
 import { Badge } from "@/components/ui/badge"
 import { Money } from "@/components/primitives/formatters"
 import type { Block } from "@/types/extended"
 import { Star, Box, ArrowRight } from "lucide-react"
-import { cn } from "@/lib/utils"
 
 export function BlockRow({ block }: { block: Block }) {
   const preview = block.previews?.[0]
@@ -15,11 +15,12 @@ export function BlockRow({ block }: { block: Block }) {
     >
       <div className="relative size-20 shrink-0 overflow-hidden rounded-2xl border border-border/40 bg-muted/30 transition-transform duration-500 group-hover:scale-105">
         {preview?.url ? (
-          <img
+          <Image
             src={preview.url}
             alt={`${block.title} preview`}
-            className="h-full w-full object-cover"
-            loading="lazy"
+            fill
+            className="object-cover"
+            sizes="80px"
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center text-muted-foreground/40">

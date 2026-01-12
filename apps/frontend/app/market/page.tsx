@@ -43,7 +43,7 @@ function mapBlockToMarketItem(block: Block): MarketItem {
 }
 
 export default function MarketPage() {
-  const [activeTab, setActiveTab] = React.useState<string>("economia");
+  const [activeTab, setActiveTab] = React.useState<string>("trending");
   const [query, setQuery] = React.useState("");
   const [sort, setSort] = React.useState<SortState>({
     key: "name",
@@ -79,6 +79,12 @@ export default function MarketPage() {
       label: cat.name
     }));
   }, [categoriesData]);
+
+  React.useEffect(() => {
+    if (tabs.length > 0 && !activeTab) {
+      setActiveTab(tabs[0].value);
+    }
+  }, [tabs, activeTab]);
 
   const items = React.useMemo(() => {
     if (!blocksData) return [];

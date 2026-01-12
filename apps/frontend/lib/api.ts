@@ -24,7 +24,7 @@ const authMiddleware: Middleware = {
       if (token) {
         request.headers.set("Authorization", `Bearer ${token}`);
       }
-    } catch (_e) {
+    } catch (_error) {
       // Not in a request context where auth() is available, or not logged in
     }
     return request;

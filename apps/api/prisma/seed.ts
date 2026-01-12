@@ -31,9 +31,9 @@ async function main() {
 
   // 2. Categories
   const categoriesData = [
-    { slug: 'economia', name: 'Economia de Bloques', icon: 'Coins' },
-    { slug: 'zero-trust', name: 'Zero Trust Preview', icon: 'ShieldCheck' },
-    { slug: 'stripe', name: 'Stripe Connect', icon: 'CreditCard' },
+    { slug: 'trending', name: 'Trending Blocks', icon: 'Flame' },
+    { slug: 'new-arrivals', name: 'New Arrivals', icon: 'Sparkles' },
+    { slug: 'top-sellers', name: 'Top Sellers', icon: 'Trophy' },
   ];
 
   const categories = [];
@@ -52,7 +52,7 @@ async function main() {
       slug: 'bento-analytics-grid',
       title: 'Bento Analytics Grid',
       description: 'A beautiful grid for your analytics dashboard',
-      categorySlug: 'economia',
+      categorySlug: 'trending',
       price: 28,
       soldCount: 142,
     },
@@ -60,7 +60,7 @@ async function main() {
       slug: 'saas-onboarding-flow',
       title: 'SaaS Onboarding Flow',
       description: 'Complete onboarding flow for your SaaS',
-      categorySlug: 'economia',
+      categorySlug: 'new-arrivals',
       price: 34,
       soldCount: 87,
     },
@@ -68,7 +68,7 @@ async function main() {
       slug: 'marketplace-trust-panel',
       title: 'Marketplace Trust Panel',
       description: 'Increase trust in your marketplace',
-      categorySlug: 'economia',
+      categorySlug: 'top-sellers',
       price: 42,
       soldCount: 64,
     },
@@ -76,7 +76,7 @@ async function main() {
       slug: 'playwright-snapshot-worker',
       title: 'Playwright Snapshot Worker',
       description: 'Security focused snapshot worker',
-      categorySlug: 'zero-trust',
+      categorySlug: 'trending',
       price: 55,
       soldCount: 24,
     },
@@ -84,7 +84,7 @@ async function main() {
       slug: 'connect-express-onboarding',
       title: 'Connect Express Onboarding',
       description: 'Seamless Stripe Connect onboarding',
-      categorySlug: 'stripe',
+      categorySlug: 'new-arrivals',
       price: 48,
       soldCount: 96,
     },

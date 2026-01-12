@@ -2,12 +2,12 @@ import * as OneSignal from "@onesignal/node-onesignal";
 import env from "../config/env.config.js";
 import { userService } from "./user.service.js";
 
-type NotificationPayload = {
+interface NotificationPayload {
   heading: string;
   message: string;
   url?: string;
   data?: Record<string, string>;
-};
+}
 
 type NotificationResult =
   | { sent: true }
@@ -70,7 +70,7 @@ export const notificationService = {
     const shortId = params.purchaseId.slice(-8).toUpperCase();
     return sendToUserId(params.buyerId, {
       heading: "Purchase complete",
-      message: `Order #${shortId} is confirmed. ${params.itemCount} item(s) are ready in your library.`,
+      message: `Order #${shortId} is confirmed. ${String(params.itemCount)} item(s) are ready in your library.`,
       url: `${env.frontendUrl}/dashboard/purchases/${params.purchaseId}`,
       data: {
         type: "purchase.completed",
@@ -100,7 +100,7 @@ export const notificationService = {
     const shortId = params.purchaseId.slice(-8).toUpperCase();
     return sendToUserId(params.creatorUserId, {
       heading: "New sale",
-      message: `${params.itemCount} item(s) sold in order #${shortId}.`,
+      message: `${String(params.itemCount)} item(s) sold in order #${shortId}.`,
       url: `${env.frontendUrl}/dashboard`,
       data: {
         type: "creator.sale",

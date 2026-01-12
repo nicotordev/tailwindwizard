@@ -132,3 +132,4 @@ export type Block = z.infer<typeof BlockSchema>;
 export type CreateBlockInput = z.infer<typeof CreateBlockSchema>;
 export type UpdateBlockInput = z.infer<typeof UpdateBlockSchema>;
 export type PreviewAsset = z.infer<typeof PreviewAssetSchema>;
+export type GetMyBlocksQuery = z.infer<typeof GetMyBlocksQuerySchema>;

@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
@@ -12,10 +11,10 @@ import Logo from "./logo";
 import { Sparkles } from "lucide-react";
 
 const NAV_ITEMS = [
-  { label: "Vision", href: "#" },
-  { label: "Ecosystem", href: "#", active: true },
-  { label: "Security", href: "#" },
-  { label: "Ingestion", href: "#" },
+  { label: "Marketplace", href: "/market", active: true },
+  { label: "Trending", href: "#" },
+  { label: "Creators", href: "#" },
+  { label: "Pricing", href: "#" },
 ];
 
 export function MarketNavbar() {
@@ -46,7 +45,7 @@ export function MarketNavbar() {
           </Button>
           <Button size="sm" className="gap-2 rounded-xl px-5">
             <Sparkles className="size-4" />
-            Sign In
+            Get Started
           </Button>
           <div className="h-6 w-px bg-border/60 mx-1" />
           <Select defaultValue="en">

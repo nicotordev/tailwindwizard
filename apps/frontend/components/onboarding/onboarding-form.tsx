@@ -43,10 +43,11 @@ export default function OnboardingForm() {
     },
   });
 
-  async function onSubmit(__values: z.infer<typeof onboardingSchema>) {
+  async function onSubmit(values: z.infer<typeof onboardingSchema>) {
     setIsLoading(true);
     try {
       // Simulate API call for now
+      console.log("Onboarding values:", values);
       await new Promise((resolve) => setTimeout(resolve, 1500));
 
       toast.success("Profile created successfully!");

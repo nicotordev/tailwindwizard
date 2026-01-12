@@ -1,6 +1,7 @@
 "use client"
 import type { Block } from "@/types/extended"
 import type { components } from "@/types/api"
+import Image from "next/image"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -55,13 +56,14 @@ export function ProductView({ block, reviews }: ProductViewProps) {
                       <Icon className="size-4" /> {viewport.label}
                     </span>
                   </div>
-                  <div className="h-44 w-full bg-muted/30">
+                  <div className="relative h-44 w-full bg-muted/30">
                     {preview?.url ? (
-                      <img
+                      <Image
                         src={preview.url}
                         alt={`${block.title} ${viewport.label} preview`}
-                        className="h-full w-full object-cover"
-                        loading="lazy"
+                        fill
+                        className="object-cover"
+                        sizes="(max-width: 768px) 100vw, 33vw"
                       />
                     ) : (
                       <div className="flex h-full w-full items-center justify-center text-muted-foreground/40">

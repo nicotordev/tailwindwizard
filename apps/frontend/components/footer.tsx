@@ -13,8 +13,8 @@ export function MarketFooter() {
           <div className="flex flex-col gap-4 max-w-md">
             <Logo size="md" />
             <p className="text-sm text-muted-foreground leading-relaxed">
-              Zero-trust previews, AST validation, and controlled payouts with
-              Stripe Connect. The secure standard for premium Tailwind components.
+              Premium Shadcn blocks for the modern web. Empowering creators and 
+              developers through a secure and transparent marketplace.
             </p>
           </div>
           <div className="flex gap-12">
@@ -50,7 +50,7 @@ export function MarketFooter() {
             <div className="flex items-center gap-2">
               <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
               <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-                Blockchain Sync: Active
+                Marketplace Status: Operational
               </span>
             </div>
           </div>

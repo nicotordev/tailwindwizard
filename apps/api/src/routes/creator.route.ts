@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { OpenAPIHono, createRoute, z } from "@hono/zod-openapi";
 import { creatorController } from "../controllers/creator.controller.js";
 import { requireAuth } from "../middleware/requireAuth.js";
