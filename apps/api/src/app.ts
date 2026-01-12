@@ -5,7 +5,6 @@ import { pinoLogger } from "hono-pino";
 import { cors } from "hono/cors";
 import { logger } from "hono/logger";
 import { secureHeaders } from "hono/secure-headers";
-// Routes
 import appRouter from "./routes/index.js";
 
 const app = new OpenAPIHono<{ Bindings: NodeJS.ProcessEnv }>({
