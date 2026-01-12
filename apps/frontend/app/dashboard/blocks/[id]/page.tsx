@@ -11,11 +11,12 @@ export const metadata: Metadata = {
 export default async function BlockDetailPage({
   params,
 }: {
-  params: { id: string }
+  params: Promise<{ id: string }>
 }) {
+  const { id } = await params;
   const { data, error } = await apiClient.GET("/api/v1/blocks/{id}", {
     params: {
-      path: { id: params.id },
+      path: { id },
     },
     cache: "no-store",
   })
