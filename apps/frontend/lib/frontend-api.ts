@@ -1,21 +1,23 @@
 "use client";
 
-import axios, { AxiosResponse } from "axios";
 import type { components, paths } from "@/types/api";
-import type { 
-  License, 
-  RenderJob, 
-  ExtendedPurchase,
+import type {
   Block,
+  Creator,
+  ExtendedPurchase,
+  License,
+  RenderJob,
   User,
-  Creator
 } from "@/types/extended";
+import axios, { AxiosResponse } from "axios";
 
 type Schema = components["schemas"];
 
-type CategoryListParams = paths["/api/v1/categories"]["get"]["parameters"]["query"];
+type CategoryListParams =
+  paths["/api/v1/categories"]["get"]["parameters"]["query"];
 type BlockListParams = paths["/api/v1/blocks"]["get"]["parameters"]["query"];
-type BlockRandomParams = paths["/api/v1/blocks/random"]["get"]["parameters"]["query"];
+type BlockRandomParams =
+  paths["/api/v1/blocks/random"]["get"]["parameters"]["query"];
 type CreatorBlocksParams =
   paths["/api/v1/creators/me/blocks"]["get"]["parameters"]["query"];
 type AdminModerationParams =
@@ -27,11 +29,53 @@ type AdminModerationDecision = NonNullable<
 >["content"]["application/json"];
 type AdminModerationDecisionResponse =
   paths["/api/v1/admin/moderation/{blockId}/decide"]["post"]["responses"][200]["content"]["application/json"];
+type AdminCreatorsParams =
+  paths["/api/v1/admin/creators"]["get"]["parameters"]["query"];
+type AdminCreatorsResponse =
+  paths["/api/v1/admin/creators"]["get"]["responses"][200]["content"]["application/json"];
+type AdminReviewCreatorRequest = NonNullable<
+  paths["/api/v1/admin/creators/{creatorId}/review"]["post"]["requestBody"]
+>["content"]["application/json"];
+type AdminReviewCreatorResponse =
+  paths["/api/v1/admin/creators/{creatorId}/review"]["post"]["responses"][200]["content"]["application/json"];
 type CreatorOnboardingRequest = NonNullable<
   paths["/api/v1/creators/me/onboarding"]["post"]["requestBody"]
 >["content"]["application/json"];
 type CreatorOnboardingResponse =
   paths["/api/v1/creators/me/onboarding"]["post"]["responses"][200]["content"]["application/json"];
+
+type AdminUsersParams =
+  paths["/api/v1/admin/users"]["get"]["parameters"]["query"];
+type AdminUsersResponse =
+  paths["/api/v1/admin/users"]["get"]["responses"][200]["content"]["application/json"];
+
+type AdminPurchaseListParams = {
+  status?: string;
+  page?: string;
+  limit?: string;
+};
+
+type AdminPurchaseListResponse = {
+  data: (ExtendedPurchase & {
+    buyer: {
+      id: string;
+      name: string | null;
+      email: string;
+      avatarUrl: string | null;
+    };
+  })[];
+  meta: Schema["PaginationMeta"];
+};
+
+type WebhookStatsResponse = {
+  last24h: {
+    total: number;
+    failed: number;
+    pending: number;
+    successRate: number;
+  };
+  lastEvents: Record<string, unknown>[];
+};
 
 type BundleUploadResponse = {
   id: string;
@@ -55,7 +99,9 @@ const createResource = <T, Params = undefined>(path: string) => ({
 });
 
 export const frontendApi = {
-  categories: createResource<Schema["Category"], CategoryListParams>("categories"),
+  categories: createResource<Schema["Category"], CategoryListParams>(
+    "categories"
+  ),
 
   blocks: {
     ...createResource<Block, BlockListParams>("blocks"),
@@ -86,9 +132,7 @@ export const frontendApi = {
   users: {
     getMe: (): Promise<AxiosResponse<User>> =>
       axiosClient.get("/api/v1/users/me"),
-    updateMe: (
-      data: Schema["UpdateUser"]
-    ): Promise<AxiosResponse<User>> =>
+    updateMe: (data: Schema["UpdateUser"]): Promise<AxiosResponse<User>> =>
       axiosClient.patch("/api/v1/users/me", data),
   },
 
@@ -97,11 +141,13 @@ export const frontendApi = {
       data: CreatorOnboardingRequest
     ): Promise<AxiosResponse<CreatorOnboardingResponse>> =>
       axiosClient.post("/api/v1/creators/onboarding", data),
-    
-    createMe: (data: Schema["CreateCreator"]): Promise<AxiosResponse<Creator>> =>
+
+    createMe: (
+      data: Schema["CreateCreator"]
+    ): Promise<AxiosResponse<Creator>> =>
       axiosClient.post("/api/v1/creators/me", data),
-      
-    getMe: (): Promise<AxiosResponse<Creator>> => 
+
+    getMe: (): Promise<AxiosResponse<Creator>> =>
       axiosClient.get("/api/v1/creators/me"),
   },
 
@@ -132,5 +178,73 @@ export const frontendApi = {
       data: AdminModerationDecision
     ): Promise<AxiosResponse<AdminModerationDecisionResponse>> =>
       axiosClient.post(`/api/v1/admin/moderation/${blockId}/decide`, data),
-  }
+    creators: {
+      list: (
+        params?: AdminCreatorsParams
+      ): Promise<AxiosResponse<AdminCreatorsResponse>> =>
+        axiosClient.get("/api/v1/admin/creators", { params }),
+    },
+    reviewCreator: (
+      creatorId: string,
+      data: AdminReviewCreatorRequest
+    ): Promise<AxiosResponse<AdminReviewCreatorResponse>> =>
+      axiosClient.post(`/api/v1/admin/creators/${creatorId}/review`, data),
+
+    // User management
+    users: {
+      list: (
+        params?: AdminUsersParams
+      ): Promise<AxiosResponse<AdminUsersResponse>> =>
+        axiosClient.get("/api/v1/admin/users", { params }),
+      updateRole: (
+        userId: string,
+        role: Schema["User"]["role"]
+      ): Promise<AxiosResponse<User>> =>
+        axiosClient.patch(`/api/v1/admin/users/${userId}/role`, { role }),
+    },
+
+    // Category management
+    categories: {
+      list: (): Promise<AxiosResponse<Schema["Category"][]>> =>
+        axiosClient.get("/api/v1/admin/categories"),
+      create: (
+        data: Partial<Schema["Category"]>
+      ): Promise<AxiosResponse<Schema["Category"]>> =>
+        axiosClient.post("/api/v1/admin/categories", data),
+      update: (
+        id: string,
+        data: Partial<Schema["Category"]>
+      ): Promise<AxiosResponse<Schema["Category"]>> =>
+        axiosClient.patch(`/api/v1/admin/categories/${id}`, data),
+      delete: (id: string): Promise<AxiosResponse<{ success: boolean }>> =>
+        axiosClient.delete(`/api/v1/admin/categories/${id}`),
+    },
+
+    // Tag management
+    tags: {
+      list: (): Promise<AxiosResponse<Schema["Tag"][]>> =>
+        axiosClient.get("/api/v1/admin/tags"),
+      create: (
+        data: Partial<Schema["Tag"]>
+      ): Promise<AxiosResponse<Schema["Tag"]>> =>
+        axiosClient.post("/api/v1/admin/tags", data),
+      update: (
+        id: string,
+        data: Partial<Schema["Tag"]>
+      ): Promise<AxiosResponse<Schema["Tag"]>> =>
+        axiosClient.patch(`/api/v1/admin/tags/${id}`, data),
+      delete: (id: string): Promise<AxiosResponse<{ success: boolean }>> =>
+        axiosClient.delete(`/api/v1/admin/tags/${id}`),
+    },
+
+    // Finance
+    finance: {
+      listPurchases: (
+        params?: AdminPurchaseListParams
+      ): Promise<AxiosResponse<AdminPurchaseListResponse>> =>
+        axiosClient.get("/api/v1/admin/purchases", { params }),
+      getWebhookStats: (): Promise<AxiosResponse<WebhookStatsResponse>> =>
+        axiosClient.get("/api/v1/admin/finance/webhooks"),
+    },
+  },
 };
