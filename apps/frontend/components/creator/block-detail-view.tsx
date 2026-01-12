@@ -19,7 +19,10 @@ import {
   ArrowUpRight,
   BarChart3,
   CheckCircle2,
+  CloudUpload,
   FileText,
+  Loader2,
+  RefreshCw,
   Rocket,
   Sparkles,
 } from "lucide-react"
@@ -36,8 +39,38 @@ type EditorState = {
   visibility: Visibility
 }
 
-export function BlockDetailView({ block }: { block: Block }) {
+export function BlockDetailView({ block: initialBlock }: { block: Block }) {
+  const [block, setBlock] = React.useState(initialBlock)
   const status = block.status as BlockStatus
+  const [renderJobId, setRenderJobId] = React.useState<string | null>(null)
+  const [isPolling, setIsPolling] = React.useState(false)
+
+  // Polling logic for render job
+  React.useEffect(() => {
+    let interval: NodeJS.Timeout
+    if (renderJobId && isPolling) {
+      interval = setInterval(async () => {
+        try {
+          const { data: job } = await frontendApi.render.status(renderJobId)
+          if (job.status === "SUCCEEDED" || job.status === "FAILED") {
+            setIsPolling(false)
+            setRenderJobId(null)
+            // Refresh block to see new previews
+            const { data: updatedBlock } = await frontendApi.blocks.identifier(block.id)
+            setBlock(updatedBlock as unknown as Block)
+            if (job.status === "SUCCEEDED") {
+              toast.success("Previews generated successfully.")
+            } else {
+              toast.error(`Rendering failed: ${job.error || "Unknown error"}`)
+            }
+          }
+        } catch (error) {
+          console.error("Polling error:", error)
+        }
+      }, 3000)
+    }
+    return () => clearInterval(interval)
+  }, [renderJobId, isPolling, block.id])
 
   return (
     <div className="space-y-8">
@@ -68,24 +101,71 @@ export function BlockDetailView({ block }: { block: Block }) {
         </CardHeader>
       </Card>
 
-      {status === "DRAFT" && <BlockEditor block={block} />}
-      {status === "REJECTED" && <RejectedPanel block={block} />}
+      {status === "DRAFT" && (
+        <BlockEditor 
+          block={block} 
+          onJobStarted={(id) => {
+            setRenderJobId(id)
+            setIsPolling(true)
+          }} 
+          isRendering={isPolling}
+        />
+      )}
+      {status === "REJECTED" && (
+        <div className="space-y-6">
+          <RejectedPanel />
+          <BlockEditor 
+            block={block} 
+            onJobStarted={(id) => {
+              setRenderJobId(id)
+              setIsPolling(true)
+            }} 
+            isRendering={isPolling}
+          />
+        </div>
+      )}
       {status === "SUBMITTED" && <SubmittedPanel />}
       {status === "APPROVED" && <ApprovedPanel />}
       {status === "PUBLISHED" && <PublishedPanel block={block} />}
 
-      {status !== "PUBLISHED" && status !== "SUBMITTED" && status !== "APPROVED" && (
+      {(status === "DRAFT" || status === "REJECTED") && (
         <Card className="bg-card/30 backdrop-blur-md border-border/40 rounded-[2rem]">
           <CardHeader>
             <CardTitle className="text-xl font-heading">Preview gallery</CardTitle>
             <CardDescription>
-              Preview assets appear here once render jobs complete.
+              {isPolling 
+                ? "Generating previews... This may take a moment." 
+                : "Preview assets appear here once render jobs complete."}
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="rounded-2xl border border-dashed border-border/60 bg-muted/20 p-8 text-center text-sm text-muted-foreground">
-              No preview assets yet.
-            </div>
+            {block.previews && block.previews.length > 0 ? (
+              <div className="grid gap-6 md:grid-cols-3">
+                {block.previews.map((p) => (
+                  <div key={p.id} className="space-y-2">
+                    <div className="aspect-[4/3] overflow-hidden rounded-2xl border border-border/40 bg-muted/20">
+                      <img 
+                        src={p.url} 
+                        alt={`${p.viewport} preview`} 
+                        className="h-full w-full object-cover"
+                      />
+                    </div>
+                    <Badge variant="outline" className="capitalize">{p.viewport.toLowerCase()}</Badge>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="rounded-2xl border border-dashed border-border/60 bg-muted/20 p-8 text-center text-sm text-muted-foreground">
+                {isPolling ? (
+                  <div className="flex flex-col items-center gap-2">
+                    <Loader2 className="size-8 animate-spin text-primary" />
+                    <span>Rendering in progress...</span>
+                  </div>
+                ) : (
+                  "No preview assets yet. Queue a render job to see them."
+                )}
+              </div>
+            )}
           </CardContent>
         </Card>
       )}
@@ -104,9 +184,22 @@ function StatCard({ label, value }: { label: string; value: React.ReactNode }) {
   )
 }
 
-function BlockEditor({ block }: { block: Block }) {
+function BlockEditor({ 
+  block, 
+  onJobStarted,
+  isRendering 
+}: { 
+  block: Block, 
+  onJobStarted: (jobId: string) => void,
+  isRendering: boolean
+}) {
   const router = useRouter()
+  const fileInputRef = React.useRef<HTMLInputElement>(null)
   const [isSaving, setIsSaving] = React.useState(false)
+  const [isSubmitting, setIsSubmitting] = React.useState(false)
+  const [isUploading, setIsUploading] = React.useState(false)
+  const [isQueueing, setIsQueueing] = React.useState(false)
+  
   const [state, setState] = React.useState<EditorState>({
     title: block.title ?? "",
     slug: block.slug ?? "",
@@ -118,6 +211,10 @@ function BlockEditor({ block }: { block: Block }) {
     stylingEngine: block.stylingEngine ?? "TAILWIND",
     visibility: (block.visibility ?? "PRIVATE") as Visibility,
   })
+
+  const hasBundle = !!block.codeBundle
+  const hasPreviews = (block.previews?.length ?? 0) > 0
+  const canSubmit = hasBundle && hasPreviews && !isRendering
 
   const setField = <K extends keyof EditorState>(key: K, value: EditorState[K]) => {
     setState((prev) => ({ ...prev, [key]: value }))
@@ -147,13 +244,100 @@ function BlockEditor({ block }: { block: Block }) {
     }
   }
 
+  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setIsUploading(true)
+    const formData = new FormData()
+    formData.append("bundle", file)
+
+    try {
+      await frontendApi.blocks.uploadBundle(block.id, formData)
+      toast.success("Bundle uploaded and validated.")
+      router.refresh()
+    } catch (error: unknown) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const msg = (error as any).response?.data?.message || "Upload failed."
+      toast.error(msg)
+    } finally {
+      setIsUploading(false)
+    }
+  }
+
+  const handleQueuePreview = async () => {
+    setIsQueueing(true)
+    try {
+      const { data: job } = await frontendApi.blocks.queuePreview(block.id)
+      onJobStarted(job.id)
+      toast.success("Render job queued.")
+    } catch (error: unknown) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const msg = (error as any).response?.data?.message || "Failed to queue preview."
+      toast.error(msg)
+    } finally {
+      setIsQueueing(false)
+    }
+  }
+
+  const handleSubmit = async () => {
+    if (!canSubmit) {
+      toast.error("Requirements not met: Bundle and previews are required.")
+      return
+    }
+    setIsSubmitting(true)
+    try {
+      await frontendApi.blocks.submit(block.id)
+      toast.success("Block submitted for review.")
+      router.refresh()
+    } catch (error) {
+      console.error("Failed to submit block:", error)
+      toast.error("Unable to submit the block right now.")
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
   return (
     <Card className="bg-card/30 backdrop-blur-md border-border/40 rounded-[2rem]">
       <CardHeader className="space-y-2">
-        <CardTitle className="text-xl font-heading">Edit draft</CardTitle>
-        <CardDescription>
-          Fine-tune the metadata before submitting for review.
-        </CardDescription>
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle className="text-xl font-heading">Edit draft</CardTitle>
+            <CardDescription>
+              Fine-tune the metadata before submitting for review.
+            </CardDescription>
+          </div>
+          <div className="flex items-center gap-2">
+            <input
+              type="file"
+              className="hidden"
+              ref={fileInputRef}
+              onChange={handleUpload}
+              accept=".tsx,.jsx,.css,.ts,.js,.zip"
+            />
+            <Button
+              variant="outline"
+              size="sm"
+              className="rounded-xl gap-2"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isUploading}
+            >
+              {isUploading ? <Loader2 className="size-4 animate-spin" /> : <CloudUpload className="size-4" />}
+              {hasBundle ? "Update Bundle" : "Upload Bundle"}
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="rounded-xl gap-2"
+              onClick={handleQueuePreview}
+              disabled={!hasBundle || isQueueing || isRendering}
+            >
+              {isQueueing || isRendering ? <Loader2 className="size-4 animate-spin" /> : <RefreshCw className="size-4" />}
+              {hasPreviews ? "Regenerate Previews" : "Generate Previews"}
+            </Button>
+          </div>
+        </div>
       </CardHeader>
       <CardContent className="space-y-5">
         <div className="grid gap-4 lg:grid-cols-2">
@@ -286,16 +470,24 @@ function BlockEditor({ block }: { block: Block }) {
         </div>
 
         <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border/40 pt-4">
-          <p className="text-xs text-muted-foreground">
-            Submissions are queued once review endpoints are enabled.
-          </p>
+          <div className="space-y-1">
+            <p className="text-xs text-muted-foreground flex items-center gap-2">
+              <CheckCircle2 className={`size-3 ${hasBundle ? "text-emerald-500" : "text-muted-foreground"}`} />
+              Bundle: {hasBundle ? "Uploaded" : "Required"}
+            </p>
+            <p className="text-xs text-muted-foreground flex items-center gap-2">
+              <CheckCircle2 className={`size-3 ${hasPreviews ? "text-emerald-500" : "text-muted-foreground"}`} />
+              Previews: {hasPreviews ? "Generated" : "Required"}
+            </p>
+          </div>
           <div className="flex items-center gap-3">
             <Button
               variant="secondary"
               className="rounded-xl"
-              onClick={() => toast.message("Submission queue is coming soon.")}
+              onClick={handleSubmit}
+              disabled={isSubmitting || !canSubmit}
             >
-              Submit for review
+              {isSubmitting ? "Submitting..." : "Submit for review"}
             </Button>
             <Button
               className="rounded-xl"
@@ -311,28 +503,25 @@ function BlockEditor({ block }: { block: Block }) {
   )
 }
 
-function RejectedPanel({ block }: { block: Block }) {
+function RejectedPanel() {
   return (
-    <div className="space-y-6">
-      <Card className="bg-destructive/5 border-destructive/30 rounded-[2rem]">
-        <CardHeader className="space-y-2">
-          <div className="flex items-center gap-2 text-destructive">
-            <AlertTriangle className="size-5" />
-            <CardTitle className="text-xl font-heading">Needs revisions</CardTitle>
-          </div>
-          <CardDescription>
-            The moderation team requested changes before publishing.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="text-sm text-muted-foreground">
-          <p>
-            No detailed feedback is available yet. Update your block metadata and
-            resubmit once the revision tools are enabled.
-          </p>
-        </CardContent>
-      </Card>
-      <BlockEditor block={block} />
-    </div>
+    <Card className="bg-destructive/5 border-destructive/30 rounded-[2rem]">
+      <CardHeader className="space-y-2">
+        <div className="flex items-center gap-2 text-destructive">
+          <AlertTriangle className="size-5" />
+          <CardTitle className="text-xl font-heading">Needs revisions</CardTitle>
+        </div>
+        <CardDescription>
+          The moderation team requested changes before publishing.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="text-sm text-muted-foreground">
+        <p>
+          No detailed feedback is available yet. Update your block metadata and
+          resubmit once the revision tools are enabled.
+        </p>
+      </CardContent>
+    </Card>
   )
 }
 
@@ -430,7 +619,7 @@ function TimelineItem({
   title,
   status,
 }: {
-  icon: typeof CheckCircle2
+  icon: React.ElementType
   title: string
   status: "complete" | "active" | "pending"
 }) {
@@ -459,7 +648,7 @@ function MetricCard({
   label,
   value,
 }: {
-  icon: typeof BarChart3
+  icon: React.ElementType
   label: string
   value: string
 }) {

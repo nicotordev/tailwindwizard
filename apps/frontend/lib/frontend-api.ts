@@ -33,6 +33,13 @@ type CreatorOnboardingRequest = NonNullable<
 type CreatorOnboardingResponse =
   paths["/api/v1/creators/me/onboarding"]["post"]["responses"][200]["content"]["application/json"];
 
+type BundleUploadResponse = {
+  id: string;
+  fileName: string;
+  sha256: string;
+  size: number;
+};
+
 const axiosClient = axios.create({
   baseURL: process.env.NEXT_PUBLIC_BASE_URL,
 });
@@ -60,8 +67,20 @@ export const frontendApi = {
       axiosClient.get("/api/v1/creator/blocks", { params }),
     create: (data: Schema["CreateBlock"]): Promise<AxiosResponse<Block>> =>
       axiosClient.post("/api/v1/blocks", data),
-    update: (id: string, data: Schema["UpdateBlock"]): Promise<AxiosResponse<Block>> =>
+    update: (
+      id: string,
+      data: Schema["UpdateBlock"]
+    ): Promise<AxiosResponse<Block>> =>
       axiosClient.patch(`/api/v1/blocks/${id}`, data),
+    uploadBundle: (
+      id: string,
+      data: FormData
+    ): Promise<AxiosResponse<BundleUploadResponse>> =>
+      axiosClient.post(`/api/v1/blocks/${id}/bundle`, data),
+    queuePreview: (id: string): Promise<AxiosResponse<RenderJob>> =>
+      axiosClient.post(`/api/v1/blocks/${id}/preview`),
+    submit: (id: string): Promise<AxiosResponse<Block>> =>
+      axiosClient.post(`/api/v1/blocks/${id}/submit`),
   },
 
   users: {
@@ -100,7 +119,7 @@ export const frontendApi = {
 
   render: {
     status: (jobId: string): Promise<AxiosResponse<RenderJob>> =>
-      axiosClient.get(`/api/v1/render/${jobId}`),
+      axiosClient.get(`/api/v1/blocks/render-jobs/${jobId}`),
   },
 
   admin: {

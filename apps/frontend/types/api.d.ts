@@ -899,9 +899,9 @@ export interface paths {
                     limit?: string;
                     offset?: string;
                     search?: string;
-                    status?: "PUBLISHED" | "DRAFT";
+                    status?: "DRAFT" | "SUBMITTED" | "APPROVED" | "REJECTED" | "PUBLISHED" | "UNPUBLISHED" | "ARCHIVED";
                     creatorId?: string;
-                    visibility?: "PUBLIC" | "PRIVATE";
+                    visibility?: "PUBLIC" | "PRIVATE" | "UNLISTED";
                     categorySlug?: string;
                 };
                 header?: never;
@@ -1143,6 +1143,284 @@ export interface paths {
                 };
             };
         };
+        trace?: never;
+    };
+    "/api/v1/blocks/{id}/bundle": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Upload a code bundle */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "multipart/form-data": {
+                        /** Format: binary */
+                        bundle?: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description Bundle uploaded */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            id: string;
+                            fileName: string;
+                            sha256: string;
+                            size: number;
+                        };
+                    };
+                };
+                /** @description Invalid bundle */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/blocks/{id}/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Queue preview render */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Render job queued */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            id: string;
+                            blockId: string;
+                            /** @enum {string} */
+                            status: "QUEUED" | "RUNNING" | "SUCCEEDED" | "FAILED" | "CANCELED";
+                            createdAt: string;
+                            updatedAt: string;
+                            error?: string | null;
+                        };
+                    };
+                };
+                /** @description Bundle required */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/blocks/render-jobs/{jobId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get render job status */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    jobId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Render job status */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            id: string;
+                            blockId: string;
+                            /** @enum {string} */
+                            status: "QUEUED" | "RUNNING" | "SUCCEEDED" | "FAILED" | "CANCELED";
+                            createdAt: string;
+                            updatedAt: string;
+                            error?: string | null;
+                        };
+                    };
+                };
+                /** @description Not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/blocks/{id}/submit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Submit block for moderation */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Block submitted */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Block"];
+                    };
+                };
+                /** @description Missing bundle or preview */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Already submitted */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/v1/blocks/{id}/reviews": {
@@ -1435,6 +1713,8 @@ export interface paths {
                             status: string;
                             totalAmount: number | string;
                             currency: string;
+                            createdAt?: string;
+                            updatedAt?: string;
                         };
                     };
                 };
@@ -1571,6 +1851,15 @@ export interface components {
             width: number;
             height: number;
         };
+        CodeBundle: {
+            id: string;
+            storageKind: string;
+            objectKey: string | null;
+            sha256: string | null;
+            astScanPassed: boolean;
+            astScanReport: string | null;
+            createdAt: string;
+        } | null;
         BlockTag: {
             tag: {
                 id: string;
@@ -1612,6 +1901,7 @@ export interface components {
                 };
             };
             previews?: components["schemas"]["PreviewAsset"][];
+            codeBundle?: components["schemas"]["CodeBundle"];
             tags?: components["schemas"]["BlockTag"][];
             categories?: components["schemas"]["BlockCategory"][];
             soldCount: number;
@@ -1687,6 +1977,8 @@ export interface components {
              * @enum {string}
              */
             visibility: "PRIVATE" | "UNLISTED" | "PUBLIC";
+            categoryId?: string;
+            tags?: string[];
         };
         UpdateBlock: {
             title?: string;
@@ -1718,6 +2010,8 @@ export interface components {
              * @enum {string}
              */
             visibility: "PRIVATE" | "UNLISTED" | "PUBLIC";
+            categoryId?: string;
+            tags?: string[];
         };
         Review: {
             id: string;
@@ -1758,6 +2052,8 @@ export interface components {
                 status: string;
                 totalAmount: number | string;
                 currency: string;
+                createdAt?: string;
+                updatedAt?: string;
             };
             checkoutUrl: string;
         };

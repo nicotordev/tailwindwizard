@@ -53,7 +53,7 @@ export default function OnboardingForm() {
       toast.success("Profile created successfully!");
       router.push("/dashboard");
     } catch (_error) {
-      toast.error("Something went wrong. Please try again.");
+      toast.error("Failed to update profile.")
     } finally {
       setIsLoading(false);
     }

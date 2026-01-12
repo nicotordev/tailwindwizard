@@ -10,6 +10,18 @@ export const PreviewAssetSchema = z
   })
   .openapi("PreviewAsset");
 
+export const CodeBundleSchema = z
+  .object({
+    id: z.string(),
+    storageKind: z.string(),
+    objectKey: z.string().nullable(),
+    sha256: z.string().nullable(),
+    astScanPassed: z.boolean(),
+    astScanReport: z.string().nullable(),
+    createdAt: z.string().or(z.date()),
+  })
+  .openapi("CodeBundle");
+
 export const BlockTagSchema = z
   .object({
     tag: z.object({
@@ -67,6 +79,7 @@ export const BlockSchema = z
       .optional(),
 
     previews: z.array(PreviewAssetSchema).optional(),
+    codeBundle: CodeBundleSchema.nullable().optional(),
     tags: z.array(BlockTagSchema).optional(),
     categories: z.array(BlockCategorySchema).optional(),
 
