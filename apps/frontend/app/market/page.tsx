@@ -1,5 +1,6 @@
 import { MarketFooter } from "@/components/footer";
 import { type SortKey, type SortState } from "@/components/item-table";
+import { MarketClientWrapper } from "@/components/market-client-wrapper";
 import { MarketHero } from "@/components/market-hero";
 import { MarketNavbar } from "@/components/navbar";
 import { apiClient } from "@/lib/api";
@@ -47,9 +48,9 @@ export default async function MarketPage(props: {
   const page = parseInt((searchParams.page as string) || "1", 10);
 
   // Fetch data on the server
-  const [categoriesData, blocksData] = await Promise.all([
-    apiClient.GET('/api/v1/categories'),
-    apiClient.GET('/api/v1/blocks', {
+  const [categoriesRes, blocksRes] = await Promise.all([
+    apiClient.GET("/api/v1/categories"),
+    apiClient.GET("/api/v1/blocks", {
       query: {
         categorySlug: activeTab || undefined,
         status: "PUBLISHED",
@@ -57,6 +58,9 @@ export default async function MarketPage(props: {
       },
     }),
   ]);
+
+  const categoriesData = categoriesRes.data || [];
+  const blocksData = blocksRes.data || [];
 
   // If no tab provided, use the first category's slug
   const finalActiveTab =
