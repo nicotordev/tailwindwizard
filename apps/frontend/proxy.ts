@@ -55,14 +55,24 @@ export default clerkMiddleware(async (auth, req) => {
 
   // ---- Onboarding gate: if signed in but missing role, force /onboarding
   // Important: only applies to signed-in users; anonymous users pass through (unless other protections exist)
-  if (!isOnboarding(req)) {
+  // We skip /api routes to avoid breaking AJAX calls during onboarding.
+  const isApi = req.nextUrl.pathname.startsWith("/api");
+
+  if (!isOnboarding(req) && !isApi) {
     const a = await auth();
     if (a.userId) {
       const client = await clerkClient();
       const user = await client.users.getUser(a.userId);
-      const role = getRoleFromPublicMetadata(user.publicMetadata);
+      const metadata = user.publicMetadata || {};
+      const role = getRoleFromPublicMetadata(metadata);
+      const onboardingComplete = !!(metadata as Record<string, unknown>)[
+        "onboardingComplete"
+      ];
 
-      if (role === null) return redirectTo(req, "/onboarding");
+      // Redirect to onboarding only if user has NO role AND is NOT marked as onboarded
+      if (role === null && !onboardingComplete) {
+        return redirectTo(req, "/onboarding");
+      }
     }
   }
 
