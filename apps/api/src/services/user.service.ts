@@ -13,7 +13,7 @@ export const userService = {
       externalAuthId,
     };
 
-    if (email) {
+    if (email && email.length > 0) {
       updateData.email = email;
     }
 

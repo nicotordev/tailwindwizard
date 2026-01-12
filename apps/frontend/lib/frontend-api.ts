@@ -154,12 +154,17 @@ export const frontendApi = {
     onboard: (
       data: CreatorOnboardingRequest
     ): Promise<AxiosResponse<CreatorOnboardingResponse>> =>
-      axiosClient.post("/api/v1/creators/onboarding", data),
+      axiosClient.post("/api/v1/creators/me/onboarding", data),
 
     createMe: (
       data: Schema["CreateCreator"]
     ): Promise<AxiosResponse<Creator>> =>
       axiosClient.post("/api/v1/creators/me", data),
+
+    updateMe: (
+      data: Schema["UpdateCreator"]
+    ): Promise<AxiosResponse<Creator>> =>
+      axiosClient.patch("/api/v1/creators/me", data),
 
     getMe: (): Promise<AxiosResponse<Creator>> =>
       axiosClient.get("/api/v1/creators/me"),

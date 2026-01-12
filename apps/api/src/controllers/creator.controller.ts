@@ -2,6 +2,7 @@ import { getAuth } from "@hono/clerk-auth";
 import type { Context } from "hono";
 import { prisma } from "../db/prisma.js";
 import { creatorService } from "../services/creator.service.js";
+import { userService } from "../services/user.service.js";
 import { blockService } from "../services/block.service.js";
 import type {
   CreateCreatorInput,
@@ -14,6 +15,7 @@ import type {
   StylingEngine,
   Visibility,
 } from "@tw/shared";
+import clerkClient from "../lib/clerkClient.js";
 
 export const creatorController = {
   async getMyBlocks(c: Context) {
@@ -119,6 +121,13 @@ export const creatorController = {
     }
 
     const body = await c.req.json<UpdateCreatorInput>();
+
+    // Check if creator exists first
+    const existing = await creatorService.getCreatorByUserId(user.id);
+    if (!existing) {
+      return c.json({ message: "Creator profile not found" }, 404);
+    }
+
     const updated = await creatorService.updateCreator(user.id, body);
     return c.json(updated);
   },
@@ -136,15 +145,25 @@ export const creatorController = {
       return c.json({ message: "Unauthorized" }, 401);
     }
 
-    const user = await prisma.user.findUnique({
-      where: { externalAuthId: auth.userId },
-    });
+    const clerkUser = await clerkClient.users.getUser(auth.userId);
 
-    if (!user) {
-      return c.json({ message: "User not found" }, 404);
+    const email = clerkUser.emailAddresses.find(
+      (email) => email.id === clerkUser.primaryEmailAddressId
+    )?.emailAddress;
+
+    if (!email) {
+      return c.json({ message: "User email is required for onboarding" }, 400);
     }
 
-    const { returnUrl, refreshUrl } = await c.req.json<CreatorOnboardingInput>();
+    const user = await userService.getOrCreateUser(auth.userId, email);
+
+
+    if (!user.email) {
+      return c.json({ message: "User email is required for onboarding" }, 400);
+    }
+
+    const { returnUrl, refreshUrl } =
+      await c.req.json<CreatorOnboardingInput>();
 
     try {
       const result = await creatorService.onboardCreator(

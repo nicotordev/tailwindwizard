@@ -2,6 +2,7 @@
 import { ClerkProvider } from "@clerk/nextjs";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { OneSignalProvider } from "@/components/notifications/onesignal-provider";
+import { Toaster } from "@/components/ui/sonner";
 
 export default function Providers({ children }: { children: React.ReactNode }) {
   const queryClient = new QueryClient({
@@ -36,6 +37,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
     >
       <QueryClientProvider client={queryClient}>
         <OneSignalProvider />
+        <Toaster />
         {children}
       </QueryClientProvider>
     </ClerkProvider>
