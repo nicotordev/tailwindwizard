@@ -5,7 +5,10 @@ export const CategorySchema = z
     id: z.string(),
     name: z.string(),
     slug: z.string(),
+    description: z.string().nullable().optional(),
     icon: z.string().nullable().optional(),
+    priority: z.number().default(0),
+    isFeatured: z.boolean().default(false),
     _count: z
       .object({
         blocks: z.number(),

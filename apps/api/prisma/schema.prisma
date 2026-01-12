@@ -465,10 +465,11 @@ model BlockNpmDependency {
 }
 
 model Tag {
-  id        String   @id @default(cuid())
-  slug      String   @unique
-  name      String
-  createdAt DateTime @default(now())
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  name        String
+  description String?
+  createdAt   DateTime @default(now())
 
   blocks BlockTag[]
 }
@@ -486,11 +487,14 @@ model BlockTag {
 }
 
 model Category {
-  id        String   @id @default(cuid())
-  slug      String   @unique
-  name      String
-  icon      String?
-  createdAt DateTime @default(now())
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  name        String
+  description String?
+  icon        String?
+  priority    Int      @default(0)
+  isFeatured  Boolean  @default(false)
+  createdAt   DateTime @default(now())
 
   blocks BlockCategory[]
 }

@@ -5,6 +5,7 @@ export const TagSchema = z
     id: z.string(),
     name: z.string(),
     slug: z.string(),
+    description: z.string().nullable().optional(),
     _count: z
       .object({
         blocks: z.number(),
