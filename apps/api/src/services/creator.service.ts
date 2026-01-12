@@ -62,7 +62,16 @@ export const creatorService = {
     let stripeAccountId = creator.stripeAccountId;
 
     if (!stripeAccountId) {
-      const account = await stripe.accounts.create({
+      const capabilities: Record<string, any> = {
+        transfers: { requested: true },
+      };
+
+      // card_payments is not supported in some regions like CL
+      if (creator.countryCode !== "CL") {
+        capabilities.card_payments = { requested: true };
+      }
+
+      const accountParams: any = {
         type: "express",
         email: creator.user.email,
         country: creator.countryCode ?? undefined,
@@ -71,11 +80,17 @@ export const creatorService = {
           product_description: creator.bio ?? undefined,
           name: creator.displayName ?? undefined,
         },
-        capabilities: {
-          card_payments: { requested: true },
-          transfers: { requested: true },
-        },
-      });
+        capabilities,
+      };
+
+      // Chile (CL) requires a 'recipient' service agreement for cross-border transfers
+      if (creator.countryCode === "CL") {
+        accountParams.tos_acceptance = {
+          service_agreement: "recipient",
+        };
+      }
+
+      const account = await stripe.accounts.create(accountParams);
 
       stripeAccountId = account.id;
 

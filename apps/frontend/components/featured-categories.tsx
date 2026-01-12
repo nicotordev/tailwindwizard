@@ -3,10 +3,41 @@
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
-import { Layout } from "lucide-react";
+import { Layout, Flame, Sparkles, Trophy, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { useCategories } from "@/hooks/use-categories";
 import Image from "next/image";
+
+const ICON_MAP: Record<string, LucideIcon> = {
+  Flame,
+  Sparkles,
+  Trophy,
+};
+
+function CategoryIcon({
+  icon,
+  alt,
+  className,
+}: {
+  icon: string;
+  alt: string;
+  className?: string;
+}) {
+  if (icon.startsWith("/") || icon.startsWith("http")) {
+    return (
+      <Image
+        src={icon}
+        alt={alt}
+        width={50}
+        height={50}
+        className={className}
+      />
+    );
+  }
+
+  const Icon = ICON_MAP[icon] || Layout;
+  return <Icon className={className} />;
+}
 
 export default function FeaturedCategories() {
   const categoriesQuery = useCategories();
@@ -74,11 +105,9 @@ export default function FeaturedCategories() {
                       )}
                     >
                       {cat.icon && (
-                        <Image
-                          src={cat.icon}
+                        <CategoryIcon
+                          icon={cat.icon}
                           alt={cat.name}
-                          width={50}
-                          height={50}
                           className="h-7 w-7"
                         />
                       )}
