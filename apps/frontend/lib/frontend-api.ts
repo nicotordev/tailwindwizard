@@ -44,6 +44,14 @@ type CreatorOnboardingRequest = NonNullable<
 type CreatorOnboardingResponse =
   paths["/api/v1/creators/me/onboarding"]["post"]["responses"][200]["content"]["application/json"];
 
+type SetupIntentResponse = {
+  clientSecret: string;
+  customerId: string;
+};
+type FinishOnboardingRequest = {
+  role: "CREATOR" | "BUILDER";
+};
+
 type AdminUsersParams =
   paths["/api/v1/admin/users"]["get"]["parameters"]["query"];
 type AdminUsersResponse =
@@ -134,6 +142,12 @@ export const frontendApi = {
       axiosClient.get("/api/v1/users/me"),
     updateMe: (data: Schema["UpdateUser"]): Promise<AxiosResponse<User>> =>
       axiosClient.patch("/api/v1/users/me", data),
+    createSetupIntent: (): Promise<AxiosResponse<SetupIntentResponse>> =>
+      axiosClient.post("/api/v1/users/me/create-setup-intent"),
+    finishOnboarding: (
+      data: FinishOnboardingRequest
+    ): Promise<AxiosResponse<{ success: boolean }>> =>
+      axiosClient.post("/api/v1/users/me/finish-onboarding", data),
   },
 
   creators: {

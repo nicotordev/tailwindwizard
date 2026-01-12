@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unsafe-return */
+/* eslint-disable @typescript-eslint/no-unsafe-call */
 import { OpenAPIHono, createRoute, z } from "@hono/zod-openapi";
 import { userController } from "../controllers/user.controller.js";
 import { requireAuth } from "../middleware/requireAuth.js";
@@ -8,6 +10,8 @@ import {
   UserPurchaseSchema as PurchaseSchema,
   UpdateUserSchema,
   UserSchema,
+  SetupIntentResponseSchema,
+  FinishOnboardingSchema,
 } from "@tw/shared";
 
 // Routes definition
@@ -161,6 +165,57 @@ const revokeApiKeyRoute = createRoute({
   },
 });
 
+// POST /me/create-setup-intent
+const createSetupIntentRoute = createRoute({
+  method: "post",
+  path: "/me/create-setup-intent",
+  tags: ["User"],
+  summary: "Create a Stripe SetupIntent",
+  responses: {
+    200: {
+      content: {
+        "application/json": {
+          schema: SetupIntentResponseSchema,
+        },
+      },
+      description: "SetupIntent created",
+    },
+    401: {
+      description: "Unauthorized",
+    },
+  },
+});
+
+// POST /me/finish-onboarding
+const finishOnboardingRoute = createRoute({
+  method: "post",
+  path: "/me/finish-onboarding",
+  tags: ["User"],
+  summary: "Mark onboarding as complete",
+  request: {
+    body: {
+      content: {
+        "application/json": {
+          schema: FinishOnboardingSchema,
+        },
+      },
+    },
+  },
+  responses: {
+    200: {
+      content: {
+        "application/json": {
+          schema: z.object({ success: z.boolean() }),
+        },
+      },
+      description: "Onboarding finished",
+    },
+    401: {
+      description: "Unauthorized",
+    },
+  },
+});
+
 // App definition
 const userApp = new OpenAPIHono();
 
@@ -172,6 +227,8 @@ const chainedApp = userApp
   .openapi(getMyPurchasesRoute, (c) => userController.getMyPurchases(c))
   .openapi(getMyApiKeysRoute, (c) => userController.getMyApiKeys(c))
   .openapi(createApiKeyRoute, (c) => userController.createApiKey(c))
-  .openapi(revokeApiKeyRoute, (c) => userController.revokeApiKey(c));
+  .openapi(revokeApiKeyRoute, (c) => userController.revokeApiKey(c))
+  .openapi(createSetupIntentRoute, (c) => userController.createSetupIntent(c))
+  .openapi(finishOnboardingRoute, (c) => userController.finishOnboarding(c));
 
 export default chainedApp;

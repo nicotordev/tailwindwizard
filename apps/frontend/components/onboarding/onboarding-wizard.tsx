@@ -40,12 +40,23 @@ import {
   Wand2,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import * as z from "zod";
 import { frontendApi } from "@/lib/frontend-api";
 import type { SerializedUser } from "@/utils/serialization";
+import { loadStripe } from "@stripe/stripe-js";
+import {
+  Elements,
+  PaymentElement,
+  useElements,
+  useStripe,
+} from "@stripe/react-stripe-js";
+
+const stripePromise = loadStripe(
+  process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || ""
+);
 
 const onboardingSchema = z.object({
   role: z.enum(["CREATOR", "BUILDER"]),
@@ -76,6 +87,60 @@ const PRESET_CATEGORIES = [
   { id: "animated", name: "Animated", icon: Sparkles },
 ];
 
+function BuilderPaymentForm({
+  onSuccess,
+  clientSecret,
+}: {
+  onSuccess: () => void;
+  clientSecret: string;
+}) {
+  const stripe = useStripe();
+  const elements = useElements();
+  const [isProcessing, setIsProcessing] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!stripe || !elements) return;
+
+    setIsProcessing(true);
+
+    const { error } = await stripe.confirmSetup({
+      elements,
+      confirmParams: {
+        return_url: `${window.location.origin}/dashboard?onboarding=success`,
+      },
+      redirect: "if_required",
+    });
+
+    if (error) {
+      toast.error(error.message || "Something went wrong with the ritual.");
+      setIsProcessing(false);
+    } else {
+      toast.success("Payment method secured!");
+      onSuccess();
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <PaymentElement />
+      <Button
+        type="button"
+        onClick={handleSubmit}
+        className="w-full h-12 rounded-2xl font-bold shadow-lg shadow-primary/20"
+        disabled={isProcessing || !stripe}
+      >
+        {isProcessing ? (
+          <Loader2 className="animate-spin h-5 w-5" />
+        ) : (
+          "Save Payment Method"
+        )}
+      </Button>
+    </div>
+  );
+}
+
 export interface OnBoardingWizardProps {
   initialUser: SerializedUser;
 }
@@ -87,6 +152,9 @@ export default function OnboardingWizard({
     "role" | "profile" | "interests" | "payment"
   >("role");
   const [isLoading, setIsLoading] = useState(false);
+  const [setupIntentSecret, setSetupIntentSecret] = useState<string | null>(
+    null
+  );
   const router = useRouter();
 
   const form = useForm<FormData>({
@@ -108,6 +176,21 @@ export default function OnboardingWizard({
   const interests = form.watch("interests");
   const imageUrl = form.watch("imageUrl");
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (step === "payment" && role === "BUILDER" && !setupIntentSecret) {
+      const fetchSetupIntent = async () => {
+        try {
+          const { data } = await frontendApi.users.createSetupIntent();
+          setSetupIntentSecret(data.clientSecret);
+        } catch (error) {
+          console.error("Failed to create SetupIntent", error);
+          toast.error("Failed to prepare payment setup. Try again.");
+        }
+      };
+      fetchSetupIntent();
+    }
+  }, [step, role, setupIntentSecret]);
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -132,6 +215,22 @@ export default function OnboardingWizard({
     }
   };
 
+  async function handleFinish() {
+    setIsLoading(true);
+    try {
+      await frontendApi.users.finishOnboarding({
+        role: form.getValues("role"),
+      });
+      toast.success("Welcome to the Block Economy!");
+      router.push("/dashboard");
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to finish the ritual. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
   async function onSubmit(values: FormData) {
     if (step === "role") {
       setStep("profile");
@@ -143,7 +242,7 @@ export default function OnboardingWizard({
       return;
     }
 
-    if (step === "interests" && values.role === "CREATOR") {
+    if (step === "interests") {
       setStep("payment");
       return;
     }
@@ -176,12 +275,16 @@ export default function OnboardingWizard({
           refreshUrl: `${baseUrl}/onboarding?step=payment`,
         });
 
+        // Save progress before leaving
+        await frontendApi.users.finishOnboarding({
+          role: "CREATOR",
+        });
+
         window.location.href = url;
         return;
       }
 
-      toast.success("Welcome to the Block Economy!");
-      router.push("/dashboard");
+      // If Builder, we handled it via the sub-component
     } catch (error) {
       console.error(error);
       toast.error("The ritual failed. Please try again.");
@@ -194,22 +297,18 @@ export default function OnboardingWizard({
     <div className="w-full max-w-xl mx-auto">
       {/* Progress Indicator */}
       <div className="flex justify-center gap-2 mb-8">
-        {["role", "profile", "interests", "payment"].map(
-          (s, idx) =>
-            (s !== "payment" || role === "CREATOR") && (
-              <div
-                key={s}
-                className={cn(
-                  "h-1 rounded-full transition-all duration-500",
-                  step === s ? "w-8 bg-primary" : "w-2 bg-border",
-                  idx <
-                    ["role", "profile", "interests", "payment"].indexOf(step)
-                    ? "bg-primary/50"
-                    : ""
-                )}
-              />
-            )
-        )}
+        {["role", "profile", "interests", "payment"].map((s, idx) => (
+          <div
+            key={s}
+            className={cn(
+              "h-1 rounded-full transition-all duration-500",
+              step === s ? "w-8 bg-primary" : "w-2 bg-border",
+              ["role", "profile", "interests", "payment"].indexOf(step) > idx
+                ? "bg-primary/50"
+                : ""
+            )}
+          />
+        ))}
       </div>
 
       <Form {...form}>
@@ -566,14 +665,13 @@ export default function OnboardingWizard({
                   type="submit"
                   className="flex-2 h-12 rounded-2xl font-bold shadow-lg shadow-primary/20"
                 >
-                  {role === "CREATOR" ? "Payment Setup" : "Finish Ritual"}{" "}
-                  <ArrowRight className="ml-2 h-5 w-5" />
+                  Payment Setup <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
               </div>
             </div>
           )}
 
-          {/* STEP 4: PAYMENT (CREATORS ONLY) */}
+          {/* STEP 4: PAYMENT */}
           {step === "payment" && (
             <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-500 text-left">
               <div className="p-6 rounded-[2rem] border border-primary/20 bg-primary/5 space-y-4">
@@ -583,7 +681,9 @@ export default function OnboardingWizard({
                   </div>
                   <div>
                     <h4 className="font-bold font-heading">
-                      Payout Infrastructure
+                      {role === "CREATOR"
+                        ? "Payout Infrastructure"
+                        : "Secure Payments"}
                     </h4>
                     <p className="text-xs text-muted-foreground uppercase tracking-widest">
                       Powered by Stripe
@@ -592,54 +692,75 @@ export default function OnboardingWizard({
                 </div>
 
                 <p className="text-sm text-muted-foreground leading-relaxed">
-                  We use <strong>Stripe-hosted onboarding</strong> to keep your
-                  data secure and ensure you get paid globally. It automatically
-                  handles KYC and tax compliance.
+                  {role === "CREATOR"
+                    ? "We use Stripe-hosted onboarding to keep your data secure and ensure you get paid globally."
+                    : "Save your payment method to enable one-click purchases and seamless block acquisition."}
                 </p>
+              </div>
 
-                <div className="grid grid-cols-1 gap-3">
-                  <div className="flex items-start gap-3 text-sm p-3 rounded-xl bg-background/50 border border-border/40">
-                    <Shield className="h-4 w-4 mt-0.5 text-primary shrink-0" />
-                    <span>
-                      Zero-Trust security for your sensitive business info.
-                    </span>
+              {role === "BUILDER" ? (
+                setupIntentSecret ? (
+                  <Elements
+                    stripe={stripePromise}
+                    options={{
+                      clientSecret: setupIntentSecret,
+                      appearance: { theme: "night" },
+                    }}
+                  >
+                    <BuilderPaymentForm
+                      clientSecret={setupIntentSecret}
+                      onSuccess={handleFinish}
+                    />
+                  </Elements>
+                ) : (
+                  <div className="flex justify-center p-12">
+                    <Loader2 className="animate-spin h-8 w-8 text-primary" />
                   </div>
-                  <div className="flex items-start gap-3 text-sm p-3 rounded-xl bg-background/50 border border-border/40">
-                    <Globe className="h-4 w-4 mt-0.5 text-primary shrink-0" />
-                    <span>Support for 45+ countries and local currencies.</span>
+                )
+              ) : (
+                <div className="space-y-6">
+                  <div className="space-y-4 text-center">
+                    <p className="text-xs text-muted-foreground uppercase tracking-widest leading-loose">
+                      Click below to begin the Stripe connection process in a
+                      secure hosted window.
+                    </p>
+                  </div>
+
+                  <div className="flex gap-4">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setStep("interests")}
+                      className="flex-1 h-12 rounded-2xl"
+                    >
+                      Back
+                    </Button>
+                    <Button
+                      type="button"
+                      onClick={() => onSubmit(form.getValues())}
+                      className="flex-2 h-12 rounded-2xl font-bold shadow-lg shadow-primary/20"
+                      disabled={isLoading}
+                    >
+                      {isLoading ? (
+                        <Loader2 className="animate-spin h-5 w-5" />
+                      ) : (
+                        "Connect Stripe Account"
+                      )}
+                    </Button>
                   </div>
                 </div>
-              </div>
+              )}
 
-              <div className="space-y-4 text-center">
-                <p className="text-xs text-muted-foreground uppercase tracking-widest leading-loose">
-                  Click below to begin the Stripe connection process in a secure
-                  hosted window.
-                </p>
-              </div>
-
-              <div className="flex gap-4">
+              {role === "BUILDER" && (
                 <Button
                   type="button"
-                  variant="outline"
-                  onClick={() => setStep("interests")}
-                  className="flex-1 h-12 rounded-2xl"
+                  variant="ghost"
+                  onClick={handleFinish}
+                  className="w-full text-xs text-muted-foreground hover:text-primary"
                 >
-                  Back
+                  Skip for now, I&apos;ll do it later
                 </Button>
-                <Button
-                  type="button"
-                  onClick={() => onSubmit(form.getValues())}
-                  className="flex-2 h-12 rounded-2xl font-bold shadow-lg shadow-primary/20"
-                  disabled={isLoading}
-                >
-                  {isLoading ? (
-                    <Loader2 className="animate-spin h-5 w-5" />
-                  ) : (
-                    "Connect Stripe Account"
-                  )}
-                </Button>
-              </div>
+              )}
             </div>
           )}
         </form>

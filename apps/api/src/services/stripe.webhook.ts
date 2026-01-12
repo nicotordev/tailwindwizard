@@ -157,6 +157,39 @@ export const stripeWebhookRoute = new Hono().post(
         return c.json({ received: true });
       }
 
+      if (event.type === "account.updated") {
+        const account = event.data.object as Stripe.Account;
+        
+        // Find the creator by stripeAccountId
+        const creator = await prisma.creator.findUnique({
+          where: { stripeAccountId: account.id }
+        });
+
+        if (creator) {
+          const isEnabled = account.charges_enabled && account.payouts_enabled;
+          
+          await prisma.creator.update({
+            where: { id: creator.id },
+            data: {
+              stripeDetailsSubmitted: account.details_submitted,
+              stripeChargesEnabled: account.charges_enabled,
+              stripePayoutsEnabled: account.payouts_enabled,
+              stripeAccountStatus: isEnabled ? "ENABLED" : "PENDING",
+              // Automatically approve as seller if Stripe is enabled (adjust policy as needed)
+              isApprovedSeller: isEnabled ? true : creator.isApprovedSeller,
+              approvedAt: isEnabled && !creator.approvedAt ? new Date() : creator.approvedAt,
+            }
+          });
+        }
+
+        await prisma.webhookEvent.update({
+          where: { externalId: event.id },
+          data: { status: "PROCESSED", processedAt: new Date() },
+        });
+
+        return c.json({ received: true });
+      }
+
       if (
         event.type === "checkout.session.async_payment_failed" ||
         event.type === "payment_intent.payment_failed"

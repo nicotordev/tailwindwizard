@@ -1,17 +1,8 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import { frontendApi } from "@/lib/frontend-api"
-import { toast } from "sonner"
-import {
-  Plus,
-  Pencil,
-  Trash2,
-  Tags,
-  Search,
-} from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -19,9 +10,9 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Table,
   TableBody,
@@ -29,67 +20,116 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table"
-import { Textarea } from "@/components/ui/textarea"
-import { Badge } from "@/components/ui/badge"
-import type { components } from "@/types/api"
+} from "@/components/ui/table";
+import { Textarea } from "@/components/ui/textarea";
+import { frontendApi } from "@/lib/frontend-api";
+import type { components } from "@/types/api";
+import { FileJson, Pencil, Plus, Search, Tags, Trash2 } from "lucide-react";
+import * as React from "react";
+import { toast } from "sonner";
 
-type Tag = components["schemas"]["Tag"]
+type Tag = components["schemas"]["Tag"];
 
 interface TagManagerProps {
-  initialTags: Tag[]
+  initialTags: Tag[];
 }
 
 export function TagManager({ initialTags }: TagManagerProps) {
-  const [tags, setTags] = React.useState(initialTags)
-  const [filter, setFilter] = React.useState("")
-  const [isDialogOpen, setIsDialogOpen] = React.useState(false)
-  const [currentTag, setCurrentTag] = React.useState<Partial<Tag> | null>(null)
-  const [isLoading, setIsLoading] = React.useState(false)
-  const [isDeleting, setIsDeleting] = React.useState(false)
+  const [tags, setTags] = React.useState(initialTags);
+  const [filter, setFilter] = React.useState("");
+  const [isDialogOpen, setIsDialogOpen] = React.useState(false);
+  const [isImportDialogOpen, setIsImportDialogOpen] = React.useState(false);
+  const [currentTag, setCurrentTag] = React.useState<Partial<Tag> | null>(null);
+  const [jsonInput, setJsonInput] = React.useState("");
+  const [isLoading, setIsLoading] = React.useState(false);
+  const [isDeleting, setIsDeleting] = React.useState(false);
 
-  const filteredTags = tags.filter((t) =>
-    t.name.toLowerCase().includes(filter.toLowerCase()) ||
-    t.slug.toLowerCase().includes(filter.toLowerCase())
-  )
+  const filteredTags = tags.filter(
+    (t) =>
+      t.name.toLowerCase().includes(filter.toLowerCase()) ||
+      t.slug.toLowerCase().includes(filter.toLowerCase())
+  );
 
   const handleSave = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!currentTag?.name || !currentTag?.slug) return
+    e.preventDefault();
+    if (!currentTag?.name || !currentTag?.slug) return;
 
-    setIsLoading(true)
+    setIsLoading(true);
     try {
       if (currentTag.id) {
-        const { data } = await frontendApi.admin.tags.update(currentTag.id, currentTag)
-        setTags((prev) => prev.map((t) => (t.id === data.id ? data : t)))
-        toast.success("Tag updated")
+        const { data } = await frontendApi.admin.tags.update(
+          currentTag.id,
+          currentTag
+        );
+        setTags((prev) => prev.map((t) => (t.id === data.id ? data : t)));
+        toast.success("Tag updated");
       } else {
-        const { data } = await frontendApi.admin.tags.create(currentTag)
-        setTags((prev) => [...prev, data])
-        toast.success("Tag created")
+        const { data } = await frontendApi.admin.tags.create(currentTag);
+        setTags((prev) => [...prev, data]);
+        toast.success("Tag created");
       }
-      setIsDialogOpen(false)
+      setIsDialogOpen(false);
     } catch (error) {
-      toast.error("Failed to save tag")
+      toast.error("Failed to save tag");
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this tag?")) return
+    if (!confirm("Are you sure you want to delete this tag?")) return;
 
-    setIsDeleting(true)
+    setIsDeleting(true);
     try {
-      await frontendApi.admin.tags.delete(id)
-      setTags((prev) => prev.filter((t) => t.id !== id))
-      toast.success("Tag deleted")
+      await frontendApi.admin.tags.delete(id);
+      setTags((prev) => prev.filter((t) => t.id !== id));
+      toast.success("Tag deleted");
     } catch (error) {
-      toast.error("Failed to delete tag")
+      toast.error("Failed to delete tag");
     } finally {
-      setIsDeleting(false)
+      setIsDeleting(false);
     }
-  }
+  };
+
+  const handleImport = async () => {
+    if (!jsonInput.trim()) return;
+
+    setIsLoading(true);
+    try {
+      const data = JSON.parse(jsonInput);
+      const tagsToImport = Array.isArray(data) ? data : [data];
+
+      const createdTags: Tag[] = [];
+      const errors: string[] = [];
+
+      for (const tag of tagsToImport) {
+        try {
+          const { data: newTag } = await frontendApi.admin.tags.create(tag);
+          createdTags.push(newTag);
+        } catch (error) {
+          errors.push(tag.name || "Unknown tag");
+        }
+      }
+
+      if (createdTags.length > 0) {
+        setTags((prev) => [...prev, ...createdTags]);
+        toast.success(`Imported ${createdTags.length} tags`);
+      }
+
+      if (errors.length > 0) {
+        toast.error(`Failed to import: ${errors.join(", ")}`);
+      }
+
+      if (errors.length === 0) {
+        setIsImportDialogOpen(false);
+        setJsonInput("");
+      }
+    } catch (error) {
+      toast.error("Invalid JSON format");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -103,16 +143,26 @@ export function TagManager({ initialTags }: TagManagerProps) {
             className="pl-9 rounded-xl bg-background/60"
           />
         </div>
-        <Button
-          onClick={() => {
-            setCurrentTag({ name: "", slug: "", description: "" })
-            setIsDialogOpen(true)
-          }}
-          className="rounded-xl"
-        >
-          <Plus className="mr-2 size-4" />
-          Add Tag
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            onClick={() => setIsImportDialogOpen(true)}
+            className="rounded-xl"
+          >
+            <FileJson className="mr-2 size-4" />
+            Import JSON
+          </Button>
+          <Button
+            onClick={() => {
+              setCurrentTag({ name: "", slug: "", description: "" });
+              setIsDialogOpen(true);
+            }}
+            className="rounded-xl"
+          >
+            <Plus className="mr-2 size-4" />
+            Add Tag
+          </Button>
+        </div>
       </div>
 
       <Card className="bg-card/40 backdrop-blur-xl border-border/50 rounded-[2rem] overflow-hidden">
@@ -120,8 +170,12 @@ export function TagManager({ initialTags }: TagManagerProps) {
           {filteredTags.length === 0 ? (
             <div className="py-20 text-center">
               <Tags className="mx-auto size-12 text-muted-foreground/20 mb-4" />
-              <h3 className="text-lg font-heading font-semibold">No tags found</h3>
-              <p className="text-sm text-muted-foreground">Try adjusting your search or add a new tag.</p>
+              <h3 className="text-lg font-heading font-semibold">
+                No tags found
+              </h3>
+              <p className="text-sm text-muted-foreground">
+                Try adjusting your search or add a new tag.
+              </p>
             </div>
           ) : (
             <Table>
@@ -135,7 +189,10 @@ export function TagManager({ initialTags }: TagManagerProps) {
               </TableHeader>
               <TableBody>
                 {filteredTags.map((tag) => (
-                  <TableRow key={tag.id} className="hover:bg-muted/20 border-border/40">
+                  <TableRow
+                    key={tag.id}
+                    className="hover:bg-muted/20 border-border/40"
+                  >
                     <TableCell>
                       <div className="flex flex-col">
                         <span className="font-semibold">{tag.name}</span>
@@ -146,7 +203,9 @@ export function TagManager({ initialTags }: TagManagerProps) {
                         )}
                       </div>
                     </TableCell>
-                    <TableCell className="font-mono text-xs">{tag.slug}</TableCell>
+                    <TableCell className="font-mono text-xs">
+                      {tag.slug}
+                    </TableCell>
                     <TableCell>
                       <Badge variant="secondary" className="rounded-lg">
                         {tag._count?.blocks || 0}
@@ -159,8 +218,8 @@ export function TagManager({ initialTags }: TagManagerProps) {
                           size="icon"
                           className="rounded-lg"
                           onClick={() => {
-                            setCurrentTag(tag)
-                            setIsDialogOpen(true)
+                            setCurrentTag(tag);
+                            setIsDialogOpen(true);
                           }}
                         >
                           <Pencil className="size-4" />
@@ -199,9 +258,14 @@ export function TagManager({ initialTags }: TagManagerProps) {
                 id="tag-name"
                 value={currentTag?.name || ""}
                 onChange={(e) => {
-                  const name = e.target.value
-                  const slug = currentTag?.slug || name.toLowerCase().replace(/ /g, "-").replace(/[^\w-]/g, "")
-                  setCurrentTag((prev) => ({ ...prev, name, slug }))
+                  const name = e.target.value;
+                  const slug =
+                    currentTag?.slug ||
+                    name
+                      .toLowerCase()
+                      .replace(/ /g, "-")
+                      .replace(/[^\w-]/g, "");
+                  setCurrentTag((prev) => ({ ...prev, name, slug }));
                 }}
                 placeholder="e.g. Responsive"
                 className="rounded-xl"
@@ -213,7 +277,9 @@ export function TagManager({ initialTags }: TagManagerProps) {
               <Input
                 id="tag-slug"
                 value={currentTag?.slug || ""}
-                onChange={(e) => setCurrentTag((prev) => ({ ...prev, slug: e.target.value }))}
+                onChange={(e) =>
+                  setCurrentTag((prev) => ({ ...prev, slug: e.target.value }))
+                }
                 placeholder="e.g. responsive"
                 className="rounded-xl"
                 required
@@ -224,7 +290,12 @@ export function TagManager({ initialTags }: TagManagerProps) {
               <Textarea
                 id="tag-description"
                 value={currentTag?.description || ""}
-                onChange={(e) => setCurrentTag((prev) => ({ ...prev, description: e.target.value }))}
+                onChange={(e) =>
+                  setCurrentTag((prev) => ({
+                    ...prev,
+                    description: e.target.value,
+                  }))
+                }
                 placeholder="Short description of this tag..."
                 className="rounded-xl min-h-[80px]"
               />
@@ -245,6 +316,60 @@ export function TagManager({ initialTags }: TagManagerProps) {
           </form>
         </DialogContent>
       </Dialog>
+
+      <Dialog open={isImportDialogOpen} onOpenChange={setIsImportDialogOpen}>
+        <DialogContent className="sm:max-w-160 rounded-[2rem]">
+          <DialogHeader>
+            <DialogTitle>Import Tags</DialogTitle>
+            <DialogDescription>
+              Paste a JSON array of tags to import them in bulk.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="json-input">JSON Data</Label>
+              <Textarea
+                id="json-input"
+                value={jsonInput}
+                onChange={(e) => setJsonInput(e.target.value)}
+                placeholder='[{"name": "Responsive", "slug": "responsive"}]'
+                className="rounded-xl min-h-[300px] font-mono text-xs"
+              />
+            </div>
+
+            <div className="bg-muted/50 p-4 rounded-xl space-y-2">
+              <p className="text-xs font-semibold">Example Format:</p>
+              <pre className="text-[10px] text-muted-foreground overflow-auto">
+                {`[
+  {
+    "name": "Responsive",
+    "slug": "responsive",
+    "description": "Works on all devices"
+  }
+]`}
+              </pre>
+            </div>
+
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setIsImportDialogOpen(false)}
+                className="rounded-xl"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleImport}
+                disabled={isLoading || !jsonInput.trim()}
+                className="rounded-xl"
+              >
+                {isLoading ? "Importing..." : "Import Tags"}
+              </Button>
+            </DialogFooter>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
-  )
+  );
 }

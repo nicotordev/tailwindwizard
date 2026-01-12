@@ -245,6 +245,98 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/users/me/create-setup-intent": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create a Stripe SetupIntent */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description SetupIntent created */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["SetupIntentResponse"];
+                    };
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/users/me/finish-onboarding": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Mark onboarding as complete */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["FinishOnboarding"];
+                };
+            };
+            responses: {
+                /** @description Onboarding finished */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            success: boolean;
+                        };
+                    };
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/creators/me/blocks": {
         parameters: {
             query?: never;
@@ -467,6 +559,7 @@ export interface paths {
                         "application/json": {
                             /** Format: uri */
                             url: string;
+                            clientSecret?: string;
                         };
                     };
                 };
@@ -2533,6 +2626,14 @@ export interface components {
              * @enum {string}
              */
             scope: "READ_PUBLIC" | "DOWNLOAD_PURCHASED" | "ADMIN";
+        };
+        SetupIntentResponse: {
+            clientSecret: string;
+            customerId: string;
+        };
+        FinishOnboarding: {
+            /** @enum {string} */
+            role: "CREATOR" | "BUILDER";
         };
         PreviewAsset: {
             id: string;

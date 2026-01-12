@@ -34,6 +34,7 @@ export const CreatorOnboardingSchema = z.object({
 
 export const CreatorOnboardingResponseSchema = z.object({
   url: z.string().url(),
+  clientSecret: z.string().optional(),
 });
 
 export type Creator = z.infer<typeof CreatorSchema>;

@@ -1,19 +1,10 @@
-"use client";
-
-import * as React from "react";
-import { useQuery } from "@tanstack/react-query";
-import { MarketNavbar } from "@/components/navbar";
-import { MarketHero } from "@/components/market-hero";
-import { MarketActions } from "@/components/market-actions";
-import { MarketTabs } from "@/components/market-tabs";
-import { ItemTable, type SortKey, type SortState } from "@/components/item-table";
-import { MarketSidebar } from "@/components/sidebar";
-import { MarketPagination } from "@/components/pagination";
 import { MarketFooter } from "@/components/footer";
-import { frontendApi } from "@/lib/frontend-api";
-import { marketGames } from "@/lib/data";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { type SortKey, type SortState } from "@/components/item-table";
+import { MarketHero } from "@/components/market-hero";
+import { MarketNavbar } from "@/components/navbar";
+import { apiClient } from "@/lib/api";
 import type { MarketItem } from "@/lib/data";
+import { marketGames } from "@/lib/data";
 import type { Block } from "@/types/extended";
 
 const PAGE_SIZE = 4;
@@ -37,142 +28,81 @@ function mapBlockToMarketItem(block: Block): MarketItem {
     name: block.title,
     game: block.categories?.[0]?.category?.name ?? "General",
     quantity: block.soldCount ?? 0,
-    priceUSD: typeof block.price === "string" ? parseFloat(block.price) : block.price,
+    priceUSD:
+      typeof block.price === "string" ? parseFloat(block.price) : block.price,
     iconURL: block.previews?.[0]?.url,
   };
 }
 
-export default function MarketPage() {
-  const [activeTab, setActiveTab] = React.useState<string>("trending");
-  const [query, setQuery] = React.useState("");
-  const [sort, setSort] = React.useState<SortState>({
-    key: "name",
-    direction: "asc",
-  });
-  const [page, setPage] = React.useState(1);
-  const isMobile = useIsMobile();
+export default async function MarketPage(props: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
+  const searchParams = await props.searchParams;
 
-  const { data: categoriesData } = useQuery({
-    queryKey: ["categories"],
-    queryFn: async () => {
-      const res = await frontendApi.categories.list();
-      return res.data;
-    },
-  });
+  // Parse params
+  const activeTab = (searchParams.tab as string) || "";
+  const query = (searchParams.q as string) || "";
+  const sortKey = (searchParams.sort as SortKey) || "name";
+  const sortDir = (searchParams.dir as "asc" | "desc") || "asc";
+  const page = parseInt((searchParams.page as string) || "1", 10);
 
-  const { data: blocksData, isLoading: isLoadingBlocks } = useQuery({
-    queryKey: ["blocks", activeTab],
-    queryFn: async () => {
-      const res = await frontendApi.blocks.list({
-        categorySlug: activeTab,
+  // Fetch data on the server
+  const [categoriesData, blocksData] = await Promise.all([
+    apiClient.GET('/api/v1/categories'),
+    apiClient.GET('/api/v1/blocks', {
+      query: {
+        categorySlug: activeTab || undefined,
         status: "PUBLISHED",
         visibility: "PUBLIC",
-      });
-      return res.data;
-    },
-  });
+      },
+    }),
+  ]);
 
-  const tabs = React.useMemo(() => {
-    if (!categoriesData) return [];
-    return categoriesData.map(cat => ({
-      value: cat.slug,
-      label: cat.name
-    }));
-  }, [categoriesData]);
+  // If no tab provided, use the first category's slug
+  const finalActiveTab =
+    activeTab || (categoriesData.length > 0 ? categoriesData[0].slug : "");
 
-  React.useEffect(() => {
-    if (tabs.length > 0 && !activeTab) {
-      setActiveTab(tabs[0].value);
-    }
-  }, [tabs, activeTab]);
+  const tabs = categoriesData.map((cat) => ({
+    value: cat.slug,
+    label: cat.name,
+  }));
 
-  const items = React.useMemo(() => {
-    if (!blocksData) return [];
-    return blocksData.map(mapBlockToMarketItem);
-  }, [blocksData]);
+  // Initial processing
+  const items = blocksData.map(mapBlockToMarketItem);
 
-  const filteredItems = React.useMemo(() => {
-    const term = query.trim().toLowerCase();
-    if (!term) return items;
-    return items.filter((item) => item.name.toLowerCase().includes(term));
-  }, [items, query]);
+  const filteredItems = query.trim()
+    ? items.filter((item) =>
+        item.name.toLowerCase().includes(query.trim().toLowerCase())
+      )
+    : items;
 
-  const sortedItems = React.useMemo(
-    () => sortItems(filteredItems, sort),
-    [filteredItems, sort]
-  );
-  
+  const sort: SortState = { key: sortKey, direction: sortDir };
+  const sortedItems = sortItems(filteredItems, sort);
+
   const totalPages = Math.max(1, Math.ceil(sortedItems.length / PAGE_SIZE));
-  const pagedItems = React.useMemo(() => {
-    const start = (page - 1) * PAGE_SIZE;
-    return sortedItems.slice(start, start + PAGE_SIZE);
-  }, [page, sortedItems]);
+  const currentPage = page > totalPages ? 1 : page;
 
-  React.useEffect(() => {
-    if (page > totalPages) setPage(1);
-  }, [page, totalPages]);
-
-  const handleTabChange = (value: string) => {
-    setActiveTab(value);
-    setPage(1);
-  };
-
-  const handleSort = (key: SortKey) => {
-    setPage(1);
-    setSort((prev) =>
-      prev.key === key
-        ? { key, direction: prev.direction === "asc" ? "desc" : "asc" }
-        : { key, direction: "asc" }
-    );
-  };
+  const start = (currentPage - 1) * PAGE_SIZE;
+  const pagedItems = sortedItems.slice(start, start + PAGE_SIZE);
 
   return (
     <div className="min-h-screen bg-background text-foreground">
       <MarketNavbar />
       <div className="mx-auto flex w-full max-w-[1440px] flex-col gap-8 px-4 pb-16 pt-8 sm:px-6 lg:px-10">
         <MarketHero />
-        <MarketActions>
-          <div className="lg:hidden">
-            <MarketSidebar
-              mode="sheet"
-              search={query}
-              onSearchChange={setQuery}
-              games={marketGames}
-            />
-          </div>
-        </MarketActions>
-        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_280px]">
-          <section className="space-y-4">
-            <MarketTabs
-              value={activeTab}
-              onChange={handleTabChange}
-              tabs={tabs.length > 0 ? tabs : []}
-            />
-            <ItemTable
-              items={pagedItems}
-              isLoading={isLoadingBlocks}
-              isMobile={isMobile}
-              sort={sort}
-              onSort={handleSort}
-            />
-            <MarketPagination
-              page={page}
-              totalPages={totalPages}
-              onPageChange={setPage}
-            />
-          </section>
-          <aside className="hidden lg:block">
-            <MarketSidebar
-              mode="static"
-              search={query}
-              onSearchChange={setQuery}
-              games={marketGames}
-            />
-          </aside>
-        </div>
+
+        <MarketClientWrapper
+          initialTab={finalActiveTab}
+          initialQuery={query}
+          initialSort={sort}
+          initialPage={currentPage}
+          totalPages={totalPages}
+          tabs={tabs}
+          items={pagedItems}
+          games={marketGames}
+        />
       </div>
       <MarketFooter />
     </div>
   );
 }
-

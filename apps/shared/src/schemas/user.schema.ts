@@ -43,6 +43,15 @@ export const NewApiKeyResponseSchema = ApiKeySchema.extend({
   key: z.string(),
 }).openapi("NewApiKeyResponse");
 
+export const FinishOnboardingSchema = z.object({
+  role: z.enum(["CREATOR", "BUILDER"]),
+}).openapi("FinishOnboarding");
+
+export const SetupIntentResponseSchema = z.object({
+  clientSecret: z.string(),
+  customerId: z.string(),
+}).openapi("SetupIntentResponse");
+
 // Simplified Purchase Schema for listing
 export const UserPurchaseSchema = z
   .object({

@@ -85,6 +85,20 @@ export const creatorService = {
       });
     }
 
+    // Create an Account Session for Embedded Onboarding
+    const accountSession = await stripe.accountSessions.create({
+      account: stripeAccountId,
+      components: {
+        account_onboarding: {
+          enabled: true,
+          features: {
+            external_account_collection: true,
+          },
+        },
+      },
+    });
+
+    // We still create an account link as a fallback or for hosted redirect if needed
     const accountLink = await stripe.accountLinks.create({
       account: stripeAccountId,
       refresh_url: refreshUrl,
@@ -92,6 +106,9 @@ export const creatorService = {
       type: "account_onboarding",
     });
 
-    return { url: accountLink.url };
+    return { 
+      url: accountLink.url,
+      clientSecret: accountSession.client_secret 
+    };
   },
 };

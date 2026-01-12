@@ -245,6 +245,9 @@ model User {
   authProvider   AuthProvider @default(CLERK)
   externalAuthId String?      @unique // e.g., Clerk userId
 
+  // Stripe side (Buyer)
+  stripeCustomerId String? @unique
+
   // Creator profile (nullable: not everyone sells)
   creator Creator?
 

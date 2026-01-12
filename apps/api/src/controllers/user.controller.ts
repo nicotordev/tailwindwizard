@@ -94,4 +94,27 @@ export const userController = {
     await userService.revokeApiKey(user.id, keyId);
     return c.json({ success: true });
   },
+
+  async createSetupIntent(c: Context) {
+    const auth = getAuth(c);
+    if (!auth?.userId) {
+      return c.json({ message: "Unauthorized" }, 401);
+    }
+    const user = await userService.getOrCreateUser(auth.userId, "");
+
+    const result = await userService.createSetupIntent(user.id);
+    return c.json(result);
+  },
+
+  async finishOnboarding(c: Context) {
+    const auth = getAuth(c);
+    if (!auth?.userId) {
+      return c.json({ message: "Unauthorized" }, 401);
+    }
+    const user = await userService.getOrCreateUser(auth.userId, "");
+
+    const body = await c.req.json<{ role: "CREATOR" | "BUILDER" }>();
+    const result = await userService.finishOnboarding(user.id, body.role);
+    return c.json(result);
+  },
 };

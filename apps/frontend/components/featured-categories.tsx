@@ -51,7 +51,7 @@ export default function FeaturedCategories() {
               whileHover={{ y: -5 }}
               className="group relative"
             >
-              <Link href={`/marketplace/${cat.slug}`}>
+              <Link href={`/market/${cat.slug}`}>
                 <div
                   className={cn(
                     "relative h-full overflow-hidden rounded-3xl border border-border bg-card p-8 transition-all duration-300",
