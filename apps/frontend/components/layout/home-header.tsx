@@ -96,6 +96,8 @@ export default function HomeHeader() {
               <Button variant="ghost" size="sm" asChild>
                 <Link href="/dashboard">Dashboard</Link>
               </Button>
+
+              <div className="h-6 w-px bg-border/60 mx-1" />
               <UserButton
                 appearance={{
                   elements: {

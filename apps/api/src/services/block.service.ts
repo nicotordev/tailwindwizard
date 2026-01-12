@@ -1,5 +1,6 @@
 import { createHash } from "crypto";
 import { PutObjectCommand } from "@aws-sdk/client-s3";
+import AdmZip from "adm-zip";
 import type {
   BlockFramework,
   BlockStatus,
@@ -53,7 +54,6 @@ function getFileKind(fileName: string): FileKind {
 }
 
 function pickRandomUnique<T>(arr: readonly T[], count: number): T[] {
-// ... existing code ...
   const n = Math.min(count, arr.length);
   const copy = arr.slice();
 
@@ -206,6 +206,52 @@ export const blockService = {
     });
   },
 
+  async countMany(params: {
+    status?: BlockStatus;
+    visibility?: Visibility;
+    type?: BlockType;
+    framework?: BlockFramework;
+    stylingEngine?: StylingEngine;
+    creatorId?: string;
+    search?: string;
+    categorySlug?: string;
+  }) {
+    const {
+      status,
+      visibility,
+      type,
+      framework,
+      stylingEngine,
+      creatorId,
+      search,
+      categorySlug,
+    } = params;
+
+    const where: Prisma.BlockWhereInput = {
+      status,
+      visibility,
+      type,
+      framework,
+      stylingEngine,
+      creatorId,
+      OR: search
+        ? [
+            { title: { contains: search, mode: "insensitive" } },
+            { description: { contains: search, mode: "insensitive" } },
+          ]
+        : undefined,
+      categories: categorySlug
+        ? {
+            some: {
+              category: { slug: categorySlug },
+            },
+          }
+        : undefined,
+    };
+
+    return prisma.block.count({ where });
+  },
+
   async findById(id: string) {
     return prisma.block.findUnique({
       where: { id },
@@ -267,62 +313,120 @@ export const blockService = {
     buffer,
   }: BundleUploadInput): Promise<BundleUploadResult> {
     const sha256 = createHash("sha256").update(buffer).digest("hex");
-    const objectKey = `bundles/${blockId}/${sha256}-${fileName}`;
+    const isZip = fileName.toLowerCase().endsWith(".zip");
+    
+    // Primary storage (the zip itself or the single file)
+    const bundleObjectKey = `bundles/${blockId}/${sha256}-${fileName}`;
 
-    // 1. AST Validation (only for text/code files)
-    let astScanPassed = true;
-    let astScanReport = "File not scanned (non-code asset).";
-    const kind = getFileKind(fileName);
-
-    if (["COMPONENT", "UTILS", "STYLE"].includes(kind)) {
-      const content = buffer.toString("utf8");
-      const validation = validateCode(content, fileName);
-      astScanPassed = validation.passed;
-      astScanReport = validation.report;
-    }
-
-    // 2. Upload to R2
+    // Upload the main artifact (zip or file)
     await r2Client.send(
       new PutObjectCommand({
         Bucket: env.r2.bucketName,
-        Key: objectKey,
+        Key: bundleObjectKey,
         Body: buffer,
-        ContentType: "application/octet-stream", // or detect based on ext
+        ContentType: isZip ? "application/zip" : "application/octet-stream",
       })
     );
 
+    // Prepare for extracted files processing
+    let astScanPassed = true;
+    let astScanReport = "Files scanned.";
+    const filesToCreate: Prisma.BlockFileCreateWithoutCodeBundleInput[] = [];
+
+    if (isZip) {
+      const zip = new AdmZip(buffer);
+      const entries = zip.getEntries();
+
+      for (const entry of entries) {
+        if (entry.isDirectory || entry.entryName.startsWith(".") || entry.entryName.includes("//.")) {
+          continue;
+        }
+
+        const entryBuffer = entry.getData();
+        const entryPath = entry.entryName; // e.g. "src/App.tsx"
+        const kind = getFileKind(entryPath);
+
+        // Upload extracted file for renderer access
+        const entryKey = `bundles/${blockId}/files/${entryPath}`;
+        
+        await r2Client.send(
+          new PutObjectCommand({
+            Bucket: env.r2.bucketName,
+            Key: entryKey,
+            Body: entryBuffer,
+            ContentType: "application/octet-stream", 
+          })
+        );
+
+        // Scan code
+        if (["COMPONENT", "UTILS", "STYLE"].includes(kind)) {
+          const content = entryBuffer.toString("utf8");
+          const validation = validateCode(content, entryPath);
+          if (!validation.passed) {
+            astScanPassed = false;
+            astScanReport += `\n${validation.report}`;
+          }
+        }
+
+        filesToCreate.push({
+          path: entryPath,
+          kind,
+        });
+      }
+    } else {
+      // Single file handling
+      const kind = getFileKind(fileName);
+      const entryKey = `bundles/${blockId}/files/${fileName}`;
+
+      // Upload accessible file copy
+      await r2Client.send(
+        new PutObjectCommand({
+          Bucket: env.r2.bucketName,
+          Key: entryKey,
+          Body: buffer,
+          ContentType: "application/octet-stream",
+        })
+      );
+
+      if (["COMPONENT", "UTILS", "STYLE"].includes(kind)) {
+        const content = buffer.toString("utf8");
+        const validation = validateCode(content, fileName);
+        astScanPassed = validation.passed;
+        astScanReport = validation.report;
+      }
+
+      filesToCreate.push({
+        path: fileName,
+        kind,
+      });
+    }
+
+    // Transactional DB update
     const codeBundle = await prisma.codeBundle.upsert({
       where: { blockId },
       create: {
         block: { connect: { id: blockId } },
         storageKind: "OBJECT_STORAGE",
-        objectKey,
+        objectKey: bundleObjectKey,
         objectBucket: env.r2.bucketName,
         objectRegion: "auto",
         sha256,
         astScanPassed,
         astScanReport,
         blockFiles: {
-          create: {
-            path: fileName,
-            kind,
-            // We don't store content inline for OBJECT_STORAGE
-          },
+          create: filesToCreate,
         },
       },
       update: {
         storageKind: "OBJECT_STORAGE",
-        objectKey,
+        objectKey: bundleObjectKey,
         objectBucket: env.r2.bucketName,
         sha256,
         astScanPassed,
         astScanReport,
         blockFiles: {
           deleteMany: {},
-          create: {
-            path: fileName,
-            kind,
-          },
+          create: filesToCreate,
         },
       },
       select: {

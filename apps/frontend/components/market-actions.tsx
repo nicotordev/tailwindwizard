@@ -31,9 +31,6 @@ export function MarketActions({ children }: { children?: React.ReactNode }) {
       </div>
       <div className="flex flex-wrap items-center justify-end gap-3">
         {children}
-        <Badge variant="secondary" className="hidden sm:inline-flex rounded-lg bg-secondary/50 text-secondary-foreground/80 border-secondary-foreground/10">
-          Global Licensing
-        </Badge>
         <Button asChild size="sm" className="gap-2 rounded-xl px-6 shadow-lg shadow-primary/20 hover:shadow-primary/30 active:scale-95 transition-all font-semibold">
           <Link href="/dashboard/blocks/new">
             <PackagePlus className="size-4" />

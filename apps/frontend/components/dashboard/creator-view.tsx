@@ -42,7 +42,7 @@ export function CreatorView() {
 
   const { data: blocks, isLoading: blocksLoading } = useQuery({
     queryKey: ["blocks", "my"],
-    queryFn: () => frontendApi.blocks.listMyBlocks().then((res) => res.data),
+    queryFn: () => frontendApi.blocks.listMyBlocks().then((res) => res.data.data),
   });
 
   // Mock render jobs

@@ -19,7 +19,7 @@ export default async function DashboardLayout({
   const isCreator = !!user.publicMetadata?.isCreator;
 
   return (
-    <div className="flex h-screen overflow-hidden bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/5 via-background to-background">
+    <div className="flex h-screen overflow-hidden bg-[radial-gradient(ellipse_at_top,var(--tw-gradient-stops))] from-primary/5 via-background to-background">
       <DashboardSidebar isCreator={isCreator} />
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <DashboardTopBar />

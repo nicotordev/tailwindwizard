@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import {
   Table,
   TableBody,
@@ -57,16 +58,25 @@ export function CategoryManager({ initialCategories }: CategoryManagerProps) {
 
     setIsLoading(true);
     try {
+      const payload = {
+        name: currentCategory.name,
+        slug: currentCategory.slug,
+        description: currentCategory.description,
+        icon: currentCategory.icon,
+        priority: currentCategory.priority,
+        isFeatured: currentCategory.isFeatured,
+      };
+
       if (currentCategory.id) {
         const { data } = await frontendApi.admin.categories.update(
           currentCategory.id,
-          currentCategory
+          payload
         );
         setCategories((prev) => prev.map((c) => (c.id === data.id ? data : c)));
         toast.success("Category updated");
       } else {
         const { data } = await frontendApi.admin.categories.create(
-          currentCategory
+          payload
         );
         setCategories((prev) => [...prev, data]);
         toast.success("Category created");
@@ -277,7 +287,7 @@ export function CategoryManager({ initialCategories }: CategoryManagerProps) {
       </Card>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="sm:max-w-125 rounded-[2rem]">
+        <DialogContent className="sm:max-w-lg rounded-[2rem]">
           <DialogHeader>
             <DialogTitle>
               {currentCategory?.id ? "Edit Category" : "Add Category"}
@@ -375,17 +385,15 @@ export function CategoryManager({ initialCategories }: CategoryManagerProps) {
                 />
               </div>
               <div className="flex items-center space-x-2 pt-8">
-                <input
-                  type="checkbox"
+                <Switch
                   id="isFeatured"
                   checked={currentCategory?.isFeatured || false}
-                  onChange={(e) =>
+                  onCheckedChange={(checked) =>
                     setCurrentCategory((prev) => ({
                       ...prev,
-                      isFeatured: e.target.checked,
+                      isFeatured: checked,
                     }))
                   }
-                  className="size-4 rounded border-gray-300 text-primary focus:ring-primary"
                 />
                 <Label htmlFor="isFeatured">Featured Category</Label>
               </div>

@@ -5,6 +5,9 @@ export type MarketItem = {
   quantity: number;
   priceUSD: number;
   iconURL?: string;
+  details?: string;
+  actionType?: "bought" | "sold";
+  timestamp?: string;
 };
 
 export const marketGames = [

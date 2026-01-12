@@ -45,19 +45,42 @@ export const creatorController = {
       return c.json({ message: "Creator profile not found" }, 404);
     }
 
-    const blocks = await blockService.findMany({
-      creatorId: user.creator.id,
-      status: status as BlockStatus | undefined,
-      type: type as BlockType | undefined,
-      framework: framework as BlockFramework | undefined,
-      stylingEngine: stylingEngine as StylingEngine | undefined,
-      visibility: visibility as Visibility | undefined,
-      search: q,
-      limit: limit,
-      offset: page && limit ? (page - 1) * limit : undefined,
-    });
+    const limitNum = limit ? parseInt(limit.toString()) : 20;
+    const pageNum = page ? parseInt(page.toString()) : 1;
+    const offset = (pageNum - 1) * limitNum;
 
-    return c.json(blocks);
+    const [blocks, total] = await Promise.all([
+      blockService.findMany({
+        creatorId: user.creator.id,
+        status: status as BlockStatus | undefined,
+        type: type as BlockType | undefined,
+        framework: framework as BlockFramework | undefined,
+        stylingEngine: stylingEngine as StylingEngine | undefined,
+        visibility: visibility as Visibility | undefined,
+        search: q,
+        limit: limitNum,
+        offset: offset,
+      }),
+      blockService.countMany({
+        creatorId: user.creator.id,
+        status: status as BlockStatus | undefined,
+        type: type as BlockType | undefined,
+        framework: framework as BlockFramework | undefined,
+        stylingEngine: stylingEngine as StylingEngine | undefined,
+        visibility: visibility as Visibility | undefined,
+        search: q,
+      }),
+    ]);
+
+    return c.json({
+      data: blocks,
+      meta: {
+        total,
+        page: pageNum,
+        limit: limitNum,
+        totalPages: Math.ceil(total / limitNum),
+      },
+    });
   },
 
   async getMe(c: Context) {

@@ -314,6 +314,7 @@ model Block {
   slug          String         @unique
   title         String
   description   String?
+  iconURL       String?
   changelog     String?
   type          BlockType      @default(COMPONENT)
   framework     BlockFramework @default(REACT)

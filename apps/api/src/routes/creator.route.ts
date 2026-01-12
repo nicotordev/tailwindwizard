@@ -16,6 +16,15 @@ const creatorApp = new OpenAPIHono();
 creatorApp.use("/me", requireAuth);
 creatorApp.use("/me/*", requireAuth);
 
+const PaginationMeta = z
+  .object({
+    total: z.number(),
+    page: z.number(),
+    limit: z.number(),
+    totalPages: z.number(),
+  })
+  .openapi("PaginationMeta");
+
 // --------------------------------------------------------------------------
 // Routes
 // --------------------------------------------------------------------------
@@ -33,7 +42,10 @@ const getMyBlocksRoute = createRoute({
     200: {
       content: {
         "application/json": {
-          schema: z.array(BlockSchema),
+          schema: z.object({
+            data: z.array(BlockSchema),
+            meta: PaginationMeta,
+          }),
         },
       },
       description: "List of my blocks",

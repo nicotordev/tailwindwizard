@@ -369,7 +369,10 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json": components["schemas"]["Block"][];
+                        "application/json": {
+                            data: components["schemas"]["Block"][];
+                            meta: components["schemas"]["PaginationMeta"];
+                        };
                     };
                 };
                 /** @description Unauthorized */
@@ -2672,6 +2675,7 @@ export interface components {
             slug: string;
             title: string;
             description: string | null;
+            iconURL?: string | null;
             /** @enum {string} */
             type: "COMPONENT" | "SECTION" | "PAGE";
             /** @enum {string} */
@@ -2703,6 +2707,12 @@ export interface components {
             updatedAt: string;
             publishedAt: string | unknown;
         };
+        PaginationMeta: {
+            total: number;
+            page: number;
+            limit: number;
+            totalPages: number;
+        };
         Creator: {
             id: string;
             userId: string;
@@ -2733,12 +2743,6 @@ export interface components {
             portfolioUrl?: string;
             countryCode?: string;
         };
-        PaginationMeta: {
-            total: number;
-            page: number;
-            limit: number;
-            totalPages: number;
-        };
         Category: {
             id: string;
             name: string;
@@ -2766,6 +2770,7 @@ export interface components {
             title: string;
             slug: string;
             description?: string;
+            iconURL?: string;
             /**
              * @default COMPONENT
              * @enum {string}

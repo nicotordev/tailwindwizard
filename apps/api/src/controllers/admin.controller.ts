@@ -52,8 +52,14 @@ export const adminController = {
   },
 
   async decide(c: Context) {
-    const user = c.get("user") as ClerkUser | null;
-    if (!user) return c.json({ message: "Unauthorized" }, 401);
+    const authUser = c.get("user") as ClerkUser | null;
+    if (!authUser) return c.json({ message: "Unauthorized" }, 401);
+
+    // Resolve internal user
+    const internalUser = await prisma.user.findUnique({
+      where: { externalAuthId: authUser.id },
+    });
+    if (!internalUser) return c.json({ message: "Admin user not found in DB" }, 404);
 
     const blockId = c.req.param("blockId");
     const body = await c.req.json<{
@@ -76,7 +82,7 @@ export const adminController = {
           create: {
             decision,
             notes,
-            decidedById: user.id,
+            decidedById: internalUser.id,
           },
         },
       },

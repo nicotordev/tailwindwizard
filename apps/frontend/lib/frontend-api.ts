@@ -117,8 +117,8 @@ export const frontendApi = {
       axiosClient.get("/api/v1/blocks/random", { params }),
     listMyBlocks: (
       params?: CreatorBlocksParams
-    ): Promise<AxiosResponse<Block[]>> =>
-      axiosClient.get("/api/v1/creator/blocks", { params }),
+    ): Promise<AxiosResponse<{ data: Block[]; meta: Schema["PaginationMeta"] }>> =>
+      axiosClient.get("/api/v1/creators/me/blocks", { params }),
     create: (data: Schema["CreateBlock"]): Promise<AxiosResponse<Block>> =>
       axiosClient.post("/api/v1/blocks", data),
     update: (

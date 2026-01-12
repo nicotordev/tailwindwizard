@@ -1,5 +1,3 @@
-import { ArrowDown, ArrowUp, ArrowUpDown, Boxes } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -11,8 +9,10 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { formatPriceUSD } from "@/lib/utils";
 import type { MarketItem } from "@/lib/data";
+import { cn, formatPriceUSD } from "@/lib/utils";
+import { ArrowDown, ArrowUp, ArrowUpDown, Boxes } from "lucide-react";
+import Image from "next/image";
 
 export type SortKey = "name" | "quantity" | "price";
 export type SortState = { key: SortKey; direction: "asc" | "desc" };
@@ -23,12 +23,13 @@ type ItemTableProps = {
   isMobile: boolean;
   sort: SortState;
   onSort: (key: SortKey) => void;
+  showActions?: boolean;
 };
 
 const columns = [
-  { key: "name" as const, label: "BLOCK", aria: "Sort by name" },
-  { key: "quantity" as const, label: "QUANTITY", aria: "Sort by quantity" },
-  { key: "price" as const, label: "PRICE (USD)", aria: "Sort by price" },
+  { key: "name" as const, label: "NAME", aria: "Sort by name" },
+  { key: "price" as const, label: "PRICE", aria: "Sort by price" },
+  { key: "action" as const, label: "ACTION", aria: "Action" },
 ];
 
 function SortIcon({
@@ -52,7 +53,12 @@ export function ItemTable({
   isMobile,
   sort,
   onSort,
+  showActions = true,
 }: ItemTableProps) {
+  const tableColumns = showActions 
+    ? columns 
+    : columns.filter(col => col.key !== "action");
+
   if (isLoading)
     return (
       <div className="space-y-4" aria-busy="true" aria-live="polite">
@@ -86,31 +92,47 @@ export function ItemTable({
         {items.map((item) => (
           <Card
             key={item.id}
-            className="rounded-2xl border-border/50 bg-card/40 backdrop-blur-sm transition-all hover:border-primary/20"
+            className="rounded-2xl border-border/50 bg-card/40 backdrop-blur-sm transition-all hover:bg-muted/30"
           >
-            <CardContent className="space-y-4 p-5">
+            <CardContent className="p-4">
               <div className="flex items-center gap-4">
-                <div className="flex size-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                  <Boxes className="size-6" />
+                <div className="relative flex size-16 shrink-0 items-center justify-center rounded-xl border border-border/50 bg-background/50 p-1">
+                  {item.iconURL ? (
+                    <Image
+                      src={item.iconURL}
+                      alt={item.name}
+                      className="size-full object-contain rounded-lg"
+                      width={50}
+                      height={50}
+                    />
+                  ) : (
+                    <Boxes className="size-8 text-muted-foreground/30" />
+                  )}
                 </div>
-                <div className="min-w-0">
-                  <div className="text-base font-bold font-heading truncate">
+                <div className="min-w-0 flex-1">
+                  <div className="text-[15px] font-bold font-heading truncate leading-snug">
                     {item.name}
                   </div>
-                  <Badge
-                    variant="outline"
-                    className="mt-1 text-[10px] font-semibold tracking-wider uppercase opacity-70"
-                  >
-                    {item.game}
-                  </Badge>
+                  <div className="text-[12px] font-medium text-muted-foreground/70 mt-0.5">
+                    {item.details || `${item.game} | ${item.quantity} units`}
+                  </div>
                 </div>
-              </div>
-              <div className="flex items-center justify-between pt-2">
-                <div className="text-sm font-medium text-muted-foreground">
-                  Qty: <span className="text-foreground">{item.quantity}</span>
-                </div>
-                <div className="text-lg font-bold text-primary font-heading">
-                  {formatPriceUSD(item.priceUSD)}
+                <div className="flex flex-col items-end gap-1.5 ml-2">
+                  <div className="text-[15px] font-bold text-foreground">
+                    {formatPriceUSD(item.priceUSD)}
+                  </div>
+                  {showActions && (
+                    <div
+                      className={cn(
+                        "inline-flex px-2 py-0.5 rounded-md text-[10px] font-bold tracking-wider uppercase border",
+                        item.actionType === "sold"
+                          ? "bg-creator/10 text-creator border-creator/20"
+                          : "bg-builder/10 text-builder border-builder/20"
+                      )}
+                    >
+                      {item.actionType === "sold" ? "Sold" : "Bought"}
+                    </div>
+                  )}
                 </div>
               </div>
             </CardContent>
@@ -125,23 +147,37 @@ export function ItemTable({
       data-testid="table-view"
     >
       <Table>
-        <TableHeader className="bg-muted/30">
-          <TableRow className="hover:bg-transparent border-border/40">
-            {columns.map((column) => (
-              <TableHead key={column.key} className="h-12 py-0">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-full w-full justify-start gap-2 px-4 text-xs font-bold tracking-widest text-muted-foreground/70 hover:bg-transparent hover:text-primary transition-colors"
-                  onClick={() => onSort(column.key)}
-                  aria-label={column.aria}
-                >
-                  {column.label}
-                  <SortIcon
-                    active={sort.key === column.key}
-                    direction={sort.direction}
-                  />
-                </Button>
+        <TableHeader className="border-b border-border/40">
+          <TableRow className="hover:bg-transparent border-none">
+            {tableColumns.map((column) => (
+              <TableHead
+                key={column.key}
+                className={cn(
+                  "h-12 py-0",
+                  column.key === "name"
+                    ? "w-[50%] md:w-[60%]"
+                    : "w-[25%] md:w-[20%] text-center"
+                )}
+              >
+                {column.key !== "action" ? (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-full w-full justify-start gap-2 px-4 text-[11px] font-bold tracking-[0.1em] text-muted-foreground/60 hover:bg-transparent hover:text-primary transition-colors"
+                    onClick={() => onSort(column.key as SortKey)}
+                    aria-label={column.aria}
+                  >
+                    {column.label}
+                    <SortIcon
+                      active={sort.key === column.key}
+                      direction={sort.direction}
+                    />
+                  </Button>
+                ) : (
+                  <div className="flex items-center justify-center h-full text-[11px] font-bold tracking-[0.1em] text-muted-foreground/60">
+                    {column.label}
+                  </div>
+                )}
               </TableHead>
             ))}
           </TableRow>
@@ -150,42 +186,61 @@ export function ItemTable({
           {items.map((item) => (
             <TableRow
               key={item.id}
-              className="group border-border/40 hover:bg-primary/2 transition-colors"
+              className="group border-none hover:bg-muted/30 transition-all duration-300"
             >
               <TableCell className="px-4 py-4">
                 <div className="flex items-center gap-4">
-                  <div className="flex size-11 items-center justify-center rounded-xl bg-muted/50 text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary transition-colors">
-                    <Boxes className="size-5" />
+                  <div className="relative flex size-14 shrink-0 items-center justify-center rounded-xl border border-border/50 bg-background/50 p-1 transition-transform group-hover:scale-105">
+                    {item.iconURL ? (
+                      <Image
+                        src={item.iconURL}
+                        alt={item.name}
+                        className="size-full object-contain rounded-lg"
+                        width={50}
+                        height={50}
+                      />
+                    ) : (
+                      <Boxes className="size-6 text-muted-foreground/40" />
+                    )}
                   </div>
-                  <div className="min-w-0">
-                    <div
-                      className="truncate font-bold font-heading text-foreground"
-                      data-testid="row-name"
-                    >
+                  <div className="min-w-0 flex flex-col gap-0.5">
+                    <div className="truncate font-bold text-[15px] text-foreground transition-colors group-hover:text-primary">
                       {item.name}
                     </div>
-                    <div className="mt-0.5">
-                      <Badge
-                        variant="outline"
-                        className="text-[10px] h-4 px-1.5 border-border/60 font-semibold opacity-60"
-                      >
-                        {item.game}
-                      </Badge>
+                    <div className="text-[12px] font-medium text-muted-foreground/70">
+                      {item.details || `${item.game} | ${item.quantity} units`}
                     </div>
                   </div>
                 </div>
               </TableCell>
-              <TableCell
-                className="px-4 font-medium text-muted-foreground"
-                data-testid="row-quantity"
-              >
-                {item.quantity} units
-              </TableCell>
-              <TableCell className="px-4" data-testid="row-price">
-                <span className="font-bold text-base text-foreground font-heading">
+
+              <TableCell className="px-4 text-center">
+                <div className="font-bold text-[16px] text-foreground">
                   {formatPriceUSD(item.priceUSD)}
-                </span>
+                </div>
               </TableCell>
+
+              {showActions && (
+                <TableCell className="px-4">
+                  <div className="flex justify-center">
+                    <div
+                      className={cn(
+                        "inline-flex flex-col items-center justify-center min-w-[90px] px-3 py-1.5 rounded-lg font-bold transition-all duration-300 border",
+                        item.actionType === "sold"
+                          ? "bg-creator/10 text-creator border-creator/20 group-hover:bg-creator/20"
+                          : "bg-builder/10 text-builder border-builder/20 group-hover:bg-builder/20"
+                      )}
+                    >
+                      <span className="text-[10px] uppercase tracking-[0.15em] opacity-80 leading-none">
+                        {item.actionType === "sold" ? "Sold" : "Bought"}
+                      </span>
+                      <span className="text-[13px] mt-1 font-heading">
+                        {formatPriceUSD(item.priceUSD)}
+                      </span>
+                    </div>
+                  </div>
+                </TableCell>
+              )}
             </TableRow>
           ))}
         </TableBody>

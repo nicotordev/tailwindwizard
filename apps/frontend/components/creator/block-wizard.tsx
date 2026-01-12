@@ -36,6 +36,8 @@ import {
   FileCode2,
   Sparkles,
   Wand2,
+  Info,
+  XCircle,
 } from "lucide-react";
 import { 
   FiPackage, 
@@ -51,6 +53,8 @@ import {
   FiShield 
 } from "react-icons/fi"
 import type { IconType } from "react-icons/lib";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Spinner } from "@/components/ui/spinner";
 
 type WizardStep = "metadata" | "pricing" | "upload" | "preview" | "submit";
 
@@ -146,7 +150,37 @@ export function BlockWizard() {
   const [isUploadingBundle, setIsUploadingBundle] = React.useState(false);
   const [previewQueued, setPreviewQueued] = React.useState(false);
   const [previewJobId, setPreviewJobId] = React.useState<string | null>(null);
+  const [jobStatus, setJobStatus] = React.useState<"QUEUED" | "RUNNING" | "SUCCEEDED" | "FAILED" | null>(null);
+  const [jobError, setJobError] = React.useState<string | null>(null);
   const [isPreviewing, setIsPreviewing] = React.useState(false);
+
+  // Polling logic for render jobs
+  React.useEffect(() => {
+    let pollInterval: NodeJS.Timeout;
+
+    if (previewJobId && (jobStatus === "QUEUED" || jobStatus === "RUNNING")) {
+      pollInterval = setInterval(async () => {
+        try {
+          const { data } = await frontendApi.render.status(previewJobId);
+          setJobStatus(data.status as any);
+          if (data.status === "SUCCEEDED") {
+            toast.success("Preview rendered successfully!");
+            clearInterval(pollInterval);
+          } else if (data.status === "FAILED") {
+            setJobError(data.error || "Unknown rendering error.");
+            toast.error("Preview rendering failed.");
+            clearInterval(pollInterval);
+          }
+        } catch (error) {
+          console.error("Polling error:", error);
+        }
+      }, 3000);
+    }
+
+    return () => {
+      if (pollInterval) clearInterval(pollInterval);
+    };
+  }, [previewJobId, jobStatus]);
   const [draft, setDraft] = React.useState<BlockDraft>({
     title: "",
     slug: "",
@@ -257,7 +291,7 @@ export function BlockWizard() {
       return bundleUploaded;
     }
     if (step.id === "preview") {
-      return previewQueued;
+      return jobStatus === "SUCCEEDED";
     }
     return true;
   }, [
@@ -932,6 +966,43 @@ export function BlockWizard() {
                       </p>
                     </div>
                   </div>
+
+                  <Accordion type="single" collapsible className="mt-8 border border-border/40 rounded-3xl bg-background/40 overflow-hidden">
+                    <AccordionItem value="guide" className="border-none">
+                      <AccordionTrigger className="px-6 py-4 hover:no-underline group">
+                        <div className="flex items-center gap-3 text-primary">
+                          <Info className="size-4" />
+                          <span className="font-bold tracking-tight">Preview System Compatibility Guide</span>
+                        </div>
+                      </AccordionTrigger>
+                      <AccordionContent className="px-6 pb-6 text-muted-foreground leading-relaxed space-y-4">
+                        <p className="text-sm">
+                          To ensure your components render correctly, our previewer runs your code in a sandboxed environment using Babel Standalone.
+                        </p>
+                        
+                        <div className="space-y-2">
+                          <h4 className="text-xs font-bold uppercase tracking-widest text-foreground">Supported Dependencies</h4>
+                          <div className="grid grid-cols-2 gap-2 text-xs">
+                            <div className="p-2 rounded-lg bg-muted/30 border border-border/40">React 18.2.0</div>
+                            <div className="p-2 rounded-lg bg-muted/30 border border-border/40">Lucide React 0.294.0</div>
+                            <div className="p-2 rounded-lg bg-muted/30 border border-border/40">Framer Motion 10.16.4</div>
+                            <div className="p-2 rounded-lg bg-muted/30 border border-border/40">Tailwind Merge & Clsx</div>
+                          </div>
+                        </div>
+
+                        <div className="space-y-2">
+                          <h4 className="text-xs font-bold uppercase tracking-widest text-foreground">Core Rules</h4>
+                          <ul className="list-disc list-inside text-xs space-y-1 ml-1">
+                            <li><strong>Default Export:</strong> Your component must be a default export.</li>
+                            <li><strong>Single File:</strong> Relative imports are not yet supported in sandbox.</li>
+                            <li><strong>No Node APIs:</strong> Avoid <code className="bg-muted px-1 rounded">fs</code>, <code className="bg-muted px-1 rounded">path</code>, etc.</li>
+                            <li><strong>Standard Tags:</strong> Use <code className="bg-muted px-1 rounded">&lt;img&gt;</code> and <code className="bg-muted px-1 rounded">&lt;a&gt;</code> instead of Next.js components.</li>
+                          </ul>
+                        </div>
+                      </AccordionContent>
+                    </AccordionItem>
+                  </Accordion>
+
                   <div className="mt-10 flex flex-wrap items-center gap-4">
                     <Button
                       onClick={async () => {
@@ -939,11 +1010,13 @@ export function BlockWizard() {
                         if (!id) return;
 
                         setIsPreviewing(true);
+                        setJobError(null);
                         try {
                           const response =
                             await frontendApi.blocks.queuePreview(id);
                           setPreviewQueued(true);
                           setPreviewJobId(response.data.id);
+                          setJobStatus("QUEUED");
                           toast.success("Preview render queued.");
                         } catch (error) {
                           console.error("Failed to queue preview:", error);
@@ -955,21 +1028,55 @@ export function BlockWizard() {
                       size="lg"
                       className="rounded-2xl h-14 px-8 font-bold text-base shadow-lg shadow-primary/20"
                       variant={previewQueued ? "secondary" : "default"}
-                      disabled={!bundleUploaded || isPreviewing}
+                      disabled={!bundleUploaded || isPreviewing || jobStatus === "RUNNING"}
                     >
-                      {isPreviewing
-                        ? "Queuing Render..."
-                        : previewQueued
-                        ? "Render Engaged"
+                      {isPreviewing || jobStatus === "RUNNING"
+                        ? "Rendering..."
+                        : jobStatus === "SUCCEEDED"
+                        ? "Re-summon Preview"
                         : "Summon Preview"}
                     </Button>
-                    {previewQueued && (
-                      <div className="flex items-center gap-3 text-sm font-bold text-primary animate-pulse bg-primary/5 px-5 py-3 rounded-2xl">
-                        Estimated Ritual: 2-4 minutes
-                        {previewJobId ? ` (job ${previewJobId.slice(-6)})` : ""}
+
+                    {jobStatus === "QUEUED" && (
+                      <div className="flex items-center gap-3 text-sm font-bold text-amber-500 bg-amber-500/5 px-5 py-3 rounded-2xl animate-pulse">
+                        <Spinner className="size-4" />
+                        In Queue...
+                      </div>
+                    )}
+
+                    {jobStatus === "RUNNING" && (
+                      <div className="flex items-center gap-3 text-sm font-bold text-primary bg-primary/5 px-5 py-3 rounded-2xl">
+                        <Spinner className="size-4" />
+                        Casting Spell (Rendering)...
+                      </div>
+                    )}
+
+                    {jobStatus === "SUCCEEDED" && (
+                      <div className="flex items-center gap-3 text-sm font-bold text-emerald-500 bg-emerald-500/5 px-5 py-3 rounded-2xl">
+                        <CheckCircle2 className="size-4" />
+                        Preview Manifested Successfully
+                      </div>
+                    )}
+
+                    {jobStatus === "FAILED" && (
+                      <div className="flex items-center gap-3 text-sm font-bold text-destructive bg-destructive/5 px-5 py-3 rounded-2xl">
+                        <XCircle className="size-4" />
+                        Manifestation Failed
                       </div>
                     )}
                   </div>
+
+                  {jobError && (
+                    <div className="mt-6 p-6 rounded-2xl bg-destructive/10 border border-destructive/20 space-y-2">
+                      <div className="flex items-center gap-2 text-destructive font-bold text-sm">
+                        <XCircle className="size-4" />
+                        Rendering Error
+                      </div>
+                      <pre className="text-xs font-mono text-destructive/80 whitespace-pre-wrap overflow-x-auto p-4 bg-background/50 rounded-xl">
+                        {jobError}
+                      </pre>
+                    </div>
+                  )}
                 </div>
               </div>
             )}

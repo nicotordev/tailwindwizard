@@ -6,88 +6,109 @@ import { MarketNavbar } from "@/components/navbar";
 import { apiClient } from "@/lib/api";
 import type { MarketItem } from "@/lib/data";
 import { marketGames } from "@/lib/data";
-import type { Block } from "@/types/extended";
 
-const PAGE_SIZE = 4;
-
-function sortItems(items: MarketItem[], sort: SortState) {
-  const direction = sort.direction === "asc" ? 1 : -1;
-  return [...items].sort((a, b) => {
-    if (sort.key === "name") {
-      return a.name.localeCompare(b.name) * direction;
-    }
-    if (sort.key === "quantity") {
-      return (a.quantity - b.quantity) * direction;
-    }
-    return (a.priceUSD - b.priceUSD) * direction;
-  });
-}
-
-function mapBlockToMarketItem(block: Block): MarketItem {
-  return {
-    id: block.id,
-    name: block.title,
-    game: block.categories?.[0]?.category?.name ?? "General",
-    quantity: block.soldCount ?? 0,
-    priceUSD:
-      typeof block.price === "string" ? parseFloat(block.price) : block.price,
-    iconURL: block.previews?.[0]?.url,
-  };
-}
+const PAGE_SIZE = 8;
 
 export default async function MarketPage(props: {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
   const searchParams = await props.searchParams;
 
-  // Parse params
-  const activeTab = (searchParams.tab as string) || "";
+  const activeTab = (searchParams.tab as string) || "activity";
   const query = (searchParams.q as string) || "";
-  const sortKey = (searchParams.sort as SortKey) || "name";
-  const sortDir = (searchParams.dir as "asc" | "desc") || "asc";
+  const sortKey =
+    (searchParams.sort as SortKey) ||
+    (activeTab === "most-sold" ? "quantity" : "name");
+  const sortDir =
+    (searchParams.dir as "asc" | "desc") ||
+    (activeTab === "most-sold" ? "desc" : "asc");
   const page = parseInt((searchParams.page as string) || "1", 10);
 
   // Fetch data on the server
-  const [categoriesRes, blocksRes] = await Promise.all([
-    apiClient.GET("/api/v1/categories"),
+  const [blocksRes, purchasesRes] = await Promise.all([
     apiClient.GET("/api/v1/blocks", {
       query: {
-        categorySlug: activeTab || undefined,
         status: "PUBLISHED",
         visibility: "PUBLIC",
       },
     }),
+    activeTab === "activity"
+      ? apiClient.GET("/api/v1/users/me/purchases")
+      : Promise.resolve({ data: [] }),
   ]);
 
-  const categoriesData = categoriesRes.data || [];
   const blocksData = blocksRes.data || [];
+  const purchasesData = purchasesRes.data || [];
 
-  // If no tab provided, use the first category's slug
-  const finalActiveTab =
-    activeTab || (categoriesData.length > 0 ? categoriesData[0].slug : "");
+  let marketItems: MarketItem[] = [];
 
-  const tabs = categoriesData.map((cat) => ({
-    value: cat.slug,
-    label: cat.name,
-  }));
+  if (activeTab === "activity") {
+    // Latest Activity shows purchases
+    marketItems = purchasesData.map((p) => {
+      const lineItem = p.lineItems?.[0];
+      return {
+        id: p.id,
+        iconURL: lineItem?.block?.iconURL,
+        name: lineItem?.block?.title || "Unknown Block",
+        game: "Template",
+        quantity: 1,
+        priceUSD:
+          typeof p.totalAmount === "string"
+            ? parseFloat(p.totalAmount)
+            : p.totalAmount,
+        actionType: "sold", // Every activity is a successful sale
+        timestamp: p.createdAt,
+        details: "Standard License",
+      };
+    });
+  } else {
+    // Most Sold shows blocks sorted by soldCount
+    marketItems = blocksData
+      .filter((b) => (b.soldCount || 0) > 0)
+      .map((b) => ({
+        id: b.id,
+        iconURL: b.iconURL,
+        name: b.title,
+        game: b.categories?.[0]?.category?.name || "General",
+        quantity: b.soldCount || 0,
+        priceUSD: typeof b.price === "string" ? parseFloat(b.price) : b.price,
+        details: `${b.soldCount} sales total`,
+        actionType: "sold",
+      }));
+  }
 
-  // Initial processing
-  const items = blocksData.map(mapBlockToMarketItem);
+  // Filter if search query exists
+  if (query.trim()) {
+    marketItems = marketItems.filter((item) =>
+      item.name.toLowerCase().includes(query.trim().toLowerCase())
+    );
+  }
 
-  const filteredItems = query.trim()
-    ? items.filter((item) =>
-        item.name.toLowerCase().includes(query.trim().toLowerCase())
-      )
-    : items;
+  // Sorting
+  marketItems.sort((a, b) => {
+    const direction = sortDir === "asc" ? 1 : -1;
+    if (sortKey === "name") return a.name.localeCompare(b.name) * direction;
+    if (sortKey === "quantity") return (a.quantity - b.quantity) * direction;
+    if (sortKey === "price") return (a.priceUSD - b.priceUSD) * direction;
+    return 0;
+  });
 
-  const sort: SortState = { key: sortKey, direction: sortDir };
-  const sortedItems = sortItems(filteredItems, sort);
+  // Latest Activity defaults to newest first if no sort specified
+  if (activeTab === "activity" && !searchParams.sort) {
+    marketItems.sort(
+      (a, b) =>
+        new Date(b.timestamp || 0).getTime() -
+        new Date(a.timestamp || 0).getTime()
+    );
+  }
 
-  const totalPages = Math.max(1, Math.ceil(sortedItems.length / PAGE_SIZE));
+  const totalPages = Math.max(1, Math.ceil(marketItems.length / PAGE_SIZE));
   const currentPage = page > totalPages ? 1 : page;
 
   const start = (currentPage - 1) * PAGE_SIZE;
-  const pagedItems = sortedItems.slice(start, start + PAGE_SIZE);
+  const pagedItems = marketItems.slice(start, start + PAGE_SIZE);
+
+  const sort: SortState = { key: sortKey, direction: sortDir };
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -96,12 +117,11 @@ export default async function MarketPage(props: {
         <MarketHero />
 
         <MarketClientWrapper
-          initialTab={finalActiveTab}
+          initialTab={activeTab}
           initialQuery={query}
           initialSort={sort}
           initialPage={currentPage}
           totalPages={totalPages}
-          tabs={tabs}
           items={pagedItems}
           games={marketGames}
         />

@@ -20,7 +20,6 @@ type MarketClientWrapperProps = {
   initialSort: SortState;
   initialPage: number;
   totalPages: number;
-  tabs: { value: string; label: string }[];
   items: MarketItem[];
   games: string[];
 };
@@ -31,7 +30,6 @@ export function MarketClientWrapper({
   initialSort,
   initialPage,
   totalPages,
-  tabs,
   items,
   games,
 }: MarketClientWrapperProps) {
@@ -114,7 +112,6 @@ export function MarketClientWrapper({
           <MarketTabs
             value={initialTab}
             onChange={handleTabChange}
-            tabs={tabs}
           />
           <ItemTable
             items={items}
@@ -122,6 +119,7 @@ export function MarketClientWrapper({
             isMobile={isMobile}
             sort={initialSort}
             onSort={handleSort}
+            showActions={initialTab !== "most-sold"}
           />
           <MarketPagination
             page={initialPage}

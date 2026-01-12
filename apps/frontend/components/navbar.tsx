@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
@@ -9,7 +11,7 @@ import {
 } from "@/components/ui/select";
 import Logo from "./logo";
 import { Sparkles } from "lucide-react";
-
+import { SignedIn, SignedOut, useUser, UserButton } from "@clerk/nextjs";
 const NAV_ITEMS = [
   { label: "Marketplace", href: "/market", active: true },
   { label: "Trending", href: "#" },
@@ -18,6 +20,7 @@ const NAV_ITEMS = [
 ];
 
 export function MarketNavbar() {
+  const { user } = useUser();
   return (
     <header className="sticky top-0 z-40 border-b border-border/40 bg-background/80 backdrop-blur-xl">
       <div className="mx-auto flex w-full max-w-[1440px] items-center justify-between px-4 py-3 sm:px-6 lg:px-10">
@@ -40,24 +43,26 @@ export function MarketNavbar() {
           </nav>
         </div>
         <div className="flex items-center gap-3">
-          <Button variant="ghost" size="sm" className="hidden sm:inline-flex text-muted-foreground hover:text-primary">
-            Install CLI
-          </Button>
-          <Button size="sm" className="gap-2 rounded-xl px-5">
-            <Sparkles className="size-4" />
-            Get Started
-          </Button>
-          <div className="h-6 w-px bg-border/60 mx-1" />
-          <Select defaultValue="en">
-            <SelectTrigger className="h-9 w-[100px] rounded-xl border-border/50 bg-muted/30" aria-label="Language">
-              <SelectValue placeholder="Lang" />
-            </SelectTrigger>
-            <SelectContent className="rounded-xl">
-              <SelectItem value="en">English</SelectItem>
-              <SelectItem value="es">Español</SelectItem>
-              <SelectItem value="pt">Português</SelectItem>
-            </SelectContent>
-          </Select>
+          <SignedOut>
+            <Button size="sm" className="gap-2 rounded-xl px-5">
+              <Sparkles className="size-4" />
+              Get Started
+            </Button>
+          </SignedOut>
+          <SignedIn>
+            <Button variant="ghost" size="sm" asChild>
+              <Link href="/dashboard">Dashboard</Link>
+            </Button>
+
+            <div className="h-6 w-px bg-border/60 mx-1" />
+            <UserButton
+              appearance={{
+                elements: {
+                  userButtonAvatarBox: "h-9 w-9",
+                },
+              }}
+            />
+          </SignedIn>
         </div>
       </div>
     </header>
