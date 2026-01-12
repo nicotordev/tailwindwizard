@@ -23,7 +23,7 @@ export interface License {
   status: LicenseStatus;
   deliveryStatus: DeliveryStatus;
   createdAt: string;
-  
+
   // Relations often needed in UI
   block?: Block;
 }
@@ -47,6 +47,12 @@ export interface ExtendedPurchase extends Purchase {
       slug: string;
     };
     licenseType?: string;
-    amount?: number | string; 
+    amount?: number | string;
   }>;
 }
+
+
+export type CreatorProfile = components["schemas"]["Creator"] & {
+  user?: components["schemas"]["User"];
+  rejectedAt?: string | null;
+};
