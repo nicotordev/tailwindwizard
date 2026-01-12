@@ -82,7 +82,7 @@ export const userService = {
       where: { id: userId },
     });
 
-    if (!user || !user.externalAuthId) throw new Error("User not found or missing external ID");
+    if (!user?.externalAuthId) throw new Error("User not found or missing external ID");
 
     // Fetch current clerk user to preserve existing metadata (like ADMIN role)
     const clerkUser = await clerkClient.users.getUser(user.externalAuthId);

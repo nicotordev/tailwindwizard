@@ -87,13 +87,15 @@ const PRESET_CATEGORIES = [
   { id: "animated", name: "Animated", icon: Sparkles },
 ];
 
+export interface BuilderPaymentFormProps {
+  onSuccess: () => void;
+  clientSecret: string;
+}
+
 function BuilderPaymentForm({
   onSuccess,
   clientSecret,
-}: {
-  onSuccess: () => void;
-  clientSecret: string;
-}) {
+}: BuilderPaymentFormProps) {
   const stripe = useStripe();
   const elements = useElements();
   const [isProcessing, setIsProcessing] = useState(false);

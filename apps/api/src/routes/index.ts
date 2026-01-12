@@ -6,6 +6,7 @@ import purchaseApp from "./purchase.route.js";
 import tagApp from "./tag.route.js";
 import userApp from "./user.route.js";
 import adminApp from "./admin.route.js";
+import { stripeWebhookRoute } from "../services/stripe.webhook.js";
 
 const appRouter = new OpenAPIHono()
   .route("/users", userApp)
@@ -14,6 +15,7 @@ const appRouter = new OpenAPIHono()
   .route("/blocks", blockApp)
   .route("/tags", tagApp)
   .route("/categories", categoryApp)
-  .route("/commerce", purchaseApp);
+  .route("/commerce", purchaseApp)
+  .route("/", stripeWebhookRoute);
 
 export default appRouter;

@@ -1,5 +1,5 @@
-/* eslint-disable @typescript-eslint/no-unsafe-return */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
+ 
+ 
 import { OpenAPIHono, createRoute, z } from "@hono/zod-openapi";
 import { userController } from "../controllers/user.controller.js";
 import { requireAuth } from "../middleware/requireAuth.js";
