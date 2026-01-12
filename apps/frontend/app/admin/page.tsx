@@ -2,13 +2,20 @@ import { apiClient } from "@/lib/api"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Gavel, ShieldCheck, Users, Wallet } from "lucide-react"
+import { Money } from "@/components/primitives/formatters"
 
 export default async function AdminPage() {
-  const { data: moderationQueue } = await apiClient.GET("/api/v1/admin/moderation", {
-    cache: "no-store",
-  })
+  const [moderationResponse, statsResponse] = await Promise.all([
+    apiClient.GET("/api/v1/admin/moderation", {
+      cache: "no-store",
+    }),
+    apiClient.GET("/api/v1/admin/stats" as any, {
+      cache: "no-store",
+    })
+  ])
 
-  const pendingCount = moderationQueue?.meta.total ?? 0
+  const pendingCount = moderationResponse.data?.meta.total ?? 0
+  const stats = statsResponse.data as any
 
   return (
     <div className="space-y-8">
@@ -29,8 +36,12 @@ export default async function AdminPage() {
           value={pendingCount.toString()}
         />
         <StatCard icon={ShieldCheck} label="Policy checks" value="Stable" />
-        <StatCard icon={Users} label="Creators" value="-" />
-        <StatCard icon={Wallet} label="Revenue" value="-" />
+        <StatCard icon={Users} label="Creators" value={stats?.totalCreators?.toString() || "0"} />
+        <StatCard 
+          icon={Wallet} 
+          label="Revenue" 
+          value={<Money amount={stats?.totalRevenue || 0} />} 
+        />
       </div>
 
       <Card className="bg-card/30 backdrop-blur-md border-border/40 rounded-[2rem]">
@@ -41,8 +52,8 @@ export default async function AdminPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="text-sm text-muted-foreground">
-          Review {pendingCount} blocks waiting for moderation. Creator and finance
-          dashboards will surface additional alerts once the admin APIs are wired.
+          Review {pendingCount} blocks waiting for moderation. 
+          The marketplace has generated <Money amount={stats?.totalRevenue || 0} /> in total revenue from {stats?.totalCreators || 0} approved creators.
         </CardContent>
       </Card>
     </div>
@@ -56,7 +67,7 @@ function StatCard({
 }: {
   icon: typeof Gavel
   label: string
-  value: string
+  value: React.ReactNode
 }) {
   return (
     <Card className="bg-card/40 backdrop-blur-xl border-border/50 rounded-[2rem]">
@@ -65,9 +76,9 @@ function StatCard({
           <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-widest">
             {label}
           </CardTitle>
-          <CardDescription className="text-2xl font-heading text-foreground mt-2">
+          <div className="text-2xl font-heading text-foreground mt-2">
             {value}
-          </CardDescription>
+          </div>
         </div>
         <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
           <Icon className="size-4" />

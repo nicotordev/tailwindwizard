@@ -1,8 +1,18 @@
+import { apiClient } from "@/lib/api"
+import { FinanceOverview } from "@/components/admin/finance-overview"
 import { Badge } from "@/components/ui/badge"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { AlertTriangle, Receipt } from "lucide-react"
 
-export default function AdminFinancePage() {
+export default async function AdminFinancePage() {
+  const [purchasesResponse, webhookResponse] = await Promise.all([
+    apiClient.GET("/api/v1/admin/purchases", {
+      params: { query: { limit: "10" } },
+      cache: "no-store",
+    }),
+    apiClient.GET("/api/v1/admin/finance/webhooks", {
+      cache: "no-store",
+    }),
+  ])
+
   return (
     <div className="space-y-8">
       <div className="space-y-3">
@@ -15,33 +25,13 @@ export default function AdminFinancePage() {
         </p>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2">
-        <Card className="bg-card/40 backdrop-blur-xl border-border/50 rounded-[2rem]">
-          <CardHeader className="flex flex-row items-center justify-between">
-            <div>
-              <CardTitle className="text-lg font-heading">Purchases</CardTitle>
-              <CardDescription>Global order feed</CardDescription>
-            </div>
-            <Receipt className="size-5 text-primary" />
-          </CardHeader>
-          <CardContent className="text-sm text-muted-foreground">
-            Connect admin commerce endpoints to stream marketplace purchases.
-          </CardContent>
-        </Card>
-
-        <Card className="bg-card/40 backdrop-blur-xl border-border/50 rounded-[2rem]">
-          <CardHeader className="flex flex-row items-center justify-between">
-            <div>
-              <CardTitle className="text-lg font-heading">Webhook health</CardTitle>
-              <CardDescription>Stripe event monitoring</CardDescription>
-            </div>
-            <AlertTriangle className="size-5 text-primary" />
-          </CardHeader>
-          <CardContent className="text-sm text-muted-foreground">
-            Awaiting webhook telemetry from the payments service.
-          </CardContent>
-        </Card>
-      </div>
+      <FinanceOverview 
+        initialPurchases={purchasesResponse.error ? [] : (purchasesResponse.data?.data as any) || []}
+        initialWebhookStats={webhookResponse.error ? { 
+          last24h: { total: 0, failed: 0, pending: 0, successRate: 100 }, 
+          lastEvents: [] 
+        } : (webhookResponse.data as any)}
+      />
     </div>
   )
 }

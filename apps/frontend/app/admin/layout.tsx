@@ -25,7 +25,7 @@ export default async function AdminLayout({
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <AdminTopBar />
         <main className="flex-1 overflow-y-auto overflow-x-hidden p-8">
-          <div className="max-w-6xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+          <div className="w-full space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
             {children}
           </div>
         </main>

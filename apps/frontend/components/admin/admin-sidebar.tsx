@@ -9,12 +9,17 @@ import {
   Users,
   Wallet,
   Shield,
+  Tags,
+  Layers,
 } from "lucide-react"
 
 const adminNav = [
   { title: "Overview", href: "/admin", icon: LayoutDashboard },
   { title: "Moderation", href: "/admin/blocks", icon: Gavel },
+  { title: "Categories", href: "/admin/categories", icon: Layers },
+  { title: "Tags", href: "/admin/tags", icon: Tags },
   { title: "Creators", href: "/admin/creators", icon: Users },
+  { title: "Users", href: "/admin/users", icon: Shield },
   { title: "Finance", href: "/admin/finance", icon: Wallet },
 ]
 

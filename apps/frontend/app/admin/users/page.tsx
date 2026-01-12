@@ -1,9 +1,9 @@
 import { apiClient } from "@/lib/api";
-import { CreatorModeration } from "@/components/admin/creator-moderation";
+import { UserManager } from "@/components/admin/user-manager";
 import { Badge } from "@/components/ui/badge";
 
-export default async function AdminCreatorsPage() {
-  const { data, error } = await apiClient.GET("/api/v1/admin/creators", {
+export default async function AdminUsersPage() {
+  const { data, error } = await apiClient.GET("/api/v1/admin/users", {
     cache: "no-store",
   });
 
@@ -12,15 +12,17 @@ export default async function AdminCreatorsPage() {
       <div className="space-y-3">
         <Badge variant="secondary">Users</Badge>
         <h1 className="text-4xl font-heading font-bold tracking-tight">
-          Creator management
+          User management
         </h1>
         <p className="text-muted-foreground max-w-2xl">
-          Review and approve creator applications to maintain marketplace
-          quality.
+          Manage user roles and monitor platform activity.
         </p>
       </div>
 
-      <CreatorModeration initialCreators={error ? [] : data?.data || []} />
+      <UserManager
+        initialUsers={error ? [] : data?.data || []}
+        meta={data?.meta || { total: 0, page: 1, limit: 20, totalPages: 0 }}
+      />
     </div>
   );
 }
