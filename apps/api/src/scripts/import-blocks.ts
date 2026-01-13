@@ -15,6 +15,8 @@ import {
 import { prisma } from "../db/prisma.js";
 import clerkClient from "../lib/clerkClient.js";
 import stripe from "../lib/stripe.js";
+import { blockService } from "../services/block.service.js";
+import { renderService } from "../services/render.service.js";
 
 const blocksFolder = path.join(process.cwd(), "individual");
 
@@ -174,10 +176,11 @@ async function main() {
       const content = fs.readFileSync(filePath, "utf-8");
 
       const slug = file.replace(".html", "").replace(/_/g, "-");
-      const prefix = file.split("_")[0];
+      const parts = file.split("_");
+      const prefix = parts[0] || "";
 
       // Determine Type
-      let type = BlockType.SECTION;
+      let type: BlockType = BlockType.SECTION;
       if (
         [
           "alert",
@@ -201,11 +204,11 @@ async function main() {
         .join(" ");
 
       // Category matching
-      const catSlug = categoryMapping[prefix];
+      const catSlug = prefix ? categoryMapping[prefix] : null;
       const categoryId = catSlug ? categoriesBySlug[catSlug] : null;
 
       try {
-        await prisma.$transaction(async (tx) => {
+        const newBlock = await prisma.$transaction(async (tx) => {
           // Check if block already exists
           const existing = await tx.block.findUnique({
             where: { slug },
@@ -217,7 +220,7 @@ async function main() {
           }
 
           console.log(`Importing: ${title} (${slug})...`);
-          await tx.block.create({
+          return await tx.block.create({
             data: {
               slug,
               title,
@@ -253,6 +256,15 @@ async function main() {
             },
           });
         });
+
+        if (newBlock) {
+          console.log(`Generating preview for ${title} (${slug})...`);
+          const job = await blockService.queueRenderJob(newBlock.id, false);
+          if (job) {
+            await renderService.processJob(job.id);
+            console.log(`Preview generated for ${slug}.`);
+          }
+        }
       } catch (err) {
         console.error(
           `Failed to import ${file}:`,

@@ -1,18 +1,18 @@
-import { createHash } from "crypto";
 import { PutObjectCommand } from "@aws-sdk/client-s3";
 import AdmZip from "adm-zip";
+import { createHash } from "crypto";
+import env from "../config/env.config.js";
 import type {
   BlockFramework,
   BlockStatus,
   BlockType,
+  FileKind,
   Prisma,
   StylingEngine,
   Visibility,
-  FileKind,
 } from "../db/generated/prisma/client.js";
 import { prisma } from "../db/prisma.js";
 import { r2Client } from "../lib/r2.js";
-import env from "../config/env.config.js";
 import { validateCode } from "../utils/validation.js";
 import { renderService } from "./render.service.js";
 
@@ -330,7 +330,7 @@ export const blockService = {
   }: BundleUploadInput): Promise<BundleUploadResult> {
     const sha256 = createHash("sha256").update(buffer).digest("hex");
     const isZip = fileName.toLowerCase().endsWith(".zip");
-    
+
     // Primary storage (the zip itself or the single file)
     const bundleObjectKey = `bundles/${blockId}/${sha256}-${fileName}`;
 
@@ -354,7 +354,11 @@ export const blockService = {
       const entries = zip.getEntries();
 
       for (const entry of entries) {
-        if (entry.isDirectory || entry.entryName.startsWith(".") || entry.entryName.includes("//.")) {
+        if (
+          entry.isDirectory ||
+          entry.entryName.startsWith(".") ||
+          entry.entryName.includes("//.")
+        ) {
           continue;
         }
 
@@ -364,13 +368,13 @@ export const blockService = {
 
         // Upload extracted file for renderer access
         const entryKey = `bundles/${blockId}/files/${entryPath}`;
-        
+
         await r2Client.send(
           new PutObjectCommand({
             Bucket: env.r2.bucketName,
             Key: entryKey,
             Body: entryBuffer,
-            ContentType: "application/octet-stream", 
+            ContentType: "application/octet-stream",
           })
         );
 
@@ -458,25 +462,24 @@ export const blockService = {
     };
   },
 
-  async queueRenderJob(blockId: string) {
+  async queueRenderJob(blockId: string, trigger = true) {
     const job = await prisma.renderJob.create({
       data: {
         block: { connect: { id: blockId } },
       },
     });
 
-    // Fire and forget: trigger rendering in background
-    renderService.processJob(job.id).catch((err: unknown) => {
-      console.error(`Failed to trigger render job ${job.id}:`, err);
-    });
+    if (trigger) {
+      // Fire and forget: trigger rendering in background
+      renderService.processJob(job.id).catch((err: unknown) => {
+        console.error(`Failed to trigger render job ${job.id}:`, err);
+      });
+    }
 
     return job;
   },
 
-  async queueRenderJobIfNeeded(
-    blockId: string,
-    options?: { force?: boolean }
-  ) {
+  async queueRenderJobIfNeeded(blockId: string, options?: { force?: boolean }) {
     const [block, pendingJob] = await Promise.all([
       prisma.block.findUnique({
         where: { id: blockId },

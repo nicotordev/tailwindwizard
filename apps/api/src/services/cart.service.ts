@@ -1,8 +1,8 @@
-import { prisma } from "../db/prisma.js";
-import type { LicenseType } from "../db/generated/prisma/client.js";
-import { HTTPException } from "hono/http-exception";
 import type { CartSchema } from "@tw/shared";
+import { HTTPException } from "hono/http-exception";
 import type { z } from "zod";
+import type { LicenseType } from "../db/generated/prisma/client.js";
+import { prisma } from "../db/prisma.js";
 
 export class CartService {
   async getCart(userId: string): Promise<z.infer<typeof CartSchema>> {
@@ -34,21 +34,20 @@ export class CartService {
     });
 
     if (!cart) {
-      cart = await prisma.cart.create({
+      const newCart = await prisma.cart.create({
         data: { userId },
         include: {
           items: {
             include: {
-              block: true, // Type placeholder, empty initially
+              block: true,
             },
           },
         },
       });
-      // Re-fetch to match structure if needed or just return empty items
-      return { ...cart, items: [] };
+      return { ...newCart, items: [] } as any;
     }
 
-    return cart;
+    return cart as any;
   }
 
   async addItem(userId: string, blockId: string, licenseType: LicenseType) {

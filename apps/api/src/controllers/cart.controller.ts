@@ -1,12 +1,12 @@
-import { cartService } from "../services/cart.service.js";
-import type { LicenseType } from "../db/generated/prisma/client.js";
-import type { Context } from "hono";
 import type { User } from "@clerk/backend";
+import type { Context } from "hono";
+import type { LicenseType } from "../db/generated/prisma/client.js";
+import { cartService } from "../services/cart.service.js";
 
 export const getCart = async (c: Context) => {
   const user = c.get("user") as User;
   const cart = await cartService.getCart(user.id);
-  return c.json(cart);
+  return c.json(cart, 200);
 };
 
 export const addToCart = async (c: Context) => {

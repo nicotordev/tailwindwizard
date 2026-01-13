@@ -1,32 +1,357 @@
+import { GetObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3";
+import { spawn } from "node:child_process";
+import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { dirname, join } from "node:path";
+import type { Readable } from "node:stream";
+import type { Page } from "playwright";
+import { chromium } from "playwright";
+import env from "../config/env.config.js";
 import { prisma } from "../db/prisma.js";
 import { r2Client } from "../lib/r2.js";
-import { PutObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
-import env from "../config/env.config.js";
-import { chromium } from "playwright";
-import { Readable } from "stream";
 
-// Helper to read stream
+type BlockType = "COMPONENT" | "SECTION" | "PAGE";
+
+async function captureAndUpload(page: Page, blockId: string): Promise<void> {
+  const viewports = [
+    { name: "DESKTOP", width: 1440, height: 900 },
+    { name: "TABLET", width: 768, height: 1024 },
+    { name: "MOBILE", width: 375, height: 667 },
+  ] as const;
+
+  for (const vp of viewports) {
+    await page.setViewportSize({ width: vp.width, height: vp.height });
+
+    // Wait a bit for layout and animations to settle
+    await page.waitForTimeout(800);
+
+    const buffer = await page.screenshot({ type: "jpeg", quality: 85 });
+    const key = `previews/${blockId}/${vp.name.toLowerCase()}.jpg`;
+
+    await r2Client.send(
+      new PutObjectCommand({
+        Bucket: env.r2.bucketName,
+        Key: key,
+        Body: buffer,
+        ContentType: "image/jpeg",
+      })
+    );
+
+    const publicUrl = `${env.r2.publicUrl}/${key}`;
+
+    await prisma.previewAsset.upsert({
+      where: {
+        blockId_viewport: {
+          blockId,
+          viewport: vp.name,
+        },
+      },
+      create: {
+        blockId,
+        viewport: vp.name,
+        url: publicUrl,
+        width: vp.width,
+        height: vp.height,
+      },
+      update: {
+        url: publicUrl,
+        width: vp.width,
+        height: vp.height,
+      },
+    });
+
+    if (vp.name === "DESKTOP") {
+      await prisma.block.update({
+        where: { id: blockId },
+        data: { screenshot: publicUrl },
+      });
+    }
+  }
+}
+
 async function streamToString(stream: Readable): Promise<string> {
   return await new Promise((resolve, reject) => {
     const chunks: Uint8Array[] = [];
-    stream.on("data", (chunk) => chunks.push(chunk));
+    stream.on("data", (chunk) => {
+      chunks.push(
+        Buffer.isBuffer(chunk) ? new Uint8Array(chunk) : (chunk as Uint8Array)
+      );
+    });
     stream.on("error", reject);
-    stream.on("end", () => resolve(Buffer.concat(chunks).toString("utf-8")));
+    stream.on("end", () => {
+      resolve(Buffer.concat(chunks).toString("utf-8"));
+    });
   });
 }
 
+interface ExecResult {
+  code: number;
+  stdout: string;
+  stderr: string;
+}
+
+async function execCmd(
+  cmd: string,
+  args: readonly string[],
+  cwd: string
+): Promise<ExecResult> {
+  return await new Promise((resolve) => {
+    const child = spawn(cmd, args, { cwd, stdio: ["ignore", "pipe", "pipe"] });
+    let stdout = "";
+    let stderr = "";
+    child.stdout.on("data", (d) => (stdout += String(d)));
+    child.stderr.on("data", (d) => (stderr += String(d)));
+    child.on("close", (code) => {
+      resolve({ code: code ?? 1, stdout, stderr });
+    });
+  });
+}
+
+function pickEntry(vfs: Record<string, string>): string {
+  const keys = Object.keys(vfs);
+  const preferred = ["src/App.tsx", "App.tsx", "src/index.tsx", "index.tsx"];
+  for (const p of preferred) if (vfs[p] != null) return p;
+
+  const tsx = keys.find((p) => p.endsWith(".tsx"));
+  if (tsx) return tsx;
+
+  const html = keys.find((p) => p.endsWith(".html"));
+  if (html) return html;
+
+  throw new Error("No valid entry point found (.tsx or .html).");
+}
+
+async function materializeVfs(
+  root: string,
+  vfs: Record<string, string>
+): Promise<void> {
+  for (const [p, content] of Object.entries(vfs)) {
+    const abs = join(root, p);
+    await mkdir(dirname(abs), { recursive: true });
+    await writeFile(abs, content, "utf-8");
+  }
+}
+
+function buildGlobalTailwindCss(): string {
+  // ✅ Esto es lo mínimo para que Tailwind + shadcn (tokens) funcionen en el preview.
+  // - @tailwind base/components/utilities habilita preflight + utilities
+  // - @layer base define bg/text usando variables shadcn
+  // - :root/.dark define variables (puedes pegar tu theme completo aquí)
+  return `
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --radius-3xl: calc(var(--radius) + 12px);
+  --radius-4xl: calc(var(--radius) + 16px);
+}
+
+:root {
+  --radius: 0.75rem;
+
+  /* defaults “neutros” para que bg-background/text-foreground existan */
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.2 0 0);
+
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.2 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.2 0 0);
+
+  --primary: oklch(0.45 0.18 290);
+  --primary-foreground: oklch(0.98 0 0);
+
+  --secondary: oklch(0.95 0.04 230);
+  --secondary-foreground: oklch(0.3 0.02 290);
+
+  --muted: oklch(0.96 0.01 290);
+  --muted-foreground: oklch(0.55 0.05 290);
+
+  --accent: oklch(0.93 0.03 290);
+  --accent-foreground: oklch(0.3 0.02 290);
+
+  --destructive: oklch(0.6 0.18 20);
+  --border: oklch(0.9 0.02 290);
+  --input: oklch(0.9 0.02 290);
+  --ring: oklch(0.45 0.18 290);
+}
+
+.dark {
+  --background: oklch(0.18 0.06 285);
+  --foreground: oklch(0.98 0.01 290);
+
+  --card: oklch(0.22 0.07 285);
+  --card-foreground: oklch(0.98 0.01 290);
+  --popover: oklch(0.22 0.07 285);
+  --popover-foreground: oklch(0.98 0.01 290);
+
+  --primary: oklch(0.7 0.16 235);
+  --primary-foreground: oklch(0.18 0.06 285);
+
+  --secondary: oklch(0.3 0.1 290);
+  --secondary-foreground: oklch(0.98 0.01 290);
+
+  --muted: oklch(0.3 0.05 285);
+  --muted-foreground: oklch(0.7 0.05 290);
+
+  --accent: oklch(0.3 0.1 285);
+  --accent-foreground: oklch(0.98 0.01 290);
+
+  --destructive: oklch(0.6 0.18 20);
+  --border: oklch(0.35 0.08 285);
+  --input: oklch(0.35 0.08 285);
+  --ring: oklch(0.7 0.16 235);
+}
+
+@layer base {
+  * {
+    border-color: var(--border);
+  }
+
+  body {
+    margin: 0;
+  }
+}
+`;
+}
+
+function buildWrapperHtml(entryJsPath: string): string {
+  const globalCss = buildGlobalTailwindCss();
+
+  return `<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Preview</title>
+
+  <!-- Tailwind-in-browser (compila el <style type="text/tailwindcss">) -->
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+
+  <style type="text/tailwindcss">
+${globalCss}
+  </style>
+</head>
+<body class="bg-background text-foreground">
+  <div id="root"></div>
+  <script type="module" src="${entryJsPath}"></script>
+</body>
+</html>`;
+}
+
+function buildHtmlWrapper(htmlContent: string): string {
+  const globalCss = buildGlobalTailwindCss();
+
+  return `<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Preview</title>
+
+  <!-- Tailwind-in-browser (compila el <style type="text/tailwindcss">) -->
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+
+  <style type="text/tailwindcss">
+${globalCss}
+  </style>
+</head>
+<body class="bg-background text-foreground">
+  ${htmlContent}
+</body>
+</html>`;
+}
+
+function buildEntryShim(entry: string, blockType: BlockType): string {
+  const importPath = "./" + entry;
+
+  // PAGE: asumimos fullscreen (sin wrapper “opinativo”)
+  if (blockType === "PAGE") {
+    return `
+import React from "react";
+import { createRoot } from "react-dom/client";
+import App from ${JSON.stringify(importPath)};
+
+const rootEl = document.getElementById("root");
+if (!rootEl) throw new Error("Missing #root");
+
+createRoot(rootEl).render(React.createElement(App));
+`;
+  }
+
+  // SECTION: container
+  if (blockType === "SECTION") {
+    return `
+import React from "react";
+import { createRoot } from "react-dom/client";
+import Section from ${JSON.stringify(importPath)};
+
+function PreviewShell(): JSX.Element {
+  return (
+    <Section />
+  );
+}
+
+const rootEl = document.getElementById("root");
+if (!rootEl) throw new Error("Missing #root");
+
+createRoot(rootEl).render(<PreviewShell />);
+`;
+  }
+
+  // COMPONENT: centrado
+  return `
+import React from "react";
+import { createRoot } from "react-dom/client";
+import Component from ${JSON.stringify(importPath)};
+
+function PreviewShell(): JSX.Element {
+  return (
+    <Component />
+  );
+}
+
+const rootEl = document.getElementById("root");
+if (!rootEl) throw new Error("Missing #root");
+
+createRoot(rootEl).render(<PreviewShell />);
+`;
+}
+
 export const renderService = {
-  async processJob(jobId: string) {
+  async processJob(jobId: string): Promise<void> {
     const job = await prisma.renderJob.findUnique({
       where: { id: jobId },
       include: {
         block: {
           include: {
-            codeBundle: {
-              include: {
-                blockFiles: true,
-              },
-            },
+            codeBundle: { include: { blockFiles: true } },
           },
         },
       },
@@ -43,505 +368,165 @@ export const renderService = {
       },
     });
 
-    let browser = null;
+    let browser: Awaited<ReturnType<typeof chromium.launch>> | null = null;
+    let workdir: string | null = null;
 
     try {
       const codeBundle = job.block.codeBundle;
-      if (!codeBundle) {
-        throw new Error("No code bundle found for this block.");
-      }
+      if (!codeBundle) throw new Error("No code bundle found for this block.");
 
-      // 1. Fetch all file contents
       const vfs: Record<string, string> = {};
-      
-      // Parallel fetch
-      await Promise.all(codeBundle.blockFiles.map(async (file) => {
-        try {
-            // Try fetching the individual file (new convention)
-            // Convention: bundles/{blockId}/files/{path}
-            // But wait, the path might contain slashes. S3 handles keys with slashes fine.
-            const key = `bundles/${job.blockId}/files/${file.path}`;
-            const getCmd = new GetObjectCommand({
-                Bucket: env.r2.bucketName,
-                Key: key,
-            });
-            const response = await r2Client.send(getCmd);
-            if (response.Body) {
-                const content = await streamToString(response.Body as Readable);
-                vfs[file.path] = content;
-            }
-        } catch (err) {
-            console.warn(`Failed to fetch file ${file.path} from R2`, err);
-            // Fallback: If it's a legacy single-file bundle, maybe we can recover?
-            // For now, ignore.
-        }
-      }));
+
+      await Promise.all(
+        codeBundle.blockFiles.map(async (file) => {
+          if (file.content) {
+            vfs[file.path] = file.content;
+            return;
+          }
+
+          const key = `bundles/${job.blockId}/files/${file.path}`;
+          const res = await r2Client.send(
+            new GetObjectCommand({ Bucket: env.r2.bucketName, Key: key })
+          );
+
+          if (!res.Body) return;
+
+          const content = await streamToString(res.Body as Readable);
+          vfs[file.path] = content;
+        })
+      );
 
       if (Object.keys(vfs).length === 0) {
         throw new Error("No source files could be retrieved.");
       }
 
-      // 2. Identify Entry Point
-      // Priority: App.tsx, index.tsx, or the first .tsx file
-      let entryPoint: string | undefined = Object.keys(vfs).find(p => p === "App.tsx" || p === "src/App.tsx");
-      if (!entryPoint) entryPoint = Object.keys(vfs).find(p => p === "index.tsx" || p === "src/index.tsx");
-      if (!entryPoint) entryPoint = Object.keys(vfs).find(p => p.endsWith(".tsx"));
-      
-      if (!entryPoint) {
-         throw new Error("No valid entry point (.tsx) found.");
-      }
+      const entry = pickEntry(vfs);
 
-      // 3. Prepare Browser Script
-      // We need to inject the VFS and a loader.
-      
-      const html = `
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Preview</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-      tailwind.config = {
-        theme: {
-          extend: {
-            colors: {
-              border: "hsl(var(--border))",
-              input: "hsl(var(--input))",
-              ring: "hsl(var(--ring))",
-              background: "hsl(var(--background))",
-              foreground: "hsl(var(--foreground))",
-              primary: {
-                DEFAULT: "hsl(var(--primary))",
-                foreground: "hsl(var(--primary-foreground))",
-              },
-              secondary: {
-                DEFAULT: "hsl(var(--secondary))",
-                foreground: "hsl(var(--secondary-foreground))",
-              },
-              destructive: {
-                DEFAULT: "hsl(var(--destructive))",
-                foreground: "hsl(var(--destructive-foreground))",
-              },
-              muted: {
-                DEFAULT: "hsl(var(--muted))",
-                foreground: "hsl(var(--muted-foreground))",
-              },
-              accent: {
-                DEFAULT: "hsl(var(--accent))",
-                foreground: "hsl(var(--accent-foreground))",
-              },
-              popover: {
-                DEFAULT: "hsl(var(--popover))",
-                foreground: "hsl(var(--popover-foreground))",
-              },
-              card: {
-                DEFAULT: "hsl(var(--card))",
-                foreground: "hsl(var(--card-foreground))",
-              },
-            },
-            borderRadius: {
-              lg: "var(--radius)",
-              md: "calc(var(--radius) - 2px)",
-              sm: "calc(var(--radius) - 4px)",
-            },
-          },
-        },
-      }
-    </script>
-    <style>
-      :root {
-        --background: 0 0% 100%;
-        --foreground: 222.2 84% 4.9%;
-        --card: 0 0% 100%;
-        --card-foreground: 222.2 84% 4.9%;
-        --popover: 0 0% 100%;
-        --popover-foreground: 222.2 84% 4.9%;
-        --primary: 222.2 47.4% 11.2%;
-        --primary-foreground: 210 40% 98%;
-        --secondary: 210 40% 96.1%;
-        --secondary-foreground: 222.2 47.4% 11.2%;
-        --muted: 210 40% 96.1%;
-        --muted-foreground: 215.4 16.3% 46.9%;
-        --accent: 210 40% 96.1%;
-        --accent-foreground: 222.2 47.4% 11.2%;
-        --destructive: 0 84.2% 60.2%;
-        --destructive-foreground: 210 40% 98%;
-        --border: 214.3 31.8% 91.4%;
-        --input: 214.3 31.8% 91.4%;
-        --ring: 222.2 84% 4.9%;
-        --radius: 0.5rem;
-      }
-    </style>
-    <script type="importmap">
-      {
-        "imports": {
-          "react": "https://esm.sh/react@18.2.0",
-          "react-dom/client": "https://esm.sh/react-dom@18.2.0/client",
-          "lucide-react": "https://esm.sh/lucide-react@0.294.0",
-          "framer-motion": "https://esm.sh/framer-motion@10.16.4",
-          "clsx": "https://esm.sh/clsx@2.0.0",
-          "tailwind-merge": "https://esm.sh/tailwind-merge@2.1.0"
-        }
-      }
-    </script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-</head>
-<body class="bg-white">
-    <div id="root" class="w-full h-full flex items-center justify-center"></div>
+      // HTML direct
+      if (entry.endsWith(".html")) {
+        const htmlContent = vfs[entry] ?? "";
+        const fullHtml = buildHtmlWrapper(htmlContent);
 
-    <script>
-      // 1. Inject VFS
-      window.__VFS__ = ${JSON.stringify(vfs)};
-      window.__ENTRY__ = "${entryPoint}";
+        browser = await chromium.launch({ headless: true });
+        const context = await browser.newContext({
+          viewport: { width: 1440, height: 900 },
+          deviceScaleFactor: 2,
+        });
 
-      // 2. Blob URL Cache
-      window.__BLOBS__ = {};
-
-      // 3. Register Custom Babel Plugin to Rewrite Imports
-      Babel.registerPlugin("vfs-resolver", {
-        visitor: {
-          ImportDeclaration(path) {
-            const source = path.node.source.value;
-            if (source.startsWith(".")) {
-               // Resolve path (simplified)
-               // Assume flat structure or basic relative resolution
-               // TODO: Real path resolution
-               let targetPath = source.replace(/^\\.\\//, ""); // remove ./
-               if (!targetPath.endsWith(".tsx") && !targetPath.endsWith(".ts")) {
-                  // try extensions
-                  if (window.__VFS__[targetPath + ".tsx"]) targetPath += ".tsx";
-                  else if (window.__VFS__[targetPath + ".ts"]) targetPath += ".ts";
-               }
-               
-               if (window.__BLOBS__[targetPath]) {
-                 path.node.source.value = window.__BLOBS__[targetPath];
-               } else {
-                 console.warn("Could not resolve import:", source);
-               }
-            }
+        // ✅ Permite cdn.jsdelivr.net para Tailwind browser
+        await context.route("**/*", async (route) => {
+          const url = route.request().url();
+          const allow =
+            url.startsWith("data:") ||
+            url.startsWith("blob:") ||
+            url.startsWith("https://cdn.jsdelivr.net/");
+          if (!allow && !url.startsWith("file://")) {
+            await route.abort();
+            return;
           }
-        }
-      });
+          await route.continue();
+        });
 
-      // 4. Loader Function
-      async function loadVFS() {
-        const sortedFiles = Object.keys(window.__VFS__); 
-        // Naive dependency handling: Just process all files and hope Babel plugin handles rewrites lazy enough?
-        // Actually, for ES modules, we need to create the Blobs for ALL files first, so the URLs exist when we import.
-        
-        // Step A: Create Blobs for everything (Initial pass)
-        // We can't rewrite imports yet because we don't know the URLs of dependencies.
-        // But we can generate the URLs first? No, the URL points to the Blob, and the Blob contains the code.
-        // Circular dependency: Code needs URL of Dep, Dep needs URL of SubDep.
-        // Solution: Use a registry or variable replacement?
-        // EASIER: Use "Data URIs" or just pre-allocate URLs? No.
-        
-        // CORRECT APPROACH with ES Modules in Browser:
-        // We must process in topological order OR use a module loader (SystemJS).
-        // Since we want to use native ES modules (via type="module"), we are stuck unless we use a Service Worker to intercept network requests.
-        // Service Worker is the cleanest "Virtual File System" for browser.
-        // But setup is complex for a screenshot job.
-        
-        // FALLBACK: Bundle it! 
-        // We will just concatenate files? No, scope issues.
-        
-        // Let's try the Babel Transform loop with a multi-pass or just naive "Pre-process all to find dependencies"?
-        
-        // SIMPLIFIED STRATEGY: 
-        // 1. Process all "leaf" nodes (no local imports).
-        // 2. Then process nodes that import them.
-        // Too complex.
-        
-        // SYSTEMJS APPROACH (Simulated):
-        // Convert everything to CommonJS-ish and use a tiny require() implementation?
-        // Babel "transform" with "presets: ['env']" -> "modules": "commonjs"
-        
-        const modules = {};
-        window.require = function(path) {
-            // resolve path
-            const name = path.replace(/^\\.\\//, "").replace(/\\.(tsx|ts|js|jsx)$/, "");
-            // Find key in modules
-            const found = Object.keys(modules).find(k => k.includes(name));
-            if (modules[found]) return modules[modules[found]];
-            console.error("Module not found:", path);
-            return {};
-        };
+        const page = await context.newPage();
+        await page.setContent(fullHtml, { waitUntil: "networkidle" });
 
-        // Standard libs
-        const libs = {
-            "react": React,
-            "react-dom/client": ReactDOM,
-            "lucide-react": LucideReact, // We need to expose this from CDN
-            "framer-motion": FramerMotion,
-            "clsx": { clsx: window.clsx },
-            "tailwind-merge": { twMerge: window.tailwindMerge }
-        };
-        // Mock require for libs
-        const oldRequire = window.require;
-        window.require = (path) => {
-            if (libs[path]) return libs[path];
-            return oldRequire(path);
-        }
+        // espera a que haya renderizado todo (Tailwind compiling + layout)
+        await page.waitForTimeout(1000);
 
-        // Compile all files to CommonJS
-        for (const [path, code] of Object.entries(window.__VFS__)) {
-            if (path.endsWith(".css")) {
-                // Inject CSS
-                const style = document.createElement("style");
-                style.textContent = code;
-                document.head.appendChild(style);
-                continue;
-            }
+        await captureAndUpload(page, job.blockId);
 
-            try {
-                const result = Babel.transform(code, {
-                    presets: ["react", "typescript", ["env", { modules: "commonjs" }]],
-                    filename: path,
-                });
-                
-                // Wrap in a function
-                const module = { exports: {} };
-                const func = new Function("exports", "require", "module", "React", result.code);
-                
-                // We delay execution? No, simplistic app usually runs immediately.
-                // But we need to store the factory to execute later when required?
-                // For simplicity: Store the factory.
-                modules[path] = module.exports; // placeholder
-                
-                // Execution wrapper
-                modules[path] = (() => {
-                   const m = { exports: {} };
-                   func(m.exports, window.require, m, window.React);
-                   return m.exports;
-                })();
-
-            } catch (err) {
-                console.error("Compilation error in " + path, err);
-            }
-        }
-
-        // Run Entry Point
-        const entryExports = modules[window.__ENTRY__];
-        if (entryExports && entryExports.default) {
-             const root = ReactDOM.createRoot(document.getElementById('root'));
-             root.render(React.createElement(entryExports.default));
-        }
+        await prisma.renderJob.update({
+          where: { id: jobId },
+          data: { status: "SUCCEEDED", finishedAt: new Date() },
+        });
+        return;
       }
-    </script>
-    
-    <!-- Load Dependencies Globals for our 'require' hack -->
-    <script src="https://unpkg.com/react@18.2.0/umd/react.production.min.js"></script>
-    <script src="https://unpkg.com/react-dom@18.2.0/umd/react-dom.production.min.js"></script>
-    <script src="https://unpkg.com/lucide-react@0.294.0/dist/umd/lucide-react.min.js"></script>
-    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
-    <script src="https://unpkg.com/clsx@2.0.0/dist/clsx.min.js"></script>
-    <script src="https://unpkg.com/tailwind-merge@2.1.0/dist/bundle.js"></script>
 
-    <script>
-       // Expose globals for the require map
-       window.React = window.React;
-       window.ReactDOM = window.ReactDOM;
-       window.LucideReact = window.lucide; // check global name
-       window.FramerMotion = window.Motion; // check global name
-       window.clsx = window.clsx;
-       window.tailwindMerge = window.twMerge;
-    </script>
-    
-    <script>
-      // Trigger load
-      window.addEventListener('load', () => {
-         // Need to wait for Babel
-         if (typeof Babel !== 'undefined') {
-             // We defined loadVFS above but it relies on vfs var which is not in this scope?
-             // Ah, I injected it via template literal into a script block above.
-             // Wait, I put the logic inside a function loadVFS but didn't define it in the global scope correctly in the previous block?
-             // I will put all logic in one big script block to be safe.
-         }
-      });
-    </script>
-</body>
-</html>
-      `;
-      
-      // ... (rest of playwright setup) 
-      
+      // 1) create temp dir
+      workdir = await mkdtemp(join(tmpdir(), "renderjob-"));
+      const distDir = join(workdir, "dist");
+      await mkdir(distDir, { recursive: true });
+
+      // 2) write files
+      await materializeVfs(workdir, vfs);
+
+      // 3) create entry shim with PreviewShell + correct globals
+      const blockType = job.block.type as BlockType;
+      const entryShim = buildEntryShim(entry, blockType);
+
+      const shimPath = join(workdir, "entry.tsx");
+      await writeFile(shimPath, entryShim, "utf-8");
+
+      // 4) bun build -> ESM
+      const buildOut = join(distDir, "entry.js");
+      const bunRes = await execCmd(
+        "bun",
+        [
+          "build",
+          shimPath,
+          "--outfile",
+          buildOut,
+          "--format=esm",
+          "--target=browser",
+          "--minify",
+        ],
+        workdir
+      );
+
+      if (bunRes.code !== 0) {
+        throw new Error(`bun build failed:\n${bunRes.stderr || bunRes.stdout}`);
+      }
+
+      // 5) wrapper html (con @tailwind base/components/utilities + tokens shadcn)
+      const html = buildWrapperHtml("./dist/entry.js");
+      const htmlPath = join(workdir, "index.html");
+      await writeFile(htmlPath, html, "utf-8");
+
+      // 6) playwright load local file
       browser = await chromium.launch({ headless: true });
       const context = await browser.newContext({
         viewport: { width: 1440, height: 900 },
         deviceScaleFactor: 2,
       });
+
+      // ✅ No mates Tailwind browser: permite cdn.jsdelivr.net completo
+      await context.route("**/*", async (route) => {
+        const url = route.request().url();
+        const allow =
+          url.startsWith("file://") ||
+          url.startsWith("https://cdn.jsdelivr.net/");
+        if (!allow) {
+          await route.abort();
+          return;
+        }
+        await route.continue();
+      });
+
       const page = await context.newPage();
+      await page.goto(`file://${htmlPath}`, { waitUntil: "networkidle" });
 
-      // We need to execute the logic inside the browser page
-      // The HTML string above is getting complicated.
-      // Let's simplify: passing VFS via page.evaluate is cleaner than string injection.
-      
-      await page.setContent(html, { waitUntil: "networkidle" });
-      
-      // Inject VFS data safely
-      await page.evaluate((data) => {
-          (window as any).__VFS__ = data.vfs;
-          (window as any).__ENTRY__ = data.entryPoint;
-      }, { vfs, entryPoint });
+      // ✅ espera a que React monte algo dentro de #root
+      await page.waitForSelector("#root > *", { timeout: 10_000 });
+      await page.waitForTimeout(300);
 
-      // Inject the loader script
-      await page.addScriptTag({
-        content: 
-        `
-        (function() {
-            const modules = {};
-            const libs = {
-                "react": window.React,
-                "react-dom/client": window.ReactDOM,
-                "lucide-react": window.lucide,
-                "framer-motion": window.Motion,
-                "clsx": { clsx: window.clsx },
-                "tailwind-merge": { twMerge: window.twMerge }
-            };
-
-            function require(path) {
-                if (libs[path]) return libs[path];
-                
-                // Normalize path
-                // Remove ./ and extension
-                const clean = path.replace(/^\\.\\//, "").replace(/\\.[a-z]+$/, "");
-                
-                // Find matching file in VFS keys
-                // Keys are like "src/components/Button.tsx"
-                // Req is "components/Button"
-                const match = Object.keys(window.__VFS__).find(k => {
-                    const kClean = k.replace(/\\.[a-z]+$/, "");
-                    return kClean.endsWith(clean);
-                });
-                
-                if (match && modules[match]) return modules[match];
-                
-                console.warn("Module not found or not compiled:", path);
-                return {};
-            }
-
-            // Compile Order: We need a smarter way than "loop once".
-            // CommonJS factory pattern allows lazy eval.
-            
-            const registry = {}; // path -> factory function
-            
-            for (const [path, code] of Object.entries(window.__VFS__)) {
-                if (path.endsWith(".css")) {
-                    const style = document.createElement("style");
-                    style.textContent = code;
-                    document.head.appendChild(style);
-                    continue;
-                }
-                
-                try {
-                    const res = Babel.transform(code, {
-                        presets: ["react", "typescript", ["env", { modules: "commonjs" }]],
-                        filename: path
-                    });
-                    
-                    registry[path] = new Function("exports", "require", "module", "React", res.code);
-                } catch(e) { console.error("Babel error", e); }
-            }
-            
-            // Override require to execute factory if needed
-            function requireDynamic(path) {
-                if (libs[path]) return libs[path];
-                 const clean = path.replace(/^\\.\\//, "").replace(/\\.[a-z]+$/, "");
-                 const match = Object.keys(window.__VFS__).find(k => k.includes(clean)); // sloppy match
-                 
-                 if (!match) return {};
-                 
-                 if (modules[match]) return modules[match];
-                 
-                 if (registry[match]) {
-                     const m = { exports: {} };
-                     registry[match](m.exports, requireDynamic, m, window.React);
-                     modules[match] = m.exports;
-                     return m.exports;
-                 }
-                 return {};
-            }
-
-            // Run Entry
-            const entry = window.__ENTRY__;
-            if (registry[entry]) {
-                const exports = requireDynamic("./" + entry); // simulate relative import
-                if (exports.default) {
-                     const root = ReactDOM.createRoot(document.getElementById('root'));
-                     root.render(React.createElement(exports.default));
-                }
-            }
-        })();
-        `
-      });
-
-      // ... Rest of screenshot logic
-      
-      // Wait for rendering
-      await page.waitForTimeout(2000);
-
-      const viewports = [
-        { name: "MOBILE", width: 375, height: 667 },
-        { name: "TABLET", width: 768, height: 1024 },
-        { name: "DESKTOP", width: 1440, height: 900 },
-      ] as const;
-
-      await prisma.previewAsset.deleteMany({
-        where: { blockId: job.blockId },
-      });
-
-      for (const vp of viewports) {
-        await page.setViewportSize({ width: vp.width, height: vp.height });
-        await page.waitForTimeout(500);
-
-        const buffer = await page.screenshot({ type: "jpeg", quality: 80 });
-        const objectKey = `previews/${job.blockId}/${vp.name.toLowerCase()}.jpeg`;
-
-        await r2Client.send(
-          new PutObjectCommand({
-            Bucket: env.r2.bucketName,
-            Key: objectKey,
-            Body: buffer,
-            ContentType: "image/jpeg",
-          })
-        );
-
-        const url = `${env.r2.publicUrl}/${objectKey}`;
-
-        await prisma.previewAsset.create({
-          data: {
-            blockId: job.blockId,
-            viewport: vp.name,
-            url,
-            width: vp.width,
-            height: vp.height,
-            watermarked: false,
-          },
-        });
-      }
+      await captureAndUpload(page, job.blockId);
 
       await prisma.renderJob.update({
         where: { id: jobId },
         data: { status: "SUCCEEDED", finishedAt: new Date() },
       });
     } catch (error: unknown) {
-      console.error(`Render job ${jobId} failed:`, error);
       const message =
-        error instanceof Error ? error.message : "Unknown error during rendering";
+        error instanceof Error
+          ? error.message
+          : "Unknown error during rendering";
       await prisma.renderJob.update({
         where: { id: jobId },
-        data: {
-          status: "FAILED",
-          finishedAt: new Date(),
-          error: message,
-        },
+        data: { status: "FAILED", finishedAt: new Date(), error: message },
       });
     } finally {
-      if (browser) {
-        await browser.close();
-      }
+      if (browser) await browser.close();
+      if (workdir) await rm(workdir, { recursive: true, force: true });
     }
   },
 };

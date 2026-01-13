@@ -1,5 +1,4 @@
 "use client";
-
 import type { components, paths } from "@/types/api";
 import type {
   Block,
@@ -94,26 +93,6 @@ type BundleUploadResponse = {
 
 const axiosClient = axios.create({
   baseURL: "http://localhost:3001",
-});
-
-// Add a request interceptor to inject the Clerk token
-axiosClient.interceptors.request.use(async (config) => {
-  try {
-    // We can only get the token on the client side
-    if (typeof window !== "undefined") {
-      // @ts-ignore - Clerk is added to window by the Clerk script
-      const Clerk = (window as any).Clerk;
-      if (Clerk?.session) {
-        const token = await Clerk.session.getToken();
-        if (token) {
-          config.headers.Authorization = `Bearer ${token}`;
-        }
-      }
-    }
-  } catch (error) {
-    console.error("Error setting auth header:", error);
-  }
-  return config;
 });
 
 /**

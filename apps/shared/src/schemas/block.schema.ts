@@ -64,7 +64,7 @@ export const BlockSchema = z
       "UNPUBLISHED",
       "ARCHIVED",
     ]),
-    price: z.string().or(z.number()),
+    price: z.any(),
     currency: z.enum(["USD", "EUR", "CLP", "GBP", "MXN", "ARS", "BRL"]),
 
     // Relations
