@@ -1932,7 +1932,22 @@ export interface paths {
                     };
                     content: {
                         "application/json": {
-                            data: unknown[];
+                            data: (components["schemas"]["Purchase"] & {
+                                buyer?: {
+                                    id: string;
+                                    name: string | null;
+                                    email: string;
+                                    avatarUrl: string | null;
+                                };
+                                lineItems?: {
+                                    block: {
+                                        id: string;
+                                        title: string;
+                                        slug: string;
+                                        screenshot?: string | null;
+                                    };
+                                }[];
+                            })[];
                             meta: components["schemas"]["PaginationMeta"];
                         };
                     };
@@ -1999,7 +2014,7 @@ export interface paths {
                                 pending: number;
                                 successRate: number;
                             };
-                            lastEvents: unknown[];
+                            lastEvents: components["schemas"]["WebhookEvent"][];
                         };
                     };
                 };
@@ -3015,7 +3030,13 @@ export interface components {
             avatarUrl: string | null;
             /** @enum {string} */
             role: "ADMIN" | "USER";
+            /** @enum {string} */
+            authProvider: "CLERK";
+            externalAuthId: string | null;
+            /** @default false */
+            isBanned: boolean;
             createdAt: string;
+            updatedAt: string;
         };
         UpdateUser: {
             name?: string;
@@ -3032,6 +3053,7 @@ export interface components {
                     id: string;
                     title: string;
                     slug: string;
+                    screenshot?: string | null;
                 };
             }[];
         };
@@ -3100,7 +3122,7 @@ export interface components {
             slug: string;
             title: string;
             description: string | null;
-            iconURL?: string | null;
+            screenshot?: string | null;
             /** @enum {string} */
             type: "COMPONENT" | "SECTION" | "PAGE";
             /** @enum {string} */
@@ -3148,6 +3170,8 @@ export interface components {
             countryCode: string | null;
             stripeAccountStatus: string;
             isApprovedSeller: boolean;
+            /** @default false */
+            isBanned: boolean;
             createdAt: string;
         };
         CreateCreator: {
@@ -3174,6 +3198,11 @@ export interface components {
             slug: string;
             description?: string | null;
             icon?: string | null;
+            /**
+             * @default LUCIDE
+             * @enum {string}
+             */
+            iconType: "IMAGE" | "LUCIDE" | "REACT_ICON" | "EMOJI";
             /** @default 0 */
             priority: number;
             /** @default false */
@@ -3186,17 +3215,38 @@ export interface components {
             id: string;
             name: string;
             slug: string;
+            icon?: string | null;
+            /**
+             * @default IMAGE
+             * @enum {string}
+             */
+            iconType: "IMAGE" | "LUCIDE" | "REACT_ICON" | "EMOJI";
             description?: string | null;
             _count?: {
                 blocks: number;
             };
+        };
+        WebhookEvent: {
+            id: string;
+            /** @enum {string} */
+            provider: "STRIPE";
+            /** @enum {string} */
+            status: "RECEIVED" | "PROCESSED" | "FAILED" | "IGNORED";
+            externalId: string;
+            eventType: string;
+            payload?: unknown;
+            receivedAt: string;
+            processedAt: string | unknown;
+            error: string | null;
+            createdAt: string;
+            updatedAt: string;
         };
         CreateBlock: {
             title: string;
             slug: string;
             description?: string;
             /** Format: uri */
-            iconURL?: string;
+            screenshot?: string;
             /**
              * @default COMPONENT
              * @enum {string}
@@ -3231,7 +3281,7 @@ export interface components {
             slug?: string;
             description?: string;
             /** Format: uri */
-            iconURL?: string;
+            screenshot?: string;
             /**
              * @default COMPONENT
              * @enum {string}
