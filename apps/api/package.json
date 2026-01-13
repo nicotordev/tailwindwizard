@@ -24,7 +24,7 @@
     "db:migrate:deploy": "prisma migrate deploy",
     "db:studio": "prisma studio",
     "db:seed": "tsx prisma/seed.ts",
-    "postinstall": "pnpm run db:generate && pnpm run db:migrate:deploy",
+    "postinstall": "pnpm run db:generate",
     "backfill:previews": "tsx src/scripts/backfill-previews.ts"
   },
   "license": "ISC",
