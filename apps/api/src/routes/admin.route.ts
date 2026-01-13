@@ -2,9 +2,11 @@ import { OpenAPIHono, createRoute, z } from "@hono/zod-openapi";
 import {
   BlockSchema,
   CategorySchema,
-  CreatorSchema,
+  WebhookEventSchema,
   TagSchema,
   UserSchema,
+  PurchaseSchema,
+  CreatorSchema,
 } from "@tw/shared";
 import { adminController } from "../controllers/admin.controller.js";
 import { requireAdmin } from "../middleware/requireAdmin.js";
@@ -592,9 +594,27 @@ const listPurchasesRoute = createRoute({
         "application/json": {
           schema: z.object({
             data: z.array(
-              z.object({
-                id: z.string(),
-                userId: z.string(),
+              PurchaseSchema.extend({
+                buyer: z
+                  .object({
+                    id: z.string(),
+                    name: z.string().nullable(),
+                    email: z.string(),
+                    avatarUrl: z.string().nullable(),
+                  })
+                  .optional(),
+                lineItems: z
+                  .array(
+                    z.object({
+                      block: z.object({
+                        id: z.string(),
+                        title: z.string(),
+                        slug: z.string(),
+                        screenshot: z.string().nullable().optional(),
+                      }),
+                    })
+                  )
+                  .optional(),
               })
             ),
             meta: PaginationMeta,
