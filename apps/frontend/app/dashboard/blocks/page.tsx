@@ -1,6 +1,6 @@
-import { Metadata } from "next";
-import { apiClient } from "@/lib/api";
 import { CreatorBlocksView } from "@/components/creator/blocks-view";
+import { apiClient } from "@/lib/api";
+import { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "My Blocks | TailwindWizard",
@@ -34,8 +34,10 @@ export default async function CreatorBlocksPage(props: {
   }
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-700">
-      <CreatorBlocksView blocks={data.data || []} meta={data.meta} />
-    </div>
+    <CreatorBlocksView
+      blocks={data.data || []}
+      meta={data.meta}
+      searchParams={searchParams}
+    />
   );
 }

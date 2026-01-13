@@ -25,6 +25,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { frontendApi } from "@/lib/frontend-api";
 import type { components } from "@/types/api";
+import type { AxiosError } from "axios";
 import { FileJson, Layers, Pencil, Plus, Search, Trash2 } from "lucide-react";
 import * as React from "react";
 import { toast } from "sonner";
@@ -36,7 +37,9 @@ interface CategoryManagerProps {
 }
 
 export function CategoryManager({ initialCategories }: CategoryManagerProps) {
-  const [categories, setCategories] = React.useState(initialCategories);
+  const [categories, setCategories] = React.useState<Category[]>(
+    Array.isArray(initialCategories) ? initialCategories : []
+  );
   const [filter, setFilter] = React.useState("");
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
   const [isImportDialogOpen, setIsImportDialogOpen] = React.useState(false);
@@ -46,11 +49,24 @@ export function CategoryManager({ initialCategories }: CategoryManagerProps) {
   const [jsonInput, setJsonInput] = React.useState("");
   const [isLoading, setIsLoading] = React.useState(false);
 
-  const filteredCategories = categories.filter(
-    (c) =>
-      c.name.toLowerCase().includes(filter.toLowerCase()) ||
-      c.slug.toLowerCase().includes(filter.toLowerCase())
-  );
+  // Sync state when props change (crucial for Next.js App Router navigations)
+  React.useEffect(() => {
+    if (Array.isArray(initialCategories)) {
+      setCategories(initialCategories);
+    }
+  }, [initialCategories]);
+
+  const filteredCategories = React.useMemo(() => {
+    const safeCategories = Array.isArray(categories) ? categories : [];
+    if (!filter.trim()) return safeCategories;
+
+    const searchTerm = filter.toLowerCase();
+    return safeCategories.filter((c) => {
+      const name = (c?.name ?? "").toLowerCase();
+      const slug = (c?.slug ?? "").toLowerCase();
+      return name.includes(searchTerm) || slug.includes(searchTerm);
+    });
+  }, [categories, filter]);
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -61,10 +77,10 @@ export function CategoryManager({ initialCategories }: CategoryManagerProps) {
       const payload = {
         name: currentCategory.name,
         slug: currentCategory.slug,
-        description: currentCategory.description,
-        icon: currentCategory.icon,
-        priority: currentCategory.priority,
-        isFeatured: currentCategory.isFeatured,
+        description: currentCategory.description || undefined,
+        icon: currentCategory.icon || undefined,
+        priority: Number(currentCategory.priority) || 0,
+        isFeatured: !!currentCategory.isFeatured,
       };
 
       if (currentCategory.id) {
@@ -75,15 +91,36 @@ export function CategoryManager({ initialCategories }: CategoryManagerProps) {
         setCategories((prev) => prev.map((c) => (c.id === data.id ? data : c)));
         toast.success("Category updated");
       } else {
-        const { data } = await frontendApi.admin.categories.create(
-          payload
-        );
+        const { data } = await frontendApi.admin.categories.create(payload);
         setCategories((prev) => [...prev, data]);
         toast.success("Category created");
       }
       setIsDialogOpen(false);
     } catch (error) {
-      toast.error("Failed to save category");
+      console.error("Failed to save category:", error);
+
+      let message = "Failed to save category";
+
+      const axiosError = error as
+        | AxiosError<{
+            errors: { path: string[]; message: string }[];
+          }>
+        | AxiosError<{ message: string }>;
+
+      if (axiosError.response?.data && "errors" in axiosError.response?.data) {
+        // Hono/Zod validation errors
+        const validationErrors = axiosError.response.data.errors
+          .map((err) => `${err.path.join(".")}: ${err.message}`)
+          .join(", ");
+        message = `Validation Error: ${validationErrors}`;
+      } else if (
+        axiosError.response?.data &&
+        "message" in axiosError.response?.data
+      ) {
+        message = axiosError.response.data.message;
+      }
+
+      toast.error(message);
     } finally {
       setIsLoading(false);
     }
@@ -149,14 +186,21 @@ export function CategoryManager({ initialCategories }: CategoryManagerProps) {
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div className="relative w-full md:w-[320px]">
-          <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            placeholder="Search categories..."
-            value={filter}
-            onChange={(e) => setFilter(e.target.value)}
-            className="pl-9 rounded-xl bg-background/60"
-          />
+        <div className="space-y-1">
+          <div className="relative w-full md:w-[320px]">
+            <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              placeholder="Search categories..."
+              value={filter}
+              onChange={(e) => setFilter(e.target.value)}
+              className="pl-9 rounded-xl bg-background/60"
+            />
+          </div>
+          <p className="text-[10px] text-muted-foreground px-1">
+            {categories.length === 0
+              ? "No categories in database"
+              : `Showing ${filteredCategories.length} of ${categories.length} categories`}
+          </p>
         </div>
         <div className="flex items-center gap-2">
           <Button
@@ -432,7 +476,7 @@ export function CategoryManager({ initialCategories }: CategoryManagerProps) {
                 value={jsonInput}
                 onChange={(e) => setJsonInput(e.target.value)}
                 placeholder='[{"name": "Buttons", "slug": "buttons", "icon": "🔘"}]'
-                className="rounded-xl min-h-[300px] font-mono text-xs"
+                className="rounded-xl min-h-[300px] font-mono text-xs max-h-[400px] overflow-auto"
               />
             </div>
 

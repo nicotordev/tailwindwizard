@@ -88,7 +88,17 @@ export const userService = {
     if (!user?.externalAuthId)
       throw new Error("User not found or missing external ID");
 
-    // Fetch current clerk user to preserve existing metadata (like ADMIN role)
+    // Determine system role from env (must be ADMIN or USER)
+    const adminEmails = process.env.ADMIN_EMAILS?.split(",") ?? [];
+    const systemRole: "ADMIN" | "USER" = adminEmails.includes(user.email) ? "ADMIN" : "USER";
+
+    // Update local Prisma record
+    await prisma.user.update({
+      where: { id: userId },
+      data: { role: systemRole },
+    });
+
+    // Fetch current clerk user to preserve existing metadata
     const clerkUser = await clerkClient.users.getUser(user.externalAuthId);
     const existingMetadata = clerkUser.publicMetadata || {};
 
@@ -97,9 +107,9 @@ export const userService = {
       publicMetadata: {
         ...existingMetadata,
         onboardingComplete: true,
-        role: existingMetadata.role ?? "USER",
+        role: systemRole, // Strictly ADMIN or USER
         appRole: role.toLowerCase(),
-        isCreator: role === "CREATOR",
+        isCreator: role === "CREATOR", // This is the flag we use to identify creators
       },
     });
 

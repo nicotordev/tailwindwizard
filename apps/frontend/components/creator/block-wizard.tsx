@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { useCategories } from "@/hooks/use-categories";
 import { frontendApi } from "@/lib/frontend-api";
 import { cn } from "@/lib/utils";
+import { CreateBlockSchema } from "@tw/shared";
 import StackIcon, { type IconName } from "tech-stack-icons";
 import {
   VisibilityToggle,
@@ -38,6 +39,8 @@ import {
   Wand2,
   Info,
   XCircle,
+  Code2,
+  Terminal,
 } from "lucide-react";
 import { 
   FiPackage, 
@@ -55,6 +58,8 @@ import {
 import type { IconType } from "react-icons/lib";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Spinner } from "@/components/ui/spinner";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 
 type WizardStep = "metadata" | "pricing" | "upload" | "preview" | "submit";
 
@@ -153,6 +158,13 @@ export function BlockWizard() {
   const [jobStatus, setJobStatus] = React.useState<"QUEUED" | "RUNNING" | "SUCCEEDED" | "FAILED" | null>(null);
   const [jobError, setJobError] = React.useState<string | null>(null);
   const [isPreviewing, setIsPreviewing] = React.useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [previews, setPreviews] = React.useState<any[]>([]);
+
+  const [isDevMode, setIsDevMode] = React.useState(false);
+  const [jsonInput, setJsonInput] = React.useState("");
+  const [jsonError, setJsonError] = React.useState<string | null>(null);
+  const isUpdatingFromJson = React.useRef(false);
 
   // Polling logic for render jobs
   React.useEffect(() => {
@@ -166,6 +178,19 @@ export function BlockWizard() {
           if (data.status === "SUCCEEDED") {
             toast.success("Preview rendered successfully!");
             clearInterval(pollInterval);
+            
+            if (blockId) {
+                try {
+                    // Re-fetch block to get the generated previews
+                    const blockRes = await frontendApi.blocks.identifier(blockId);
+                    if (blockRes.data.previews) {
+                        setPreviews(blockRes.data.previews);
+                    }
+                } catch (err) {
+                    console.error("Failed to fetch previews:", err);
+                }
+            }
+
           } else if (data.status === "FAILED") {
             setJobError(data.error || "Unknown rendering error.");
             toast.error("Preview rendering failed.");
@@ -180,7 +205,7 @@ export function BlockWizard() {
     return () => {
       if (pollInterval) clearInterval(pollInterval);
     };
-  }, [previewJobId, jobStatus]);
+  }, [previewJobId, jobStatus, blockId]);
   const [draft, setDraft] = React.useState<BlockDraft>({
     title: "",
     slug: "",
@@ -195,6 +220,66 @@ export function BlockWizard() {
     stylingEngine: "TAILWIND",
     visibility: "PRIVATE",
   });
+
+  // Sync draft to JSON when dev mode is enabled or draft changes
+  React.useEffect(() => {
+    if (isDevMode && !isUpdatingFromJson.current) {
+      setJsonInput(JSON.stringify(draft, null, 2));
+    }
+  }, [draft, isDevMode]);
+
+  const handleJsonChange = (value: string) => {
+    setJsonInput(value);
+    try {
+      const parsed = JSON.parse(value);
+      // Basic validation to ensure we don't break the state
+      if (typeof parsed === "object" && parsed !== null) {
+        // Create a copy for validation as the schema expects specific types
+        const toValidate = {
+          ...parsed,
+          price: typeof parsed.price === "string" ? Number(parsed.price) : parsed.price,
+          tags: typeof parsed.tags === "string" ? parsed.tags.split(",").map((t: string) => t.trim()).filter(Boolean) : parsed.tags,
+        };
+
+        const result = CreateBlockSchema.partial().safeParse(toValidate);
+        
+        if (!result.success) {
+          const errorMsg = result.error.errors.map(e => `${e.path.join(".")}: ${e.message}`).join(", ");
+          setJsonError(errorMsg);
+          return;
+        }
+
+        // Validate categoryId exists if provided
+        if (parsed.categoryId && categories) {
+          const exists = categories.some(c => c.id === parsed.categoryId);
+          if (!exists) {
+            setJsonError(`categoryId "${parsed.categoryId}" does not exist in the database.`);
+            return;
+          }
+        }
+
+        isUpdatingFromJson.current = true;
+        // Ensure numeric price from JSON is converted back to string for the form state
+        if (typeof parsed.price === "number") {
+          parsed.price = String(parsed.price);
+        }
+        // Ensure tags array is converted back to string for the form state
+        if (Array.isArray(parsed.tags)) {
+          parsed.tags = parsed.tags.join(", ");
+        }
+
+        setDraft((prev) => ({ ...prev, ...parsed }));
+        setJsonError(null);
+        
+        // Reset the ref after a tick to allow the effect to run for other changes
+        setTimeout(() => {
+          isUpdatingFromJson.current = false;
+        }, 0);
+      }
+    } catch (e) {
+      setJsonError((e as Error).message);
+    }
+  };
 
   React.useEffect(() => {
     setMaxStepReached((prev) => Math.max(prev, activeStep));
@@ -340,15 +425,22 @@ export function BlockWizard() {
           <div className="space-y-3">
             <Badge
               variant="secondary"
-              className="w-fit bg-primary/10 text-primary border-none hover:bg-primary/20 transition-colors"
+              className={cn(
+                "w-fit border-none transition-colors",
+                isDevMode 
+                  ? "bg-amber-500/10 text-amber-500 hover:bg-amber-500/20" 
+                  : "bg-primary/10 text-primary hover:bg-primary/20"
+              )}
             >
-              Creation Suite
+              {isDevMode ? "Developer Suite" : "Creation Suite"}
             </Badge>
             <CardTitle className="text-3xl font-heading tracking-tight">
-              Forge Sequence
+              {isDevMode ? "Direct Manifest" : "Forge Sequence"}
             </CardTitle>
             <CardDescription className="text-sm leading-relaxed">
-              Step through the ritual to publish your next digital spell.
+              {isDevMode 
+                ? "Manipulate the raw essence of your block directly via JSON."
+                : "Step through the ritual to publish your next digital spell."}
             </CardDescription>
           </div>
           <div className="space-y-2">
@@ -440,16 +532,143 @@ export function BlockWizard() {
                   </CardDescription>
                 </div>
               </div>
-              <Badge
-                variant="outline"
-                className="rounded-full px-5 py-2 border-border/60 bg-background/50 text-xs font-bold tracking-wider uppercase"
-              >
-                Phase {activeStep + 1}{" "}
-                <span className="mx-2 opacity-30">/</span> {steps.length}
-              </Badge>
+
+              <div className="flex items-center gap-6">
+                <div className="flex items-center gap-3 px-4 py-2 rounded-2xl bg-primary/5 border border-primary/10">
+                  <div className="flex items-center gap-2">
+                    <Terminal className="size-4 text-primary" />
+                    <Label htmlFor="dev-mode" className="text-xs font-bold uppercase tracking-wider cursor-pointer">Dev Mode</Label>
+                  </div>
+                  <Switch 
+                    id="dev-mode" 
+                    checked={isDevMode} 
+                    onCheckedChange={setIsDevMode}
+                  />
+                </div>
+                
+                <Badge
+                  variant="outline"
+                  className="rounded-full px-5 py-2 border-border/60 bg-background/50 text-xs font-bold tracking-wider uppercase"
+                >
+                  Phase {activeStep + 1}{" "}
+                  <span className="mx-2 opacity-30">/</span> {steps.length}
+                </Badge>
+              </div>
             </div>
           </CardHeader>
           <CardContent className="p-10">
+            {isDevMode && (
+              <div className="mb-10 space-y-4 animate-in fade-in slide-in-from-top-4 duration-500">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-primary font-bold text-sm uppercase tracking-widest">
+                    <Code2 className="size-4" />
+                    JSON Manifest
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {jsonError && (
+                      <Badge variant="destructive" className="animate-pulse text-[10px] py-0 h-5">
+                        Invalid: {jsonError}
+                      </Badge>
+                    )}
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="h-8 rounded-lg text-[10px] font-bold uppercase tracking-wider"
+                      onClick={() => {
+                        navigator.clipboard.writeText(jsonInput);
+                        toast.success("Manifest copied to clipboard");
+                      }}
+                    >
+                      Copy JSON
+                    </Button>
+                  </div>
+                </div>
+                <Textarea
+                  value={jsonInput}
+                  onChange={(e) => handleJsonChange(e.target.value)}
+                  className={cn(
+                    "font-mono text-xs min-h-[250px] bg-background/80 rounded-2xl p-6 shadow-inner leading-relaxed transition-all",
+                    jsonError ? "border-destructive/50 focus:border-destructive" : "border-primary/20 focus:border-primary/50"
+                  )}
+                  placeholder='{ "title": "My Awesome Block", ... }'
+                />
+                
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="p-4 rounded-2xl bg-muted/30 border border-border/40 space-y-3">
+                    <h4 className="text-[10px] font-bold uppercase tracking-widest text-primary flex items-center gap-2">
+                      <FiPackage className="size-3" />
+                      Available Category IDs
+                    </h4>
+                    {/* ... existing categories content ... */}
+                    <div className="max-h-[120px] overflow-y-auto space-y-1.5 pr-2 custom-scrollbar">
+                      {categoriesLoading ? (
+                        <p className="text-[10px] animate-pulse">Loading categories...</p>
+                      ) : (
+                        categories?.map((cat) => (
+                          <div key={cat.id} className="flex items-center justify-between text-[10px] font-mono group/id">
+                            <span className="text-muted-foreground">{cat.name}:</span>
+                            <button 
+                              onClick={() => {
+                                navigator.clipboard.writeText(cat.id);
+                                toast.success(`ID for ${cat.name} copied`);
+                              }}
+                              className="bg-background/50 hover:bg-primary/10 px-2 py-0.5 rounded border border-border/40 transition-colors group-hover/id:border-primary/30"
+                            >
+                              {cat.id}
+                            </button>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="p-4 rounded-2xl bg-muted/30 border border-border/40 space-y-3">
+                    <h4 className="text-[10px] font-bold uppercase tracking-widest text-primary flex items-center gap-2">
+                      <FiSettings className="size-3" />
+                      Enum Constraints
+                    </h4>
+                    <div className="space-y-2 text-[9px] font-medium leading-tight text-muted-foreground">
+                      <div><span className="text-foreground font-bold">type:</span> COMPONENT, SECTION, PAGE</div>
+                      <div><span className="text-foreground font-bold">framework:</span> REACT, VUE, SVELTE</div>
+                      <div><span className="text-foreground font-bold">stylingEngine:</span> TAILWIND, CSS</div>
+                      <div><span className="text-foreground font-bold">visibility:</span> PUBLIC, PRIVATE, UNLISTED</div>
+                      <div><span className="text-foreground font-bold">currency:</span> USD, EUR, CLP, GBP, MXN, ARS, BRL</div>
+                    </div>
+                  </div>
+
+                  <div className="p-4 rounded-2xl bg-primary/5 border border-primary/10 space-y-3">
+                    <h4 className="text-[10px] font-bold uppercase tracking-widest text-primary flex items-center gap-2">
+                      <FiCpu className="size-3" />
+                      System State (Read-only)
+                    </h4>
+                    <div className="space-y-2 text-[9px] font-mono leading-tight">
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Block ID:</span>
+                        <span className="text-foreground truncate ml-2">{blockId || "N/A"}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Status:</span>
+                        <span className={cn(
+                          "font-bold",
+                          jobStatus === "SUCCEEDED" ? "text-emerald-500" : 
+                          jobStatus === "FAILED" ? "text-destructive" : "text-amber-500"
+                        )}>{jobStatus || "DRAFT"}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Bundle:</span>
+                        <span className="text-foreground">{bundleUploaded ? "READY" : "MISSING"}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <p className="text-[10px] text-muted-foreground font-medium flex items-center gap-2">
+                  <Info className="size-3" />
+                  Changes to the JSON will immediately manifest in the visual forge below. Validation active.
+                </p>
+              </div>
+            )}
+
             {step.id === "metadata" && (
               <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
                 <div className="grid gap-8 lg:grid-cols-2">
@@ -1052,9 +1271,28 @@ export function BlockWizard() {
                     )}
 
                     {jobStatus === "SUCCEEDED" && (
-                      <div className="flex items-center gap-3 text-sm font-bold text-emerald-500 bg-emerald-500/5 px-5 py-3 rounded-2xl">
-                        <CheckCircle2 className="size-4" />
-                        Preview Manifested Successfully
+                      <div className="w-full mt-4 space-y-4">
+                        <div className="flex items-center gap-3 text-sm font-bold text-emerald-500 bg-emerald-500/5 px-5 py-3 rounded-2xl w-fit">
+                            <CheckCircle2 className="size-4" />
+                            Preview Manifested Successfully
+                        </div>
+
+                        {previews.length > 0 && (
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 animate-in fade-in slide-in-from-bottom-4">
+                                {previews.map((preview) => (
+                                    <div key={preview.id} className="relative rounded-2xl overflow-hidden border border-border/40 bg-muted/20 aspect-video group/preview shadow-sm">
+                                        <img 
+                                            src={preview.url} 
+                                            alt={`Preview ${preview.viewport}`}
+                                            className="w-full h-full object-cover transition-transform duration-700 group-hover/preview:scale-105"
+                                        />
+                                        <div className="absolute bottom-3 right-3 px-2.5 py-1 bg-background/80 backdrop-blur-md text-foreground text-[10px] font-bold uppercase rounded-lg border border-border/20 shadow-sm">
+                                            {preview.viewport}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                       </div>
                     )}
 

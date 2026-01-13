@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
-import { frontendApi } from "@/lib/frontend-api";
+import { frontendApi, type Schema } from "@/lib/frontend-api";
 import {
   onboardingSchema,
   OnboardingFormData,
@@ -13,6 +13,7 @@ import {
   STEP_ORDER,
 } from "@/components/onboarding/types";
 import type { SerializedUser } from "@/utils/serialization";
+import { updateCreatorProfile } from "@/app/actions";
 
 interface UseOnboardingWizardProps {
   initialUser: SerializedUser;
@@ -102,8 +103,12 @@ export function useOnboardingWizard({ initialUser }: UseOnboardingWizardProps) {
       avatarUrl: values.imageUrl,
     });
 
+    const userId = initialUser.id;
+
+    await updateCreatorProfile(userId, values.role);
+
     if (values.role === "CREATOR") {
-      const creatorData = {
+      const creatorData: Schema["UpdateCreator"] = {
         displayName: values.displayName,
         bio: values.bio,
         websiteUrl: values.websiteUrl || undefined,
@@ -122,7 +127,7 @@ export function useOnboardingWizard({ initialUser }: UseOnboardingWizardProps) {
         }
       }
     }
-  }, [form]);
+  }, [form, initialUser.id]);
 
   const validateStep = useCallback(
     async (s: OnboardingStep): Promise<boolean> => {

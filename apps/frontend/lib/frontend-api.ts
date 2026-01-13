@@ -11,7 +11,7 @@ import type {
 } from "@/types/extended";
 import axios, { AxiosResponse } from "axios";
 
-type Schema = components["schemas"];
+export type Schema = components["schemas"];
 
 type CategoryListParams =
   paths["/api/v1/categories"]["get"]["parameters"]["query"];
@@ -93,7 +93,27 @@ type BundleUploadResponse = {
 };
 
 const axiosClient = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_BASE_URL,
+  baseURL: "http://localhost:3001",
+});
+
+// Add a request interceptor to inject the Clerk token
+axiosClient.interceptors.request.use(async (config) => {
+  try {
+    // We can only get the token on the client side
+    if (typeof window !== "undefined") {
+      // @ts-ignore - Clerk is added to window by the Clerk script
+      const Clerk = (window as any).Clerk;
+      if (Clerk?.session) {
+        const token = await Clerk.session.getToken();
+        if (token) {
+          config.headers.Authorization = `Bearer ${token}`;
+        }
+      }
+    }
+  } catch (error) {
+    console.error("Error setting auth header:", error);
+  }
+  return config;
 });
 
 /**
@@ -184,7 +204,7 @@ export const frontendApi = {
 
   render: {
     status: (jobId: string): Promise<AxiosResponse<RenderJob>> =>
-      axiosClient.get(`/api/v1/blocks/render-jobs/${jobId}`),
+      axiosClient.get(`/api/v1/render/${jobId}`),
   },
 
   admin: {

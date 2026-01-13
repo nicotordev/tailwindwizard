@@ -2,18 +2,19 @@ import { prisma } from "../db/prisma.js";
 
 export const categoryService = {
   async listAll(options?: { page?: number; limit?: number; search?: string }) {
-    const { page = 1, limit = 50, search } = options ?? {};
+    const { page = 1, limit = 50, search = "" } = options ?? {};
     const skip = (page - 1) * limit;
 
-    return prisma.category.findMany({
-      where: search
-        ? {
-            OR: [
-              { name: { contains: search, mode: "insensitive" } },
-              { slug: { contains: search, mode: "insensitive" } },
-            ],
-          }
-        : {},
+    return await prisma.category.findMany({
+      where:
+        search.trim() !== ""
+          ? {
+              OR: [
+                { name: { contains: search, mode: "insensitive" } },
+                { slug: { contains: search, mode: "insensitive" } },
+              ],
+            }
+          : {},
       orderBy: { name: "asc" },
       take: limit,
       skip,
@@ -26,7 +27,7 @@ export const categoryService = {
   },
 
   async findBySlug(slug: string) {
-    return prisma.category.findUnique({
+    return await prisma.category.findUnique({
       where: { slug },
       include: {
         _count: {
@@ -44,7 +45,7 @@ export const categoryService = {
     priority?: number;
     isFeatured?: boolean;
   }) {
-    return prisma.category.create({
+    return await prisma.category.create({
       data,
     });
   },
@@ -60,14 +61,14 @@ export const categoryService = {
       isFeatured?: boolean;
     }
   ) {
-    return prisma.category.update({
+    return await prisma.category.update({
       where: { id },
       data,
     });
   },
 
   async delete(id: string) {
-    return prisma.category.delete({
+    return await prisma.category.delete({
       where: { id },
     });
   },

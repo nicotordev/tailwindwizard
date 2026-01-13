@@ -15,7 +15,7 @@ export const userController = {
 
     if (process.env.ADMIN_EMAILS?.split(",").includes(email)) {
       await clerkClient.users.updateUser(auth.userId, {
-        publicMetadata: { role: "admin" },
+        publicMetadata: { role: "ADMIN", onboardingComplete: true },
       });
     }
 
@@ -34,7 +34,7 @@ export const userController = {
 
     if (process.env.ADMIN_EMAILS?.split(",").includes(user.email)) {
       await clerkClient.users.updateUser(auth.userId, {
-        publicMetadata: { role: "admin" },
+        publicMetadata: { role: "ADMIN", onboardingComplete: true },
       });
     }
 

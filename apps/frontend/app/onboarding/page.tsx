@@ -6,15 +6,22 @@ import { ArrowLeft, Shield, Sparkles, Wand2 } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
-export default async function OnboardingPage() {
+export interface OnboardingPageProps {
+  searchParams: Promise<{ force?: string }>;
+}
+
+export default async function OnboardingPage(props: OnboardingPageProps) {
   const user = await currentUser();
 
   if (!user) {
     redirect("/auth/sign-in");
   }
 
-  // If user metadata says already onboarded, redirect to dashboard
-  if (user?.publicMetadata?.onboardingComplete) {
+  const searchParams = await props.searchParams;
+  const force = searchParams.force === "true";
+
+  // If user metadata says already onboarded, redirect to dashboard unless force is true
+  if (user?.publicMetadata?.onboardingComplete && !force) {
     redirect("/dashboard");
   }
 

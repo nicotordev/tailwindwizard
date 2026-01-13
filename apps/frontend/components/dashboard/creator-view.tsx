@@ -279,8 +279,7 @@ export function CreatorView() {
             </div>
             <Card className="bg-card/30 backdrop-blur-md rounded-[2rem] border-border/40 p-6 shadow-sm">
               <p className="text-xs text-muted-foreground leading-relaxed">
-                Creators focusing on <strong>E-commerce dashboards</strong> are
-                seeing a 24% increase in invocations this week.
+                You&apos;re all caught up! no new market insights for now.
               </p>
             </Card>
           </div>

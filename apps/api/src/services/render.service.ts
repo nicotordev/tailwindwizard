@@ -83,7 +83,7 @@ export const renderService = {
 
       // 2. Identify Entry Point
       // Priority: App.tsx, index.tsx, or the first .tsx file
-      let entryPoint = Object.keys(vfs).find(p => p === "App.tsx" || p === "src/App.tsx");
+      let entryPoint: string | undefined = Object.keys(vfs).find(p => p === "App.tsx" || p === "src/App.tsx");
       if (!entryPoint) entryPoint = Object.keys(vfs).find(p => p === "index.tsx" || p === "src/index.tsx");
       if (!entryPoint) entryPoint = Object.keys(vfs).find(p => p.endsWith(".tsx"));
       
@@ -382,8 +382,8 @@ export const renderService = {
       
       // Inject VFS data safely
       await page.evaluate((data) => {
-          window.__VFS__ = data.vfs;
-          window.__ENTRY__ = data.entryPoint;
+          (window as any).__VFS__ = data.vfs;
+          (window as any).__ENTRY__ = data.entryPoint;
       }, { vfs, entryPoint });
 
       // Inject the loader script
@@ -496,15 +496,15 @@ export const renderService = {
         await page.setViewportSize({ width: vp.width, height: vp.height });
         await page.waitForTimeout(500);
 
-        const buffer = await page.screenshot({ type: "webp", quality: 80 });
-        const objectKey = `previews/${job.blockId}/${vp.name.toLowerCase()}.webp`;
+        const buffer = await page.screenshot({ type: "jpeg", quality: 80 });
+        const objectKey = `previews/${job.blockId}/${vp.name.toLowerCase()}.jpeg`;
 
         await r2Client.send(
           new PutObjectCommand({
             Bucket: env.r2.bucketName,
             Key: objectKey,
             Body: buffer,
-            ContentType: "image/webp",
+            ContentType: "image/jpeg",
           })
         );
 

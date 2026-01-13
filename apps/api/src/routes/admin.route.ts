@@ -1,10 +1,10 @@
 import { OpenAPIHono, createRoute, z } from "@hono/zod-openapi";
 import {
   BlockSchema,
-  CreatorSchema,
-  UserSchema,
   CategorySchema,
+  CreatorSchema,
   TagSchema,
+  UserSchema,
 } from "@tw/shared";
 import { adminController } from "../controllers/admin.controller.js";
 import { requireAdmin } from "../middleware/requireAdmin.js";
@@ -33,6 +33,15 @@ const UnauthorizedResponse = {
 
 const ForbiddenResponse = {
   description: "Forbidden",
+  content: {
+    "application/json": {
+      schema: z.object({ message: z.string() }),
+    },
+  },
+};
+
+const NotFoundResponse = {
+  description: "Not Found",
   content: {
     "application/json": {
       schema: z.object({ message: z.string() }),
@@ -102,6 +111,7 @@ const decideRoute = createRoute({
     },
     401: UnauthorizedResponse,
     403: ForbiddenResponse,
+    404: NotFoundResponse,
   },
 });
 
@@ -188,7 +198,9 @@ const listCreatorsRoute = createRoute({
       content: {
         "application/json": {
           schema: z.object({
-            data: z.array(CreatorSchema.extend({ user: UserSchema.optional() })),
+            data: z.array(
+              CreatorSchema.extend({ user: UserSchema.optional() })
+            ),
             meta: PaginationMeta,
           }),
         },
@@ -248,6 +260,27 @@ const listCategoriesRoute = createRoute({
     },
     401: UnauthorizedResponse,
     403: ForbiddenResponse,
+  },
+});
+
+const getCategoryByIdRoute = createRoute({
+  method: "get",
+  path: "/categories/{id}",
+  tags: ["Admin"],
+  summary: "Get category by id",
+  request: {
+    params: z.object({
+      id: z.string(),
+    }),
+  },
+  responses: {
+    200: {
+      content: { "application/json": { schema: CategorySchema } },
+      description: "Category by id",
+    },
+    401: UnauthorizedResponse,
+    403: ForbiddenResponse,
+    404: NotFoundResponse,
   },
 });
 
@@ -521,6 +554,7 @@ const chainedApp = adminApp
   .openapi(deleteTagRoute, (c) => adminController.deleteTag(c))
   .openapi(listPurchasesRoute, (c) => adminController.listPurchases(c))
   .openapi(getWebhookStatsRoute, (c) => adminController.getWebhookStats(c))
+  .openapi(getCategoryByIdRoute, (c) => adminController.getCategoryById(c))
   .openapi(getDashboardStatsRoute, (c) => adminController.getDashboardStats(c));
 
 export default chainedApp;

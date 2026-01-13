@@ -6,7 +6,7 @@ import {
 import { NextResponse, type NextRequest } from "next/server";
 
 const isHome = createRouteMatcher(["/"]);
-const isAdmin = createRouteMatcher(["/admin(.*)"]);
+const isAdmin = createRouteMatcher(["/admin(.*)", "/dev(.*)"]);
 const isOnboarding = createRouteMatcher(["/onboarding(.*)"]);
 const isMarketProtected = createRouteMatcher([
   "/market/buy(.*)",
@@ -18,8 +18,8 @@ type Role = "ADMIN" | "USER";
 function getRoleFromPublicMetadata(meta: unknown): Role | null {
   if (typeof meta !== "object" || meta === null) return null;
   const record = meta as Record<string, unknown>;
-  const role = record["role"];
-  if (role === "ADMIN" || role === "USER") return role;
+  const role = (record["role"] as string | undefined)?.toUpperCase();
+  if (role === "ADMIN" || role === "USER") return role as Role;
   return null;
 }
 
@@ -64,13 +64,11 @@ export default clerkMiddleware(async (auth, req) => {
       const client = await clerkClient();
       const user = await client.users.getUser(a.userId);
       const metadata = user.publicMetadata || {};
-      const role = getRoleFromPublicMetadata(metadata);
       const onboardingComplete = !!(metadata as Record<string, unknown>)[
         "onboardingComplete"
       ];
-
       // Redirect to onboarding only if user has NO role AND is NOT marked as onboarded
-      if (role === null && !onboardingComplete) {
+      if (!onboardingComplete) {
         return redirectTo(req, "/onboarding");
       }
     }

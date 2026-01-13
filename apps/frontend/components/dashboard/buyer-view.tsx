@@ -225,6 +225,34 @@ export function BuyerView() {
           </Card>
         </section>
       </div>
+
+      {/* Become a Creator CTA */}
+      <section className="relative overflow-hidden rounded-[2.5rem] border border-primary/20 bg-primary/5 p-8 md:p-12">
+        <div className="absolute top-0 right-0 -translate-y-1/2 translate-x-1/4 h-64 w-64 bg-primary/10 blur-[100px] rounded-full" />
+        <div className="relative flex flex-col md:flex-row items-center justify-between gap-8">
+          <div className="space-y-4 text-center md:text-left">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-[10px] font-bold uppercase tracking-widest">
+              <Sparkles className="size-3" />
+              Upgrade to Creator
+            </div>
+            <h2 className="text-3xl font-bold font-heading tracking-tight">
+              Ready to monetize your <span className="text-primary italic">magic</span>?
+            </h2>
+            <p className="text-muted-foreground max-w-xl">
+              Turn your Tailwind components into a source of income. Join our elite circle of creators and start selling to thousands of developers.
+            </p>
+          </div>
+          <Button 
+            asChild
+            size="lg" 
+            className="h-14 px-8 rounded-2xl font-bold shadow-xl shadow-primary/20 hover:scale-105 transition-transform"
+          >
+            <a href="/onboarding?force=true&step=role">
+              Become a Creator <ArrowRight className="ml-2 size-5" />
+            </a>
+          </Button>
+        </div>
+      </section>
     </div>
   );
 }

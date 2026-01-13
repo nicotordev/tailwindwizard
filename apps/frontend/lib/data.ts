@@ -4,7 +4,7 @@ export type MarketItem = {
   game: string;
   quantity: number;
   priceUSD: number;
-  iconURL?: string;
+  iconURL?: string | null;
   details?: string;
   actionType?: "bought" | "sold";
   timestamp?: string;

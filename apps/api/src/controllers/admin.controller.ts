@@ -1,20 +1,29 @@
+import type { Context } from "hono";
 import type {
-  ModerationDecision,
-  UserRole,
-  Prisma,
   BlockStatus,
+  ModerationDecision,
+  Prisma,
+  UserRole,
 } from "../db/generated/prisma/client.js";
 import { PurchaseStatus } from "../db/generated/prisma/client.js";
-import type { Context } from "hono";
 
+import type { User as ClerkUser } from "@clerk/backend";
 import { prisma } from "../db/prisma.js";
+import clerkClient from "../lib/clerkClient.js";
 import { blockService } from "../services/block.service.js";
 import { categoryService } from "../services/category.service.js";
 import { tagService } from "../services/tag.service.js";
-import clerkClient from "../lib/clerkClient.js";
-import type { User as ClerkUser } from "@clerk/backend";
 
 export const adminController = {
+  async getCategoryById(c: Context) {
+    const id = c.req.param("id");
+    const category = await prisma.category.findUnique({
+      where: { id },
+    });
+    if (!category) return c.json({ message: "Category not found" }, 404);
+    return c.json(category, 200);
+  },
+
   async listModeration(c: Context) {
     const user = c.get("user");
     if (!user) return c.json({ message: "Unauthorized" }, 401);
@@ -59,7 +68,8 @@ export const adminController = {
     const internalUser = await prisma.user.findUnique({
       where: { externalAuthId: authUser.id },
     });
-    if (!internalUser) return c.json({ message: "Admin user not found in DB" }, 404);
+    if (!internalUser)
+      return c.json({ message: "Admin user not found in DB" }, 404);
 
     const blockId = c.req.param("blockId");
     const body = await c.req.json<{
@@ -153,6 +163,7 @@ export const adminController = {
       await clerkClient.users.updateUser(updatedUser.externalAuthId, {
         publicMetadata: {
           role,
+          onboardingComplete: true, // If an admin is setting a role, onboarding is effectively complete
         },
       });
     }
@@ -251,23 +262,35 @@ export const adminController = {
   },
 
   async createCategory(c: Context) {
-    const body = await c.req.json<{
-      name: string;
-      slug: string;
-      icon?: string;
-    }>();
-    const category = await categoryService.create(body);
+    const body = await c.req.json();
+    const { name, slug, icon, description, priority, isFeatured } = body;
+
+    const category = await categoryService.create({
+      name,
+      slug,
+      icon,
+      description,
+      priority: priority ? Number(priority) : 0,
+      isFeatured: !!isFeatured,
+    });
+
     return c.json(category, 201);
   },
 
   async updateCategory(c: Context) {
     const id = c.req.param("id");
-    const body = await c.req.json<{
-      name?: string;
-      slug?: string;
-      icon?: string;
-    }>();
-    const category = await categoryService.update(id, body);
+    const body = await c.req.json();
+    const { name, slug, icon, description, priority, isFeatured } = body;
+
+    const category = await categoryService.update(id, {
+      name,
+      slug,
+      icon,
+      description,
+      priority: priority !== undefined ? Number(priority) : undefined,
+      isFeatured: isFeatured !== undefined ? !!isFeatured : undefined,
+    });
+
     return c.json(category, 200);
   },
 
@@ -346,7 +369,7 @@ export const adminController = {
               block: {
                 select: {
                   id: true,
-
+                  iconURL: true,
                   title: true,
 
                   slug: true,
