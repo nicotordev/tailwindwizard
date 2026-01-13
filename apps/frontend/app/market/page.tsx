@@ -39,6 +39,7 @@ export default async function MarketPage(props: {
 
   const blocksData = blocksRes.data || [];
   const purchasesData = purchasesRes.data || [];
+  const blocksById = new Map(blocksData.map((block) => [block.id, block]));
 
   let marketItems: MarketItem[] = [];
 
@@ -46,9 +47,12 @@ export default async function MarketPage(props: {
     // Latest Activity shows purchases
     marketItems = purchasesData.map((p) => {
       const lineItem = p.lineItems?.[0];
+      const blockId = lineItem?.block?.id;
+      const block = blockId ? blocksById.get(blockId) : undefined;
       return {
         id: p.id,
-        iconURL: lineItem?.block?.iconURL,
+        blockId,
+        screenshot: block?.screenshot,
         name: lineItem?.block?.title || "Unknown Block",
         game: "Template",
         quantity: 1,
@@ -67,7 +71,8 @@ export default async function MarketPage(props: {
       .filter((b) => (b.soldCount || 0) > 0)
       .map((b) => ({
         id: b.id,
-        iconURL: b.iconURL,
+        blockId: b.id,
+        screenshot: b.screenshot,
         name: b.title,
         game: b.categories?.[0]?.category?.name || "General",
         quantity: b.soldCount || 0,
@@ -113,7 +118,7 @@ export default async function MarketPage(props: {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <MarketNavbar />
-      <div className="mx-auto flex w-full max-w-[1440px] flex-col gap-8 px-4 pb-16 pt-8 sm:px-6 lg:px-10">
+      <div className="mx-auto flex w-full max-w-360 flex-col gap-8 px-4 pb-16 pt-8 sm:px-6 lg:px-10">
         <MarketHero />
 
         <MarketClientWrapper

@@ -23,7 +23,7 @@ const purchaseInclude = {
           slug: true,
           price: true,
           currency: true,
-          iconURL: true,
+          screenshot: true,
         },
       },
     },
@@ -31,7 +31,7 @@ const purchaseInclude = {
   licenses: {
     include: {
       block: {
-        select: { id: true, title: true, slug: true, iconURL: true },
+        select: { id: true, title: true, slug: true, screenshot: true },
       },
     },
   },
@@ -144,7 +144,7 @@ async function fetchUserLicenses(userId: string) {
     orderBy: { createdAt: "desc" },
     include: {
       block: {
-        select: { id: true, title: true, slug: true, iconURL: true },
+        select: { id: true, title: true, slug: true, screenshot: true },
       },
       purchase: {
         select: { id: true, status: true, paidAt: true },

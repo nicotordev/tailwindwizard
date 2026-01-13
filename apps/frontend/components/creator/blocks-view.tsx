@@ -52,6 +52,7 @@ import {
   TrendingUp,
   Upload,
 } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import * as React from "react";
@@ -161,7 +162,7 @@ export function CreatorBlocksView({
   }
 
   return (
-    <div className="space-y-8 max-w-[1400px] mx-auto">
+    <div className="space-y-8 max-w-350 mx-auto">
       {/* Enhanced Header Section */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div className="space-y-2">
@@ -179,7 +180,7 @@ export function CreatorBlocksView({
           </div>
           <h1 className="text-4xl font-bold tracking-tight font-heading">
             My{" "}
-            <span className="bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent italic">
+            <span className="bg-linear-to-r from-primary to-primary/60 bg-clip-text text-transparent italic">
               Wizardry
             </span>
           </h1>
@@ -242,7 +243,7 @@ export function CreatorBlocksView({
                 <TableHead className="text-right pr-8 text-[10px] uppercase tracking-widest font-bold text-muted-foreground/70">
                   Sales
                 </TableHead>
-                <TableHead className="w-[80px]"></TableHead>
+                <TableHead className="w-20"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -277,11 +278,13 @@ export function CreatorBlocksView({
                       <TableCell className="pl-8 py-4">
                         <div className="flex items-center gap-4">
                           <div className="size-12 rounded-2xl bg-muted/60 flex items-center justify-center text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary transition-all duration-300 ring-1 ring-border/50 shadow-sm relative overflow-hidden">
-                            {block.iconURL ? (
-                              <img
-                                src={block.iconURL}
+                            {block.screenshot ? (
+                              <Image
+                                src={block.screenshot}
                                 alt=""
                                 className="size-full object-cover"
+                                width={50}
+                                height={50}
                               />
                             ) : (
                               <Box className="size-6 transition-transform group-hover:scale-110" />
@@ -437,7 +440,7 @@ function BlockActions({ block }: { block: Block }) {
       </DropdownMenuTrigger>
       <DropdownMenuContent
         align="end"
-        className="w-[180px] rounded-2xl p-2 border-border/40 bg-card/95 backdrop-blur-xl shadow-2xl"
+        className="w-45 rounded-2xl p-2 border-border/40 bg-card/95 backdrop-blur-xl shadow-2xl"
       >
         {/* DRAFT: Edit */}
         {status === "DRAFT" && (

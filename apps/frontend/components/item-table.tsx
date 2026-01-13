@@ -13,6 +13,7 @@ import type { MarketItem } from "@/lib/data";
 import { cn, formatPriceUSD } from "@/lib/utils";
 import { ArrowDown, ArrowUp, ArrowUpDown, Boxes } from "lucide-react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 
 export type SortKey = "name" | "quantity" | "price";
 export type SortState = { key: SortKey; direction: "asc" | "desc" };
@@ -55,9 +56,16 @@ export function ItemTable({
   onSort,
   showActions = true,
 }: ItemTableProps) {
-  const tableColumns = showActions 
-    ? columns 
+  const router = useRouter();
+  const tableColumns = showActions
+    ? columns
     : columns.filter(col => col.key !== "action");
+
+  const handleRowClick = (item: MarketItem) => {
+    if (item.blockId) {
+      router.push(`/market/blocks/${item.blockId}`);
+    }
+  };
 
   if (isLoading)
     return (
@@ -92,14 +100,18 @@ export function ItemTable({
         {items.map((item) => (
           <Card
             key={item.id}
-            className="rounded-2xl border-border/50 bg-card/40 backdrop-blur-sm transition-all hover:bg-muted/30"
+            className={cn(
+              "rounded-2xl border-border/50 bg-card/40 backdrop-blur-sm transition-all hover:bg-muted/30",
+              item.blockId && "cursor-pointer"
+            )}
+            onClick={() => handleRowClick(item)}
           >
             <CardContent className="p-4">
               <div className="flex items-center gap-4">
                 <div className="relative flex size-16 shrink-0 items-center justify-center rounded-xl border border-border/50 bg-background/50 p-1">
-                  {item.iconURL ? (
+                  {item.screenshot ? (
                     <Image
-                      src={item.iconURL}
+                      src={item.screenshot}
                       alt={item.name}
                       className="size-full object-contain rounded-lg"
                       width={50}
@@ -163,7 +175,7 @@ export function ItemTable({
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="h-full w-full justify-start gap-2 px-4 text-[11px] font-bold tracking-[0.1em] text-muted-foreground/60 hover:bg-transparent hover:text-primary transition-colors"
+                    className="h-full w-full justify-start gap-2 px-4 text-[11px] font-bold tracking-widest text-muted-foreground/60 hover:bg-transparent hover:text-primary transition-colors"
                     onClick={() => onSort(column.key as SortKey)}
                     aria-label={column.aria}
                   >
@@ -174,7 +186,7 @@ export function ItemTable({
                     />
                   </Button>
                 ) : (
-                  <div className="flex items-center justify-center h-full text-[11px] font-bold tracking-[0.1em] text-muted-foreground/60">
+                  <div className="flex items-center justify-center h-full text-[11px] font-bold tracking-widest text-muted-foreground/60">
                     {column.label}
                   </div>
                 )}
@@ -186,14 +198,18 @@ export function ItemTable({
           {items.map((item) => (
             <TableRow
               key={item.id}
-              className="group border-none hover:bg-muted/30 transition-all duration-300"
+              className={cn(
+                "group border-none hover:bg-muted/30 transition-all duration-300",
+                item.blockId && "cursor-pointer"
+              )}
+              onClick={() => handleRowClick(item)}
             >
               <TableCell className="px-4 py-4">
                 <div className="flex items-center gap-4">
                   <div className="relative flex size-14 shrink-0 items-center justify-center rounded-xl border border-border/50 bg-background/50 p-1 transition-transform group-hover:scale-105">
-                    {item.iconURL ? (
+                    {item.screenshot ? (
                       <Image
-                        src={item.iconURL}
+                        src={item.screenshot}
                         alt={item.name}
                         className="size-full object-contain rounded-lg"
                         width={50}
@@ -225,7 +241,7 @@ export function ItemTable({
                   <div className="flex justify-center">
                     <div
                       className={cn(
-                        "inline-flex flex-col items-center justify-center min-w-[90px] px-3 py-1.5 rounded-lg font-bold transition-all duration-300 border",
+                        "inline-flex flex-col items-center justify-center min-w-22.5 px-3 py-1.5 rounded-lg font-bold transition-all duration-300 border",
                         item.actionType === "sold"
                           ? "bg-creator/10 text-creator border-creator/20 group-hover:bg-creator/20"
                           : "bg-builder/10 text-builder border-builder/20 group-hover:bg-builder/20"
