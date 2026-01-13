@@ -9,9 +9,9 @@ export function BlockRow({ block }: { block: Block }) {
   const preview = block.previews?.[0]
 
   return (
-    <Link 
-      href={`/block/${block.slug}`} 
-      className="group flex items-center gap-4 p-4 bg-card/40 backdrop-blur-xl border border-border/50 hover:border-primary/50 hover:bg-card/60 transition-all duration-300 rounded-3xl mb-3 shadow-sm hover:shadow-xl hover:shadow-primary/5"
+    <Link
+      href={`/market/blocks/${block.slug}`}
+      className="group flex items-center gap-4 p-4 bg-card/40 backdrop-blur-xl border border-border/50 hover:border-primary/50 hover:bg-card/60 transition-all duration-300 rounded-3xl mb-3 shadow-sm hover:shadow-xl hover:shadow-primary/50"
     >
       <div className="relative size-20 shrink-0 overflow-hidden rounded-2xl border border-border/40 bg-muted/30 transition-transform duration-500 group-hover:scale-105">
         {preview?.url ? (
@@ -53,7 +53,7 @@ export function BlockRow({ block }: { block: Block }) {
         </span>
       </div>
 
-      <div className="text-right min-w-[120px] pr-2 space-y-1">
+      <div className="text-right min-w-30 pr-2 space-y-1">
         <div className="text-2xl font-heading font-bold tracking-tight">
           <Money amount={block.price} />
         </div>

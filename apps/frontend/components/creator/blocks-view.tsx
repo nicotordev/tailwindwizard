@@ -495,7 +495,7 @@ function BlockActions({ block }: { block: Block }) {
               asChild
               className="rounded-xl focus:bg-primary/10"
             >
-              <Link href={`/block/${block.slug}`} target="_blank">
+              <Link href={`/market/blocks/${block.slug}`} target="_blank">
                 <Eye className="mr-2 size-4 text-primary" />
                 View Page
               </Link>

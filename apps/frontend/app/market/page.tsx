@@ -5,16 +5,39 @@ import { MarketHero } from "@/components/market-hero";
 import { MarketNavbar } from "@/components/navbar";
 import { apiClient } from "@/lib/api";
 import type { MarketItem } from "@/lib/data";
-import { marketGames } from "@/lib/data";
 
 const PAGE_SIZE = 8;
+const DEFAULT_CATEGORY = "General";
+
+type PreviewItem = {
+  viewport: "MOBILE" | "TABLET" | "DESKTOP";
+  url: string;
+};
+
+type BlockPreviewSource = {
+  screenshot?: string | null;
+  previews?: PreviewItem[];
+  categories?: { category?: { name?: string | null } | null }[] | null;
+  type?: string;
+  title?: string;
+};
+
+const getPrimaryCategory = (block?: BlockPreviewSource) =>
+  block?.categories?.[0]?.category?.name || DEFAULT_CATEGORY;
+
+const getPreviewUrl = (block?: BlockPreviewSource) =>
+  block?.previews?.find((preview) => preview.viewport === "DESKTOP")?.url ||
+  block?.screenshot ||
+  null;
 
 export default async function MarketPage(props: {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
   const searchParams = await props.searchParams;
 
-  const activeTab = (searchParams.tab as string) || "activity";
+  const allowedTabs = new Set(["activity", "most-sold", "all-blocks"]);
+  const requestedTab = (searchParams.tab as string) || "all-blocks";
+  const activeTab = allowedTabs.has(requestedTab) ? requestedTab : "all-blocks";
   const query = (searchParams.q as string) || "";
   const sortKey =
     (searchParams.sort as SortKey) ||
@@ -40,6 +63,13 @@ export default async function MarketPage(props: {
   const blocksData = blocksRes.data || [];
   const purchasesData = purchasesRes.data || [];
   const blocksById = new Map(blocksData.map((block) => [block.id, block]));
+  const marketCategories = Array.from(
+    new Set(
+      blocksData
+        .map((block) => getPrimaryCategory(block))
+        .filter((category) => Boolean(category))
+    )
+  ).sort((a, b) => a.localeCompare(b));
 
   let marketItems: MarketItem[] = [];
 
@@ -49,12 +79,15 @@ export default async function MarketPage(props: {
       const lineItem = p.lineItems?.[0];
       const blockId = lineItem?.block?.id;
       const block = blockId ? blocksById.get(blockId) : undefined;
+      const categoryName = getPrimaryCategory(block);
+      const preview =
+        getPreviewUrl(block) || lineItem?.block?.screenshot || null;
       return {
         id: p.id,
         blockId,
-        screenshot: block?.screenshot,
-        name: lineItem?.block?.title || "Unknown Block",
-        game: "Template",
+        screenshot: preview,
+        name: block?.title || lineItem?.block?.title || "Unknown Block",
+        game: categoryName,
         quantity: 1,
         priceUSD:
           typeof p.totalAmount === "string"
@@ -62,24 +95,51 @@ export default async function MarketPage(props: {
             : p.totalAmount,
         actionType: "sold", // Every activity is a successful sale
         timestamp: p.createdAt,
-        details: "Standard License",
+        details: `${categoryName} | ${block?.type || "COMPONENT"}`,
       };
     });
-  } else {
+  } else if (activeTab === "most-sold") {
     // Most Sold shows blocks sorted by soldCount
     marketItems = blocksData
       .filter((b) => (b.soldCount || 0) > 0)
-      .map((b) => ({
+      .map((b) => {
+        const categoryName = getPrimaryCategory(b);
+        const preview = getPreviewUrl(b);
+        const soldCount = b.soldCount || 0;
+
+        return {
+          id: b.id,
+          blockId: b.id,
+          screenshot: preview,
+          name: b.title,
+          game: categoryName,
+          quantity: soldCount,
+          priceUSD: typeof b.price === "string" ? parseFloat(b.price) : b.price,
+          details: `${categoryName} | ${soldCount} sales`,
+          actionType: "sold",
+        };
+      });
+  } else {
+    // All Blocks shows the full catalog
+    marketItems = blocksData.map((b) => {
+      const category = getPrimaryCategory(b);
+      const preview = getPreviewUrl(b);
+      const soldCount = b.soldCount || 0;
+
+      return {
         id: b.id,
         blockId: b.id,
-        screenshot: b.screenshot,
+        screenshot: preview,
         name: b.title,
-        game: b.categories?.[0]?.category?.name || "General",
-        quantity: b.soldCount || 0,
+        game: category,
+        quantity: soldCount,
         priceUSD: typeof b.price === "string" ? parseFloat(b.price) : b.price,
-        details: `${b.soldCount} sales total`,
-        actionType: "sold",
-      }));
+        details:
+          soldCount > 0
+            ? `${category} | ${soldCount} sales`
+            : `${category} | New`,
+      };
+    });
   }
 
   // Filter if search query exists
@@ -128,7 +188,7 @@ export default async function MarketPage(props: {
           initialPage={currentPage}
           totalPages={totalPages}
           items={pagedItems}
-          games={marketGames}
+          games={marketCategories}
         />
       </div>
       <MarketFooter />

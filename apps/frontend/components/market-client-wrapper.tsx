@@ -119,7 +119,7 @@ export function MarketClientWrapper({
             isMobile={isMobile}
             sort={initialSort}
             onSort={handleSort}
-            showActions={initialTab !== "most-sold"}
+            showActions={initialTab === "activity"}
           />
           <MarketPagination
             page={initialPage}

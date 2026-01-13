@@ -11,7 +11,7 @@ export function BlockCard({ block }: { block: Block }) {
 
   return (
     <Card className="group overflow-hidden bg-card/40 backdrop-blur-xl border-border/50 rounded-3xl transition-all duration-300 hover:shadow-2xl hover:shadow-primary/10 hover:-translate-y-1">
-      <Link href={`/block/${block.slug}`} className="block">
+      <Link href={`/market/blocks/${block.slug}`} className="block">
         <CardHeader className="space-y-4">
           <div className="relative h-40 w-full overflow-hidden rounded-2xl border border-border/40 bg-muted/30">
             {preview?.url ? (
@@ -29,7 +29,9 @@ export function BlockCard({ block }: { block: Block }) {
             )}
           </div>
           <div className="space-y-1">
-            <CardTitle className="text-xl font-heading">{block.title}</CardTitle>
+            <CardTitle className="text-xl font-heading">
+              {block.title}
+            </CardTitle>
             <p className="text-xs text-muted-foreground line-clamp-2">
               {block.description || "A crafted UI block ready to deploy."}
             </p>
@@ -54,5 +56,5 @@ export function BlockCard({ block }: { block: Block }) {
         </CardContent>
       </Link>
     </Card>
-  )
+  );
 }

@@ -29,10 +29,16 @@ export function PurchaseDetailView({ purchase }: PurchaseDetailViewProps) {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div className="space-y-1">
           <div className="flex items-center gap-3">
-            <h1 className="text-3xl font-bold font-heading">Order #{purchase.id.slice(-8).toUpperCase()}</h1>
-            <Badge 
+            <h1 className="text-3xl font-bold font-heading">
+              Order #{purchase.id.slice(-8).toUpperCase()}
+            </h1>
+            <Badge
               variant={isPaid ? "default" : "secondary"}
-              className={cn(isPaid ? "bg-green-500/10 text-green-500 border-green-500/20" : "")}
+              className={cn(
+                isPaid
+                  ? "bg-green-500/10 text-green-500 border-green-500/20"
+                  : ""
+              )}
             >
               {purchase.status}
             </Badge>
@@ -64,14 +70,17 @@ export function PurchaseDetailView({ purchase }: PurchaseDetailViewProps) {
             <CardContent className="p-0">
               <div className="divide-y divide-border/40">
                 {purchase.lineItems?.map((item, idx) => (
-                  <div key={idx} className="p-6 flex items-center justify-between group">
+                  <div
+                    key={idx}
+                    className="p-6 flex items-center justify-between group"
+                  >
                     <div className="flex items-center gap-4">
                       <div className="h-14 w-14 rounded-2xl bg-muted flex items-center justify-center border border-border/60">
                         <Package className="size-7 text-muted-foreground/40" />
                       </div>
                       <div className="space-y-1">
-                        <Link 
-                          href={`/block/${item.block.slug}`}
+                        <Link
+                          href={`/market/blocks/${item.block.slug}`}
                           className="font-bold hover:text-primary transition-colors flex items-center gap-1"
                         >
                           {item.block.title}
@@ -83,7 +92,10 @@ export function PurchaseDetailView({ purchase }: PurchaseDetailViewProps) {
                       </div>
                     </div>
                     <div className="text-right">
-                      <Money amount={Number(item.amount || purchase.totalAmount)} className="font-bold" />
+                      <Money
+                        amount={Number(item.amount || purchase.totalAmount)}
+                        className="font-bold"
+                      />
                     </div>
                   </div>
                 ))}
@@ -92,7 +104,9 @@ export function PurchaseDetailView({ purchase }: PurchaseDetailViewProps) {
           </Card>
 
           <section className="space-y-4">
-            <h2 className="text-xl font-bold font-heading px-2">Delivery Status</h2>
+            <h2 className="text-xl font-bold font-heading px-2">
+              Delivery Status
+            </h2>
             <Card className="bg-card/40 backdrop-blur-xl border-border/50 rounded-3xl p-6">
               <div className="flex items-center gap-4">
                 <div className="h-12 w-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
@@ -104,10 +118,12 @@ export function PurchaseDetailView({ purchase }: PurchaseDetailViewProps) {
                     These blocks are now available in your library.
                   </p>
                 </div>
-                <Button variant="secondary" asChild className="rounded-xl border-border/60">
-                  <Link href="/dashboard/library">
-                    View Library
-                  </Link>
+                <Button
+                  variant="secondary"
+                  asChild
+                  className="rounded-xl border-border/60"
+                >
+                  <Link href="/dashboard/library">View Library</Link>
                 </Button>
               </div>
             </Card>
@@ -118,7 +134,9 @@ export function PurchaseDetailView({ purchase }: PurchaseDetailViewProps) {
         <div className="space-y-8">
           <Card className="bg-card/40 backdrop-blur-xl border-border/50 rounded-3xl p-6">
             <CardHeader className="px-0 pt-0">
-              <CardTitle className="text-lg font-bold">Payment Summary</CardTitle>
+              <CardTitle className="text-lg font-bold">
+                Payment Summary
+              </CardTitle>
             </CardHeader>
             <CardContent className="px-0 pb-0 space-y-4">
               <div className="flex justify-between text-sm">
@@ -132,9 +150,12 @@ export function PurchaseDetailView({ purchase }: PurchaseDetailViewProps) {
               <Separator className="bg-border/40" />
               <div className="flex justify-between items-center">
                 <span className="font-bold">Total</span>
-                <Money amount={Number(purchase.totalAmount)} className="text-xl font-black text-primary" />
+                <Money
+                  amount={Number(purchase.totalAmount)}
+                  className="text-xl font-black text-primary"
+                />
               </div>
-              
+
               <div className="pt-4 flex items-center gap-3 text-xs text-muted-foreground bg-muted/30 p-3 rounded-2xl border border-border/40">
                 <CreditCard className="size-4 shrink-0" />
                 <span>Paid via Stripe **** **** **** 4242</span>
@@ -145,16 +166,20 @@ export function PurchaseDetailView({ purchase }: PurchaseDetailViewProps) {
           <Card className="bg-primary/5 border-primary/10 rounded-3xl p-6">
             <h3 className="font-bold mb-2">Need help with this order?</h3>
             <p className="text-sm text-muted-foreground mb-4">
-              If you have any issues with your purchase or the component files, our wizards are here to help.
+              If you have any issues with your purchase or the component files,
+              our wizards are here to help.
             </p>
-            <Button variant="outline" className="w-full rounded-xl border-primary/20 text-primary hover:bg-primary/5">
+            <Button
+              variant="outline"
+              className="w-full rounded-xl border-primary/20 text-primary hover:bg-primary/5"
+            >
               Contact Support
             </Button>
           </Card>
         </div>
       </div>
     </div>
-  )
+  );
 }
 
 function Separator({ className }: { className?: string }) {
