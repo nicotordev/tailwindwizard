@@ -73,7 +73,8 @@
     "tech-stack-icons": "^3.3.2",
     "vaul": "^1.1.2",
     "world-countries": "^5.1.0",
-    "zod": "3.23.8"
+    "zod": "3.23.8",
+    "zustand": "^5.0.10"
   },
   "devDependencies": {
     "@hono/zod-openapi": "0.16.4",

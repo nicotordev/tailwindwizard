@@ -4,6 +4,54 @@
  */
 
 export interface paths {
+    "/api/v1/cart": {
+        get: {
+            responses: {
+                200: {
+                    content: {
+                        "application/json": components["schemas"]["Cart"];
+                    };
+                };
+            };
+        };
+        delete: {
+            responses: {
+                204: {
+                    description: "Cart cleared";
+                };
+            };
+        };
+    };
+    "/api/v1/cart/items": {
+        post: {
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["AddToCart"];
+                };
+            };
+            responses: {
+                201: {
+                    content: {
+                        "application/json": components["schemas"]["CartItem"];
+                    };
+                };
+            };
+        };
+    };
+    "/api/v1/cart/items/{id}": {
+        delete: {
+            parameters: {
+                path: {
+                    id: string;
+                };
+            };
+            responses: {
+                204: {
+                    description: "Item removed";
+                };
+            };
+        };
+    };
     "/api/v1/users/me": {
         parameters: {
             query?: never;
@@ -3353,6 +3401,27 @@ export interface components {
             licenseType: "PERSONAL" | "TEAM" | "ENTERPRISE";
             issuedAt: string;
             expiresAt: string | unknown;
+        };
+        Cart: {
+            id: string;
+            userId: string;
+            items: components["schemas"]["CartItem"][];
+            createdAt: string;
+            updatedAt: string;
+        };
+        CartItem: {
+            id: string;
+            cartId: string;
+            blockId: string;
+            /** @enum {string} */
+            licenseType: "PERSONAL" | "TEAM" | "ENTERPRISE";
+            createdAt: string;
+            block?: components["schemas"]["Block"];
+        };
+        AddToCart: {
+            blockId: string;
+            /** @enum {string} */
+            licenseType?: "PERSONAL" | "TEAM" | "ENTERPRISE";
         };
     };
     responses: never;

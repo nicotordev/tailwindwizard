@@ -195,6 +195,17 @@ export const frontendApi = {
       axiosClient.get("/api/v1/licenses"),
   },
 
+  cart: {
+    get: (): Promise<AxiosResponse<Schema["Cart"]>> =>
+      axiosClient.get("/api/v1/cart"),
+    add: (data: Schema["AddToCart"]): Promise<AxiosResponse<Schema["CartItem"]>> =>
+      axiosClient.post("/api/v1/cart/items", data),
+    remove: (itemId: string): Promise<AxiosResponse<void>> =>
+      axiosClient.delete(`/api/v1/cart/items/${itemId}`),
+    clear: (): Promise<AxiosResponse<void>> =>
+      axiosClient.delete("/api/v1/cart"),
+  },
+
   purchases: {
     list: (): Promise<AxiosResponse<ExtendedPurchase[]>> =>
       axiosClient.get("/api/v1/purchases"),

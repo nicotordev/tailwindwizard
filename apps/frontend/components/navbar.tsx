@@ -10,8 +10,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import Logo from "./logo";
-import { Sparkles } from "lucide-react";
+import { Sparkles, ShoppingBag } from "lucide-react";
 import { SignedIn, SignedOut, useUser, UserButton } from "@clerk/nextjs";
+import { useCart, useCartUI } from "@/hooks/use-cart";
+import { CartSheet } from "@/components/marketplace/cart-sheet";
+import { Badge } from "@/components/ui/badge";
+
 const NAV_ITEMS = [
   { label: "Marketplace", href: "/market", active: true },
   { label: "Trending", href: "#" },
@@ -21,6 +25,11 @@ const NAV_ITEMS = [
 
 export function MarketNavbar() {
   const { user } = useUser();
+  const { toggleCart } = useCartUI();
+  const { cart } = useCart();
+
+  const cartItemCount = cart?.items?.length || 0;
+
   return (
     <header className="sticky top-0 z-40 border-b border-border/40 bg-background/80 backdrop-blur-xl">
       <div className="mx-auto flex w-full max-w-[1440px] items-center justify-between px-4 py-3 sm:px-6 lg:px-10">
@@ -43,6 +52,23 @@ export function MarketNavbar() {
           </nav>
         </div>
         <div className="flex items-center gap-3">
+          <SignedIn>
+            <Button 
+                variant="ghost" 
+                size="icon" 
+                className="relative rounded-full"
+                onClick={toggleCart}
+            >
+                <ShoppingBag className="size-5" />
+                {cartItemCount > 0 && (
+                    <Badge className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-[10px] rounded-full">
+                        {cartItemCount}
+                    </Badge>
+                )}
+            </Button>
+            <CartSheet />
+          </SignedIn>
+
           <SignedOut>
             <Button size="sm" className="gap-2 rounded-xl px-5">
               <Sparkles className="size-4" />
