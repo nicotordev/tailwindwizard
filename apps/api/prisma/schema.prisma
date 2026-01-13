@@ -231,6 +231,13 @@ enum PlanTier {
   ENTERPRISE
 }
 
+enum IconType {
+  IMAGE
+  LUCIDE
+  REACT_ICON
+  EMOJI
+}
+
 // -----------------------------
 // Models
 // -----------------------------
@@ -268,6 +275,7 @@ model User {
   createdAt        DateTime          @default(now())
   updatedAt        DateTime          @updatedAt
   deletedAt        DateTime?
+  isBanned         Boolean           @default(false)
   moderationEvents ModerationEvent[]
 
   @@index([createdAt])
@@ -298,6 +306,7 @@ model Creator {
   approvedAt       DateTime?
   rejectedAt       DateTime?
   rejectionReason  String?
+  isBanned         Boolean   @default(false)
 
   blocks  Block[]
   payouts Payout[]
@@ -314,7 +323,7 @@ model Block {
   slug          String         @unique
   title         String
   description   String?
-  iconURL       String?
+  screenshot    String?
   changelog     String?
   type          BlockType      @default(COMPONENT)
   framework     BlockFramework @default(REACT)
@@ -471,6 +480,8 @@ model BlockNpmDependency {
 model Tag {
   id          String   @id @default(cuid())
   slug        String   @unique
+  icon        String?
+  iconType    IconType @default(IMAGE)
   name        String
   description String?
   createdAt   DateTime @default(now())
@@ -496,6 +507,7 @@ model Category {
   name        String
   description String?
   icon        String?
+  iconType    IconType @default(LUCIDE)
   priority    Int      @default(0)
   isFeatured  Boolean  @default(false)
   createdAt   DateTime @default(now())
