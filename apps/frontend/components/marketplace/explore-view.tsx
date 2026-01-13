@@ -83,8 +83,8 @@ export function ExploreView({ initialBlocks, categories }: ExploreViewProps) {
     <div className="flex flex-col gap-10">
       {/* Premium Wizard Hero */}
       <section className="relative isolate overflow-hidden rounded-[2.5rem] bg-card/10 border border-border/50 p-10 md:p-16">
-        <div className="absolute left-[-10%] top-[-20%] h-[400px] w-[400px] rounded-full bg-primary/20 blur-[120px] -z-10" />
-        <div className="absolute right-[-5%] bottom-[-30%] h-[350px] w-[350px] rounded-full bg-secondary/30 blur-[100px] -z-10" />
+        <div className="absolute left-[-10%] top-[-20%] h-100 w-100 rounded-full bg-primary/20 blur-[120px] -z-10" />
+        <div className="absolute right-[-5%] bottom-[-30%] h-87.5 w-87.5 rounded-full bg-secondary/30 blur-[100px] -z-10" />
 
         <div className="max-w-3xl space-y-4">
           <Badge

@@ -25,11 +25,6 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 
-export const metadata = {
-  title: "Clerk Debug | TailwindWizard",
-  description: "Internal tool to inspect Clerk user state and metadata.",
-};
-
 export default async function ClerkDebugPage() {
   const user = await currentUser();
   const authData = await auth();
@@ -109,7 +104,7 @@ export default async function ClerkDebugPage() {
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 overflow-hidden">
           <div className="flex items-center gap-6">
             <div className="relative group">
-              <div className="absolute -inset-1 bg-gradient-to-tr from-primary to-primary/30 rounded-full opacity-20 group-hover:opacity-40 transition-opacity blur-sm" />
+              <div className="absolute -inset-1 bg-linear-to-tr from-primary to-primary/30 rounded-full opacity-20 group-hover:opacity-40 transition-opacity blur-sm" />
               <Avatar className="h-20 w-20 border-4 border-background shadow-xl">
                 <AvatarImage src={user.imageUrl} alt={user.firstName || "User"} />
                 <AvatarFallback className="bg-primary/5 text-primary text-2xl font-bold font-heading">
@@ -235,7 +230,7 @@ export default async function ClerkDebugPage() {
                       {meta.desc}
                     </span>
                   </div>
-                  <div className={cn("rounded-2xl p-4 border min-h-[120px] max-h-[300px] overflow-auto", meta.bg, meta.border)}>
+                  <div className={cn("rounded-2xl p-4 border min-h-32 max-h-32 overflow-auto", meta.bg, meta.border)}>
                     {Object.keys(meta.data || {}).length > 0 ? (
                       <pre className="text-[10px] font-mono leading-relaxed">
                         {JSON.stringify(meta.data, null, 2)}
@@ -268,8 +263,8 @@ export default async function ClerkDebugPage() {
                 </Badge>
               </div>
             </CardHeader>
-            <CardContent className="p-0 flex-grow overflow-hidden">
-              <ScrollArea className="h-[600px] w-full">
+            <CardContent className="p-0 grow overflow-hidden">
+              <ScrollArea className="h-150 w-full">
                 <div className="p-6">
                   <pre className="text-[10px] font-mono leading-relaxed selection:bg-primary/20 text-foreground/70">
                     {JSON.stringify(user, null, 2)}
@@ -290,7 +285,7 @@ export default async function ClerkDebugPage() {
               <div className="flex justify-between items-center text-[10px]">
                 <span className="text-muted-foreground font-bold uppercase tracking-tighter">Session ID</span>
                 <span
-                  className="font-mono text-primary truncate max-w-[140px] ml-2"
+                  className="font-mono text-primary truncate max-w-35 ml-2"
                   title={authData.sessionId || ""}
                 >
                   {authData.sessionId || "None"}
