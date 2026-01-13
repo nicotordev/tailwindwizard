@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "node ./.next/standalone/server.js",
+    "start": "node ./.next/standalone/apps/frontend/server.js",
     "lint": "eslint",
     "prebuild": "pnpm --filter @tw/shared build",
     "gen:api": "openapi-typescript http://localhost:3001/doc -o ./types/api.d.ts"
