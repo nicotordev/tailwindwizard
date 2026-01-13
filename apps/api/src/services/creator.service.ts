@@ -35,6 +35,8 @@ export const creatorService = {
     return prisma.creator.create({
       data: {
         ...data,
+        isApprovedSeller: true,
+        approvedAt: new Date(),
         user: {
           connect: { id: userId },
         },

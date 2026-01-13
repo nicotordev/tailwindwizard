@@ -34,6 +34,33 @@ export default clerkMiddleware(async (auth, req) => {
   // ✅ Let the home page always through (no auth, no user fetch)
   if (isHome(req)) return NextResponse.next();
 
+  const isBannedPage = req.nextUrl.pathname.startsWith("/banned");
+
+  // ---- Banned check
+  if (!isBannedPage) {
+    const a = await auth();
+    if (a.userId) {
+      const client = await clerkClient();
+      const user = await client.users.getUser(a.userId);
+      if (user.publicMetadata.isBanned) {
+        return redirectTo(req, "/banned");
+      }
+    }
+  } else {
+    // If on /banned page but NOT banned, redirect to home
+    const a = await auth();
+    if (a.userId) {
+      const client = await clerkClient();
+      const user = await client.users.getUser(a.userId);
+      if (!user.publicMetadata.isBanned) {
+        return redirectTo(req, "/");
+      }
+    } else {
+      // Not logged in, can't be on /banned
+      return redirectTo(req, "/");
+    }
+  }
+
   // ---- Market protected routes: require signed-in and role USER (or higher, depending on your Clerk setup)
   if (isMarketProtected(req)) {
     await auth.protect({ role: "USER" });

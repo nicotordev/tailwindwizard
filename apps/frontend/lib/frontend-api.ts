@@ -222,6 +222,15 @@ export const frontendApi = {
         params?: AdminCreatorsParams
       ): Promise<AxiosResponse<AdminCreatorsResponse>> =>
         axiosClient.get("/api/v1/admin/creators", { params }),
+      update: (
+        id: string,
+        data: Schema["UpdateCreator"]
+      ): Promise<AxiosResponse<Schema["Creator"]>> =>
+        axiosClient.patch(`/api/v1/admin/creators/${id}`, data),
+      ban: (id: string): Promise<AxiosResponse<Schema["Creator"]>> =>
+        axiosClient.post(`/api/v1/admin/creators/${id}/ban`),
+      unban: (id: string): Promise<AxiosResponse<Schema["Creator"]>> =>
+        axiosClient.post(`/api/v1/admin/creators/${id}/unban`),
     },
     reviewCreator: (
       creatorId: string,
@@ -240,6 +249,10 @@ export const frontendApi = {
         role: Schema["User"]["role"]
       ): Promise<AxiosResponse<User>> =>
         axiosClient.patch(`/api/v1/admin/users/${userId}/role`, { role }),
+      ban: (userId: string): Promise<AxiosResponse<User>> =>
+        axiosClient.post(`/api/v1/admin/users/${userId}/ban`),
+      unban: (userId: string): Promise<AxiosResponse<User>> =>
+        axiosClient.post(`/api/v1/admin/users/${userId}/unban`),
     },
 
     // Category management

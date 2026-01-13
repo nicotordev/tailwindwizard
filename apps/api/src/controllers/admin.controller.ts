@@ -171,6 +171,60 @@ export const adminController = {
     return c.json(updatedUser, 200);
   },
 
+  async banUser(c: Context) {
+    const user = c.get("user");
+    if (!user) return c.json({ message: "Unauthorized" }, 401);
+
+    const userId = c.req.param("userId");
+    const dbUser = await prisma.user.findUnique({ where: { id: userId } });
+    if (!dbUser) return c.json({ message: "User not found" }, 404);
+
+    const updatedUser = await prisma.user.update({
+      where: { id: userId },
+      data: { isBanned: true }
+    });
+
+    if (dbUser.externalAuthId) {
+      await clerkClient.users.banUser(dbUser.externalAuthId);
+      const clerkUser = await clerkClient.users.getUser(dbUser.externalAuthId);
+      await clerkClient.users.updateUser(dbUser.externalAuthId, {
+        publicMetadata: {
+          ...clerkUser.publicMetadata,
+          isBanned: true
+        }
+      });
+    }
+
+    return c.json(updatedUser, 200);
+  },
+
+  async unbanUser(c: Context) {
+    const user = c.get("user");
+    if (!user) return c.json({ message: "Unauthorized" }, 401);
+
+    const userId = c.req.param("userId");
+    const dbUser = await prisma.user.findUnique({ where: { id: userId } });
+    if (!dbUser) return c.json({ message: "User not found" }, 404);
+
+    const updatedUser = await prisma.user.update({
+      where: { id: userId },
+      data: { isBanned: false }
+    });
+
+    if (dbUser.externalAuthId) {
+      await clerkClient.users.unbanUser(dbUser.externalAuthId);
+      const clerkUser = await clerkClient.users.getUser(dbUser.externalAuthId);
+      await clerkClient.users.updateUser(dbUser.externalAuthId, {
+        publicMetadata: {
+          ...clerkUser.publicMetadata,
+          isBanned: false
+        }
+      });
+    }
+
+    return c.json(updatedUser, 200);
+  },
+
   async listCreators(c: Context) {
     const user = c.get("user");
     if (!user) return c.json({ message: "Unauthorized" }, 401);
@@ -246,6 +300,110 @@ export const adminController = {
       where: { id: creatorId },
       data,
     });
+
+    return c.json(updatedCreator, 200);
+  },
+
+  async updateCreator(c: Context) {
+    const user = c.get("user");
+    if (!user) return c.json({ message: "Unauthorized" }, 401);
+
+    const creatorId = c.req.param("creatorId");
+    const body = await c.req.json();
+
+    // Sanitize input to only allow profile fields
+    const { displayName, bio, websiteUrl, portfolioUrl, countryCode } = body;
+
+    const updatedCreator = await prisma.creator.update({
+      where: { id: creatorId },
+      data: {
+        displayName,
+        bio,
+        websiteUrl,
+        portfolioUrl,
+        countryCode,
+      },
+    });
+
+    return c.json(updatedCreator, 200);
+  },
+
+  async banCreator(c: Context) {
+    const user = c.get("user");
+    if (!user) return c.json({ message: "Unauthorized" }, 401);
+
+    const creatorId = c.req.param("creatorId");
+
+    // Fetch creator to get userId
+    const creator = await prisma.creator.findUnique({
+      where: { id: creatorId },
+      include: { user: true }
+    });
+
+    if (!creator) return c.json({ message: "Creator not found" }, 404);
+
+    const updatedCreator = await prisma.creator.update({
+      where: { id: creatorId },
+      data: { isBanned: true }
+    });
+
+    // Ban in our DB
+    await prisma.user.update({
+      where: { id: creator.userId },
+      data: { isBanned: true }
+    });
+
+    // Ban in Clerk
+    if (creator.user.externalAuthId) {
+      await clerkClient.users.banUser(creator.user.externalAuthId);
+      const clerkUser = await clerkClient.users.getUser(creator.user.externalAuthId);
+      await clerkClient.users.updateUser(creator.user.externalAuthId, {
+        publicMetadata: {
+          ...clerkUser.publicMetadata,
+          isBanned: true
+        }
+      });
+    }
+
+    return c.json(updatedCreator, 200);
+  },
+
+  async unbanCreator(c: Context) {
+    const user = c.get("user");
+    if (!user) return c.json({ message: "Unauthorized" }, 401);
+
+    const creatorId = c.req.param("creatorId");
+
+    // Fetch creator to get userId
+    const creator = await prisma.creator.findUnique({
+      where: { id: creatorId },
+      include: { user: true }
+    });
+
+    if (!creator) return c.json({ message: "Creator not found" }, 404);
+
+    const updatedCreator = await prisma.creator.update({
+      where: { id: creatorId },
+      data: { isBanned: false }
+    });
+
+    // Unban in our DB
+    await prisma.user.update({
+      where: { id: creator.userId },
+      data: { isBanned: false }
+    });
+
+    // Unban in Clerk
+    if (creator.user.externalAuthId) {
+      await clerkClient.users.unbanUser(creator.user.externalAuthId);
+      const clerkUser = await clerkClient.users.getUser(creator.user.externalAuthId);
+      await clerkClient.users.updateUser(creator.user.externalAuthId, {
+        publicMetadata: {
+          ...clerkUser.publicMetadata,
+          isBanned: false
+        }
+      });
+    }
 
     return c.json(updatedCreator, 200);
   },
@@ -369,7 +527,7 @@ export const adminController = {
               block: {
                 select: {
                   id: true,
-                  iconURL: true,
+                  screenshot: true,
                   title: true,
 
                   slug: true,

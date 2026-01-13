@@ -9,6 +9,8 @@ import {
   ExternalLink,
   ShieldCheck,
   ChevronsUpDown,
+  Ban,
+  Pencil,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -61,6 +63,14 @@ export function CreatorModeration({ initialCreators }: CreatorModerationProps) {
     React.useState<CreatorProfile | null>(null);
   const [reason, setReason] = React.useState<string>("");
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
+
+  const [isEditing, setIsEditing] = React.useState(false);
+  const [editForm, setEditForm] = React.useState({
+    displayName: "",
+    bio: "",
+    websiteUrl: "",
+    countryCode: "",
+  });
 
   const [sortKey, setSortKey] = React.useState<SortKey>("JOINED");
   const [sortDir, setSortDir] = React.useState<SortDir>("DESC");
@@ -162,6 +172,60 @@ export function CreatorModeration({ initialCreators }: CreatorModerationProps) {
     }
   };
 
+  const handleBan = async (id: string) => {
+    if (!confirm("Are you sure you want to BAN this creator? This will also ban their user account in Clerk.")) return;
+
+    try {
+      await frontendApi.admin.creators.ban(id);
+      setCreators((prev) =>
+        prev.map((c) => (c.id === id ? { ...c, isBanned: true } : c))
+      );
+      toast.success("Creator and User banned");
+    } catch (error) {
+      toast.error("Failed to ban creator");
+    }
+  };
+
+  const handleUnban = async (id: string) => {
+    if (!confirm("Are you sure you want to UNBAN this creator?")) return;
+
+    try {
+      await frontendApi.admin.creators.unban(id);
+      setCreators((prev) =>
+        prev.map((c) => (c.id === id ? { ...c, isBanned: false } : c))
+      );
+      toast.success("Creator and User unbanned");
+    } catch (error) {
+      toast.error("Failed to unban creator");
+    }
+  };
+
+  const handleUpdateCreator = async () => {
+    if (!selectedCreator) return;
+    setIsSubmitting(true);
+    try {
+      const { data } = await frontendApi.admin.creators.update(selectedCreator.id, editForm);
+      setCreators((prev) => prev.map((c) => (c.id === selectedCreator.id ? { ...c, ...data } : c)));
+      toast.success("Creator updated");
+      setIsEditing(false);
+    } catch (error) {
+      toast.error("Failed to update creator");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const startEditing = (creator: CreatorProfile) => {
+    setSelectedCreator(creator);
+    setEditForm({
+      displayName: creator.displayName || "",
+      bio: creator.bio || "",
+      websiteUrl: creator.websiteUrl || "",
+      countryCode: creator.countryCode || "",
+    });
+    setIsEditing(true);
+  };
+
   const metricsMapped = {
     Total: metrics.total,
     Approved: metrics.approved,
@@ -261,7 +325,7 @@ export function CreatorModeration({ initialCreators }: CreatorModerationProps) {
                         </button>
                       </TableHead>
 
-                      <TableHead className="w-[180px]">
+                      <TableHead className="w-45">
                         <button
                           type="button"
                           onClick={() => toggleSort("STRIPE")}
@@ -275,7 +339,7 @@ export function CreatorModeration({ initialCreators }: CreatorModerationProps) {
                         </button>
                       </TableHead>
 
-                      <TableHead className="w-[170px]">
+                      <TableHead className="w-42.5">
                         <button
                           type="button"
                           onClick={() => toggleSort("APPROVAL")}
@@ -289,7 +353,7 @@ export function CreatorModeration({ initialCreators }: CreatorModerationProps) {
                         </button>
                       </TableHead>
 
-                      <TableHead className="w-[160px]">
+                      <TableHead className="w-40">
                         <button
                           type="button"
                           onClick={() => toggleSort("JOINED")}
@@ -303,7 +367,7 @@ export function CreatorModeration({ initialCreators }: CreatorModerationProps) {
                         </button>
                       </TableHead>
 
-                      <TableHead className="text-right w-[160px]">
+                      <TableHead className="text-right w-40">
                         Actions
                       </TableHead>
                     </TableRow>
@@ -358,6 +422,11 @@ export function CreatorModeration({ initialCreators }: CreatorModerationProps) {
                                         "bg-destructive/70"
                                     )}
                                   />
+                                  {creator.isBanned && (
+                                    <Badge variant="destructive" className="h-4 px-1.5 text-[9px] uppercase font-black tracking-tighter">
+                                      Banned
+                                    </Badge>
+                                  )}
                                 </div>
 
                                 <div className="mt-0.5 flex items-center gap-2 text-xs text-muted-foreground">
@@ -420,7 +489,26 @@ export function CreatorModeration({ initialCreators }: CreatorModerationProps) {
 
                           <TableCell className="text-right">
                             <div className="inline-flex items-center gap-2">
-                              {!creator.isApprovedSeller ? (
+                              {creator.isBanned ? (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="rounded-xl text-emerald-600 border-emerald-200 hover:bg-emerald-50"
+                                  onClick={() => handleUnban(creator.id)}
+                                >
+                                  Unban
+                                </Button>
+                              ) : (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="rounded-xl text-destructive hover:bg-destructive/10"
+                                  onClick={() => handleBan(creator.id)}
+                                >
+                                  <Ban className="size-4" />
+                                </Button>
+                              )}
+                              {!creator.isApprovedSeller && (
                                 <Button
                                   variant="secondary"
                                   size="sm"
@@ -429,16 +517,15 @@ export function CreatorModeration({ initialCreators }: CreatorModerationProps) {
                                 >
                                   Review
                                 </Button>
-                              ) : (
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="rounded-xl"
-                                  onClick={() => setSelectedCreator(creator)}
-                                >
-                                  Details
-                                </Button>
                               )}
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="rounded-xl"
+                                onClick={() => startEditing(creator)}
+                              >
+                                <Pencil className="size-4" />
+                              </Button>
                             </div>
                           </TableCell>
                         </TableRow>
@@ -484,7 +571,7 @@ export function CreatorModeration({ initialCreators }: CreatorModerationProps) {
         open={!!selectedCreator}
         onOpenChange={(open) => !open && setSelectedCreator(null)}
       >
-        <DialogContent className="sm:max-w-[520px] rounded-[2rem]">
+        <DialogContent className="sm:max-w-130 rounded-[2rem]">
           <DialogHeader>
             <DialogTitle>Creator Review</DialogTitle>
             <DialogDescription>
@@ -566,7 +653,7 @@ export function CreatorModeration({ initialCreators }: CreatorModerationProps) {
                     placeholder="If rejecting, explain why…"
                     value={reason}
                     onChange={(e) => setReason(e.target.value)}
-                    className="rounded-xl min-h-[90px]"
+                    className="rounded-xl min-h-22.5"
                   />
                 </div>
               )}
@@ -608,6 +695,79 @@ export function CreatorModeration({ initialCreators }: CreatorModerationProps) {
               </DialogFooter>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={isEditing}
+        onOpenChange={(open) => !open && setIsEditing(false)}
+      >
+        <DialogContent className="sm:max-w-130 rounded-[2rem]">
+          <DialogHeader>
+            <DialogTitle>Edit Creator</DialogTitle>
+            <DialogDescription>
+              Modify creator profile information.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="displayName">Display Name</Label>
+              <Input
+                id="displayName"
+                value={editForm.displayName}
+                onChange={(e) => setEditForm({ ...editForm, displayName: e.target.value })}
+                className="rounded-xl"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="bio">Bio</Label>
+              <Textarea
+                id="bio"
+                value={editForm.bio}
+                onChange={(e) => setEditForm({ ...editForm, bio: e.target.value })}
+                className="rounded-xl min-h-25"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="website">Website</Label>
+                <Input
+                  id="website"
+                  value={editForm.websiteUrl}
+                  onChange={(e) => setEditForm({ ...editForm, websiteUrl: e.target.value })}
+                  className="rounded-xl"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="country">Country Code (2 chars)</Label>
+                <Input
+                  id="country"
+                  value={editForm.countryCode}
+                  onChange={(e) => setEditForm({ ...editForm, countryCode: e.target.value })}
+                  className="rounded-xl"
+                  maxLength={2}
+                />
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsEditing(false)}
+              className="rounded-xl"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleUpdateCreator}
+              disabled={isSubmitting}
+              className="rounded-xl"
+            >
+              {isSubmitting ? "Saving..." : "Save Changes"}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

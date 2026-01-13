@@ -7,9 +7,9 @@ export async function GET(
 ) {
   try {
     const id = (await ctx.params).id;
-    const category = await apiClient.GET("/api/v1/admin/categories", {
+    const category = await apiClient.GET("/api/v1/admin/categories/{id}", {
       params: {
-        id,
+        path: { id },
       },
     });
     return Response.json(category, { status: 200 });

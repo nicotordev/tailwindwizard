@@ -180,6 +180,50 @@ const updateUserRoleRoute = createRoute({
   },
 });
 
+// POST /users/{userId}/ban
+const banUserRoute = createRoute({
+  method: "post",
+  path: "/users/{userId}/ban",
+  tags: ["Admin"],
+  summary: "Ban a user",
+  request: {
+    params: z.object({
+      userId: z.string(),
+    }),
+  },
+  responses: {
+    200: {
+      content: { "application/json": { schema: UserSchema } },
+      description: "User banned",
+    },
+    401: UnauthorizedResponse,
+    403: ForbiddenResponse,
+    404: NotFoundResponse,
+  },
+});
+
+// POST /users/{userId}/unban
+const unbanUserRoute = createRoute({
+  method: "post",
+  path: "/users/{userId}/unban",
+  tags: ["Admin"],
+  summary: "Unban a user",
+  request: {
+    params: z.object({
+      userId: z.string(),
+    }),
+  },
+  responses: {
+    200: {
+      content: { "application/json": { schema: UserSchema } },
+      description: "User unbanned",
+    },
+    401: UnauthorizedResponse,
+    403: ForbiddenResponse,
+    404: NotFoundResponse,
+  },
+});
+
 // GET /creators
 const listCreatorsRoute = createRoute({
   method: "get",
@@ -244,6 +288,78 @@ const reviewCreatorRoute = createRoute({
     },
     401: UnauthorizedResponse,
     403: ForbiddenResponse,
+  },
+});
+
+// POST /creators/{creatorId}/ban
+const banCreatorRoute = createRoute({
+  method: "post",
+  path: "/creators/{creatorId}/ban",
+  tags: ["Admin"],
+  summary: "Ban a creator",
+  request: {
+    params: z.object({
+      creatorId: z.string(),
+    }),
+  },
+  responses: {
+    200: {
+      content: { "application/json": { schema: CreatorSchema } },
+      description: "Creator banned",
+    },
+    401: UnauthorizedResponse,
+    403: ForbiddenResponse,
+    404: NotFoundResponse,
+  },
+});
+
+// POST /creators/{creatorId}/unban
+const unbanCreatorRoute = createRoute({
+  method: "post",
+  path: "/creators/{creatorId}/unban",
+  tags: ["Admin"],
+  summary: "Unban a creator",
+  request: {
+    params: z.object({
+      creatorId: z.string(),
+    }),
+  },
+  responses: {
+    200: {
+      content: { "application/json": { schema: CreatorSchema } },
+      description: "Creator unbanned",
+    },
+    401: UnauthorizedResponse,
+    403: ForbiddenResponse,
+    404: NotFoundResponse,
+  },
+});
+
+const updateCreatorRoute = createRoute({
+  method: "patch",
+  path: "/creators/{creatorId}",
+  tags: ["Admin"],
+  summary: "Update creator profile",
+  request: {
+    params: z.object({
+      creatorId: z.string(),
+    }),
+    body: {
+      content: {
+        "application/json": {
+          schema: CreatorSchema.partial(),
+        },
+      },
+    },
+  },
+  responses: {
+    200: {
+      content: { "application/json": { schema: CreatorSchema } },
+      description: "Creator updated",
+    },
+    401: UnauthorizedResponse,
+    403: ForbiddenResponse,
+    404: NotFoundResponse,
   },
 });
 
@@ -475,7 +591,12 @@ const listPurchasesRoute = createRoute({
       content: {
         "application/json": {
           schema: z.object({
-            data: z.array(z.any()),
+            data: z.array(
+              z.object({
+                id: z.string(),
+                userId: z.string(),
+              })
+            ),
             meta: PaginationMeta,
           }),
         },
@@ -503,7 +624,7 @@ const getWebhookStatsRoute = createRoute({
               pending: z.number(),
               successRate: z.number(),
             }),
-            lastEvents: z.array(z.any()),
+            lastEvents: z.array(WebhookEventSchema),
           }),
         },
       },
@@ -542,8 +663,13 @@ const chainedApp = adminApp
   .openapi(decideRoute, (c) => adminController.decide(c))
   .openapi(listUsersRoute, (c) => adminController.listUsers(c))
   .openapi(updateUserRoleRoute, (c) => adminController.updateUserRole(c))
+  .openapi(banUserRoute, (c) => adminController.banUser(c))
+  .openapi(unbanUserRoute, (c) => adminController.unbanUser(c))
   .openapi(listCreatorsRoute, (c) => adminController.listCreators(c))
   .openapi(reviewCreatorRoute, (c) => adminController.reviewCreator(c))
+  .openapi(updateCreatorRoute, (c) => adminController.updateCreator(c))
+  .openapi(banCreatorRoute, (c) => adminController.banCreator(c))
+  .openapi(unbanCreatorRoute, (c) => adminController.unbanCreator(c))
   .openapi(listCategoriesRoute, (c) => adminController.listCategories(c))
   .openapi(createCategoryRoute, (c) => adminController.createCategory(c))
   .openapi(updateCategoryRoute, (c) => adminController.updateCategory(c))

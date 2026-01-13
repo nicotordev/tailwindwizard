@@ -35,10 +35,9 @@ interface UserManagerProps {
   }
 }
 
-export function UserManager({ initialUsers, meta }: UserManagerProps) {
+export function UserManager({ initialUsers }: UserManagerProps) {
   const [users, setUsers] = React.useState(initialUsers)
   const [filter, setFilter] = React.useState("")
-  const [isLoading, setIsLoading] = React.useState(false)
 
   const handleUpdateRole = async (userId: string, role: "ADMIN" | "USER") => {
     try {
@@ -47,6 +46,28 @@ export function UserManager({ initialUsers, meta }: UserManagerProps) {
       toast.success(`User role updated to ${role}`)
     } catch (error) {
       toast.error("Failed to update user role")
+    }
+  }
+
+  const handleBan = async (userId: string) => {
+    if (!confirm("Are you sure you want to BAN this user in Clerk and the database?")) return;
+    try {
+      const { data } = await frontendApi.admin.users.ban(userId)
+      setUsers((prev) => prev.map((u) => (u.id === userId ? { ...u, isBanned: true } : u)))
+      toast.success("User banned")
+    } catch (error) {
+      toast.error("Failed to ban user")
+    }
+  }
+
+  const handleUnban = async (userId: string) => {
+    if (!confirm("Are you sure you want to UNBAN this user?")) return;
+    try {
+      const { data } = await frontendApi.admin.users.unban(userId)
+      setUsers((prev) => prev.map((u) => (u.id === userId ? { ...u, isBanned: false } : u)))
+      toast.success("User unbanned")
+    } catch (error) {
+      toast.error("Failed to unban user")
     }
   }
 
@@ -85,7 +106,14 @@ export function UserManager({ initialUsers, meta }: UserManagerProps) {
                         </AvatarFallback>
                       </Avatar>
                       <div className="flex flex-col">
-                        <span className="font-semibold">{user.name || "Anonymous"}</span>
+                        <div className="flex items-center gap-2">
+                          <span className="font-semibold">{user.name || "Anonymous"}</span>
+                          {user.isBanned && (
+                            <Badge variant="destructive" className="h-4 px-1.5 text-[9px] uppercase font-black">
+                              Banned
+                            </Badge>
+                          )}
+                        </div>
                         <span className="text-xs text-muted-foreground">{user.email}</span>
                       </div>
                     </div>
@@ -107,25 +135,46 @@ export function UserManager({ initialUsers, meta }: UserManagerProps) {
                     {new Date(user.createdAt).toLocaleDateString()}
                   </TableCell>
                   <TableCell className="text-right">
-                    {user.role === "ADMIN" ? (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="rounded-xl"
-                        onClick={() => handleUpdateRole(user.id, "USER")}
-                      >
-                        Demote to User
-                      </Button>
-                    ) : (
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        className="rounded-xl"
-                        onClick={() => handleUpdateRole(user.id, "ADMIN")}
-                      >
-                        Promote to Admin
-                      </Button>
-                    )}
+                    <div className="flex justify-end gap-2">
+                      {user.isBanned ? (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="rounded-xl text-emerald-600 border-emerald-200"
+                          onClick={() => handleUnban(user.id)}
+                        >
+                          Unban
+                        </Button>
+                      ) : (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="rounded-xl text-destructive hover:bg-destructive/10"
+                          onClick={() => handleBan(user.id)}
+                        >
+                          Ban
+                        </Button>
+                      )}
+                      {user.role === "ADMIN" ? (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="rounded-xl"
+                          onClick={() => handleUpdateRole(user.id, "USER")}
+                        >
+                          Demote
+                        </Button>
+                      ) : (
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          className="rounded-xl"
+                          onClick={() => handleUpdateRole(user.id, "ADMIN")}
+                        >
+                          Promote
+                        </Button>
+                      )}
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}

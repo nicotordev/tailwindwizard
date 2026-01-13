@@ -124,6 +124,7 @@ export function TagManager({ initialTags }: TagManagerProps) {
         setIsImportDialogOpen(false);
         setJsonInput("");
       }
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
       toast.error("Invalid JSON format");
     } finally {
@@ -244,7 +245,7 @@ export function TagManager({ initialTags }: TagManagerProps) {
       </Card>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="sm:max-w-[425px] rounded-[2rem]">
+        <DialogContent className="sm:max-w-106.25 rounded-[2rem]">
           <DialogHeader>
             <DialogTitle>{currentTag?.id ? "Edit Tag" : "Add Tag"}</DialogTitle>
             <DialogDescription>
@@ -297,7 +298,7 @@ export function TagManager({ initialTags }: TagManagerProps) {
                   }))
                 }
                 placeholder="Short description of this tag..."
-                className="rounded-xl min-h-[80px]"
+                className="rounded-xl min-h-20"
               />
             </div>
             <DialogFooter className="pt-4">
@@ -333,7 +334,7 @@ export function TagManager({ initialTags }: TagManagerProps) {
                 value={jsonInput}
                 onChange={(e) => setJsonInput(e.target.value)}
                 placeholder='[{"name": "Responsive", "slug": "responsive"}]'
-                className="rounded-xl min-h-[300px] font-mono text-xs"
+                className="rounded-xl min-h-75 font-mono text-xs max-h-100"
               />
             </div>
 
