@@ -49,7 +49,7 @@ export const BlockSchema = z
     slug: z.string(),
     title: z.string(),
     description: z.string().nullable(),
-    iconURL: z.string().nullable().optional(),
+    screenshot: z.string().nullable().optional(),
     type: z.enum(["COMPONENT", "SECTION", "PAGE"]),
     framework: z.enum(["REACT", "VUE", "SVELTE"]),
     stylingEngine: z.enum(["TAILWIND", "CSS"]),
@@ -103,7 +103,7 @@ export const CreateBlockSchema = z
       .min(3)
       .regex(/^[a-z0-9-]+$/),
     description: z.string().optional(),
-    iconURL: z.string().url().optional(),
+    screenshot: z.string().url().optional(),
     type: z.enum(["COMPONENT", "SECTION", "PAGE"]).default("COMPONENT"),
     price: z.number().min(0),
     currency: z

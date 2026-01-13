@@ -7,8 +7,11 @@ export const UserSchema = z
     name: z.string().nullable(),
     avatarUrl: z.string().nullable(),
     role: z.enum(["ADMIN", "USER"]),
+    authProvider: z.enum(["CLERK"]),
+    externalAuthId: z.string().nullable(),
+    isBanned: z.boolean().default(false),
     createdAt: z.string().or(z.date()),
-    // Add other fields as necessary
+    updatedAt: z.string().or(z.date()),
   })
   .openapi("User");
 
@@ -67,6 +70,7 @@ export const UserPurchaseSchema = z
             id: z.string(),
             title: z.string(),
             slug: z.string(),
+            screenshot: z.string().nullable().optional(),
           }),
         })
       )

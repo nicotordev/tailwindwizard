@@ -7,6 +7,7 @@ export const CategorySchema = z
     slug: z.string(),
     description: z.string().nullable().optional(),
     icon: z.string().nullable().optional(),
+    iconType: z.enum(["IMAGE", "LUCIDE", "REACT_ICON", "EMOJI"]).default("LUCIDE"),
     priority: z.number().default(0),
     isFeatured: z.boolean().default(false),
     _count: z

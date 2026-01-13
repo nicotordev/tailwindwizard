@@ -55,4 +55,5 @@ export interface ExtendedPurchase extends Purchase {
 export type CreatorProfile = components["schemas"]["Creator"] & {
   user?: components["schemas"]["User"];
   rejectedAt?: string | null;
+  isBanned?: boolean;
 };

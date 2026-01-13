@@ -11,6 +11,7 @@ export const CreatorSchema = z
     countryCode: z.string().nullable(),
     stripeAccountStatus: z.string(), // simplified enum
     isApprovedSeller: z.boolean(),
+    isBanned: z.boolean().default(false),
     createdAt: z.string().or(z.date()),
   })
   .openapi("Creator");

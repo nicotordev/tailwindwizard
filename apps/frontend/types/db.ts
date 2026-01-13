@@ -300,7 +300,7 @@ export interface Block {
   slug: string;
   title: string;
   description: string | null;
-  iconURL: string | null;
+  screenshot: string | null;
   changelog: string | null;
   type: BlockType;
   framework: BlockFramework;

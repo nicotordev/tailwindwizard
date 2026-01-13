@@ -131,5 +131,5 @@ This project leverages Model Context Protocol (MCP) servers to enhance developme
 ## Recent Context & Memory
 - **Onboarding Flow:** Currently working on V2 and resume parsing features.
 - **Moderation Bug:** Fixed "ModerationEvent_decidedById_fkey" error by resolving internal `User.id` from Clerk's `externalAuthId`.
-- **Block Model:** Added `iconURL` to `Block` model and seeded data.
-- **Type Sync:** Manually updated `frontend/types/api.d.ts` and `shared/schemas/block.schema.ts` for `iconURL`.
+- **Block Model:** Added `screenshot` to `Block` model and seeded data.
+- **Type Sync:** Manually updated `frontend/types/api.d.ts` and `shared/schemas/block.schema.ts` for `screenshot`.

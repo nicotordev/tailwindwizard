@@ -5,6 +5,8 @@ export const TagSchema = z
     id: z.string(),
     name: z.string(),
     slug: z.string(),
+    icon: z.string().nullable().optional(),
+    iconType: z.enum(["IMAGE", "LUCIDE", "REACT_ICON", "EMOJI"]).default("IMAGE"),
     description: z.string().nullable().optional(),
     _count: z
       .object({

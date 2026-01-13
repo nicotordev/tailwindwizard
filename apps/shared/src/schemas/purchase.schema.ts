@@ -26,6 +26,7 @@ export const ExtendedPurchaseSchema = PurchaseSchema.extend({
           id: z.string(),
           title: z.string(),
           slug: z.string(),
+          screenshot: z.string().nullable().optional(),
         }),
         licenseType: LicenseTypeEnum.optional(),
         amount: z.number().or(z.string()).optional(),
