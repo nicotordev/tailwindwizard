@@ -301,10 +301,26 @@ export const blockService = {
   },
 
   async update(id: string, data: Prisma.BlockUpdateInput) {
-    return prisma.block.update({
+    const existing = await prisma.block.findUnique({
+      where: { id },
+      select: { status: true },
+    });
+
+    const updated = await prisma.block.update({
       where: { id },
       data,
     });
+
+    const nextStatus =
+      typeof data.status === "string" ? data.status : data.status?.set;
+    const shouldQueuePreview =
+      nextStatus === "PUBLISHED" && existing?.status !== "PUBLISHED";
+
+    if (shouldQueuePreview) {
+      void blockService.queueRenderJobIfNeeded(id);
+    }
+
+    return updated;
   },
 
   async upsertCodeBundle({
@@ -455,6 +471,31 @@ export const blockService = {
     });
 
     return job;
+  },
+
+  async queueRenderJobIfNeeded(
+    blockId: string,
+    options?: { force?: boolean }
+  ) {
+    const [block, pendingJob] = await Promise.all([
+      prisma.block.findUnique({
+        where: { id: blockId },
+        select: {
+          codeBundle: { select: { id: true } },
+          _count: { select: { previews: true } },
+        },
+      }),
+      prisma.renderJob.findFirst({
+        where: { blockId, status: { in: ["QUEUED", "RUNNING"] } },
+        select: { id: true },
+      }),
+    ]);
+
+    if (!block?.codeBundle) return null;
+    if (pendingJob && !options?.force) return pendingJob;
+    if (!options?.force && block._count.previews > 0) return null;
+
+    return blockService.queueRenderJob(blockId);
   },
 
   async getCreatorUserId(blockId: string) {

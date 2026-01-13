@@ -193,6 +193,8 @@ export const blockController = {
       buffer,
     });
 
+    void blockService.queueRenderJobIfNeeded(existing.id, { force: true });
+
     return c.json(
       {
         id: upload.id,
