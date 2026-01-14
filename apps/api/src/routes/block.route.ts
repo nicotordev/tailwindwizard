@@ -9,25 +9,13 @@ import {
   UpdateBlockSchema,
 } from "@tw/shared";
 import { CreateReviewSchema, ReviewSchema } from "@tw/shared";
+import {
+  BundleUploadResponseSchema,
+  BundleUploadSchema,
+  RenderJobSchema,
+} from "../schemas/block.schema.js";
 
 const blockApp = new OpenAPIHono();
-const BundleUploadSchema = z.object({
-  bundle: z.any().openapi({ type: "string", format: "binary" }),
-});
-const BundleUploadResponseSchema = z.object({
-  id: z.string(),
-  fileName: z.string(),
-  sha256: z.string(),
-  size: z.number(),
-});
-const RenderJobSchema = z.object({
-  id: z.string(),
-  blockId: z.string(),
-  status: z.enum(["QUEUED", "RUNNING", "SUCCEEDED", "FAILED", "CANCELED"]),
-  createdAt: z.string(),
-  updatedAt: z.string(),
-  error: z.string().nullable().optional(),
-});
 
 // Auth protection for mutations
 blockApp.use("/", async (c, next) => {

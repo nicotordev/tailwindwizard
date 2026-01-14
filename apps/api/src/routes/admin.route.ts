@@ -10,55 +10,17 @@ import {
 } from "@tw/shared";
 import { adminController } from "../controllers/admin.controller.js";
 import { requireAdmin } from "../middleware/requireAdmin.js";
+import {
+  BadRequestResponse,
+  ForbiddenResponse,
+  NotFoundResponse,
+  PaginationMeta,
+  UnauthorizedResponse,
+} from "../schemas/common.schema.js";
 
 const adminApp = new OpenAPIHono();
 
 adminApp.use("*", requireAdmin);
-
-const PaginationMeta = z
-  .object({
-    total: z.number(),
-    page: z.number(),
-    limit: z.number(),
-    totalPages: z.number(),
-  })
-  .openapi("PaginationMeta");
-
-const UnauthorizedResponse = {
-  description: "Unauthorized",
-  content: {
-    "application/json": {
-      schema: z.object({ message: z.string() }),
-    },
-  },
-};
-
-const ForbiddenResponse = {
-  description: "Forbidden",
-  content: {
-    "application/json": {
-      schema: z.object({ message: z.string() }),
-    },
-  },
-};
-
-const NotFoundResponse = {
-  description: "Not Found",
-  content: {
-    "application/json": {
-      schema: z.object({ message: z.string() }),
-    },
-  },
-};
-
-const BadRequestResponse = {
-  description: "Bad Request",
-  content: {
-    "application/json": {
-      schema: z.object({ message: z.string() }),
-    },
-  },
-};
 
 // GET /moderation
 const listModerationRoute = createRoute({

@@ -10,20 +10,12 @@ import {
   BlockSchema,
   GetMyBlocksQuerySchema,
 } from "@tw/shared";
+import { PaginationMeta } from "../schemas/common.schema.js";
 
 const creatorApp = new OpenAPIHono();
 
 creatorApp.use("/me", requireAuth);
 creatorApp.use("/me/*", requireAuth);
-
-const PaginationMeta = z
-  .object({
-    total: z.number(),
-    page: z.number(),
-    limit: z.number(),
-    totalPages: z.number(),
-  })
-  .openapi("PaginationMeta");
 
 // --------------------------------------------------------------------------
 // Routes
