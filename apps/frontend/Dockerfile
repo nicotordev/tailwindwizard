@@ -94,6 +94,9 @@ COPY --from=builder --chown=nextjs:nodejs /app/apps/frontend/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/apps/frontend/public ./apps/frontend/public
 COPY --from=builder --chown=nextjs:nodejs /app/apps/frontend/.next/static ./apps/frontend/.next/static
 
+# Copy scripts directory to ensure start-standalone.sh is available
+COPY --from=builder --chown=nextjs:nodejs /app/apps/frontend/scripts ./apps/frontend/scripts
+
 USER nextjs
 
 EXPOSE 3000
