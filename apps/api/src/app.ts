@@ -5,6 +5,7 @@ import { pinoLogger } from "hono-pino";
 import { cors } from "hono/cors";
 import { logger } from "hono/logger";
 import { secureHeaders } from "hono/secure-headers";
+import env from "./config/env.config.js";
 import appRouter from "./routes/index.js";
 
 const app = new OpenAPIHono<{ Bindings: NodeJS.ProcessEnv }>({
@@ -43,10 +44,24 @@ app.use(
 
 // Security & CORS
 app.use("*", secureHeaders());
-app.use("/api/*", cors());
+app.use(
+  "/api/*",
+  cors({
+    origin: ["http://localhost:3000", "http://localhost:8080", env.frontendUrl],
+    credentials: true,
+    allowMethods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
+  })
+);
 
 // Clerk Auth
-app.use("*", clerkMiddleware());
+app.use(
+  "*",
+  clerkMiddleware({
+    publishableKey: env.clerk.publishableKey,
+    secretKey: env.clerk.secretKey,
+  })
+);
 
 export const routes = app.route("/api/v1", appRouter);
 

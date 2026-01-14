@@ -9,6 +9,9 @@ const EnvSchema = z.object({
   FRONTEND_URL: z.string().url(),
   ONESIGNAL_APP_ID: z.string().min(1).optional(),
   ONESIGNAL_API_KEY: z.string().min(1).optional(),
+  // Clerk Config
+  CLERK_SECRET_KEY: z.string().min(1),
+  CLERK_PUBLISHABLE_KEY: z.string().min(1),
   // R2 Config
   R2_ACCESS_KEY_ID: z.string().min(1),
   R2_SECRET_ACCESS_KEY: z.string().min(1),
@@ -31,6 +34,10 @@ const env = {
   frontendUrl: parsed.data.FRONTEND_URL,
   oneSignalAppId: parsed.data.ONESIGNAL_APP_ID,
   oneSignalApiKey: parsed.data.ONESIGNAL_API_KEY,
+  clerk: {
+    secretKey: parsed.data.CLERK_SECRET_KEY,
+    publishableKey: parsed.data.CLERK_PUBLISHABLE_KEY,
+  },
   r2: {
     accessKeyId: parsed.data.R2_ACCESS_KEY_ID,
     secretAccessKey: parsed.data.R2_SECRET_ACCESS_KEY,
