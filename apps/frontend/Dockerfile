@@ -6,15 +6,19 @@ FROM base AS deps
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
-# Install pnpm
-RUN npm install -g pnpm
+# Install pnpm using corepack for consistency with packageManager in package.json
+RUN corepack enable && corepack prepare pnpm@10.28.0 --activate
 
 # Copy workspace config
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 
-# Copy all apps source code to install dependencies
-# In a larger monorepo we might want to use 'turbo prune' but for this size copying is fine
-COPY apps ./apps
+# Copy all package.json files to install dependencies efficiently
+COPY apps/api/package.json ./apps/api/
+COPY apps/frontend/package.json ./apps/frontend/
+COPY apps/shared/package.json ./apps/shared/
+
+# We need the prisma schema for the postinstall hook in apps/api
+COPY apps/api/prisma ./apps/api/prisma
 
 # Install dependencies
 RUN pnpm install --frozen-lockfile
@@ -22,14 +26,21 @@ RUN pnpm install --frozen-lockfile
 # 2. Rebuild the source code only when needed
 FROM base AS builder
 WORKDIR /app
+
+# Enable pnpm
+RUN corepack enable && corepack prepare pnpm@10.28.0 --activate
+
 COPY --from=deps /app/node_modules ./node_modules
 COPY --from=deps /app/apps ./apps
 COPY --from=deps /app/package.json ./package.json
 COPY --from=deps /app/pnpm-lock.yaml ./pnpm-lock.yaml
 COPY --from=deps /app/pnpm-workspace.yaml ./pnpm-workspace.yaml
 
-# Install pnpm
-RUN npm install -g pnpm
+# Copy the rest of the source code
+COPY . .
+
+# Build the shared package first as others depend on it
+RUN pnpm --filter @tw/shared build
 
 # Build the frontend
 # We skip linting to speed up build, assuming CI catches that
