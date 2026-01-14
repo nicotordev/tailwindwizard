@@ -74,6 +74,9 @@ WORKDIR /app
 ENV NODE_ENV=production \
     NEXT_TELEMETRY_DISABLED=1
 
+# Install pnpm in runner stage as some platforms might rely on it
+RUN corepack enable && corepack prepare pnpm@10.28.0 --activate
+
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
