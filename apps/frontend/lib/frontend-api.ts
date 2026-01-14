@@ -117,6 +117,7 @@ export const frontendApi = {
   categories: createResource<Schema["Category"], CategoryListParams>(
     "categories"
   ),
+  tags: createResource<Schema["Tag"]>("tags"),
 
   blocks: {
     ...createResource<Block, BlockListParams>("blocks"),
