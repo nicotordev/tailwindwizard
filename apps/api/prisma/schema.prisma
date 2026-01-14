@@ -279,7 +279,7 @@ model User {
   moderationEvents ModerationEvent[]
 
   // Commerce
-  cart             Cart?
+  cart Cart?
 
   @@index([createdAt])
   @@index([role])
@@ -361,7 +361,7 @@ model Block {
 
   // Pricing
   currency       CurrencyCode @default(USD)
-  price          Decimal      @db.Decimal(10, 2)
+  price          Float
   platformFeeBps Int          @default(1500) // e.g. 15% in basis points (1500 = 15.00%)
 
   // Ownership
@@ -649,7 +649,7 @@ model PurchaseLineItem {
 
   licenseType LicenseType @default(PERSONAL)
 
-  unitPrice Decimal @db.Decimal(10, 2)
+  unitPrice Float
   quantity  Int     @default(1)
 
   createdAt DateTime @default(now())
