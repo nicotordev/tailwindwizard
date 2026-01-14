@@ -1,2 +1,2 @@
 #!/bin/sh
-node apps/frontend/server.js
+node /app/apps/frontend/server.js
