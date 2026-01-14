@@ -51,6 +51,15 @@ const NotFoundResponse = {
   },
 };
 
+const BadRequestResponse = {
+  description: "Bad Request",
+  content: {
+    "application/json": {
+      schema: z.object({ message: z.string() }),
+    },
+  },
+};
+
 // GET /moderation
 const listModerationRoute = createRoute({
   method: "get",
@@ -416,7 +425,9 @@ const createCategoryRoute = createRoute({
             slug: z.string(),
             description: z.string().optional(),
             icon: z.string().optional(),
-            iconType: z.enum(["IMAGE", "LUCIDE", "REACT_ICON", "EMOJI"]).optional(),
+            iconType: z
+              .enum(["IMAGE", "LUCIDE", "REACT_ICON", "EMOJI"])
+              .optional(),
             priority: z.number().optional(),
             isFeatured: z.boolean().optional(),
           }),
@@ -431,6 +442,7 @@ const createCategoryRoute = createRoute({
     },
     401: UnauthorizedResponse,
     403: ForbiddenResponse,
+    400: BadRequestResponse,
   },
 });
 
@@ -449,7 +461,9 @@ const updateCategoryRoute = createRoute({
             slug: z.string().optional(),
             description: z.string().optional(),
             icon: z.string().optional(),
-            iconType: z.enum(["IMAGE", "LUCIDE", "REACT_ICON", "EMOJI"]).optional(),
+            iconType: z
+              .enum(["IMAGE", "LUCIDE", "REACT_ICON", "EMOJI"])
+              .optional(),
             priority: z.number().optional(),
             isFeatured: z.boolean().optional(),
           }),
@@ -464,6 +478,7 @@ const updateCategoryRoute = createRoute({
     },
     401: UnauthorizedResponse,
     403: ForbiddenResponse,
+    400: BadRequestResponse,
   },
 });
 
@@ -515,7 +530,9 @@ const createTagRoute = createRoute({
             slug: z.string(),
             description: z.string().optional(),
             icon: z.string().optional(),
-            iconType: z.enum(["IMAGE", "LUCIDE", "REACT_ICON", "EMOJI"]).optional(),
+            iconType: z
+              .enum(["IMAGE", "LUCIDE", "REACT_ICON", "EMOJI"])
+              .optional(),
           }),
         },
       },
@@ -528,6 +545,7 @@ const createTagRoute = createRoute({
     },
     401: UnauthorizedResponse,
     403: ForbiddenResponse,
+    400: BadRequestResponse,
   },
 });
 
@@ -546,7 +564,9 @@ const updateTagRoute = createRoute({
             slug: z.string().optional(),
             description: z.string().optional(),
             icon: z.string().optional(),
-            iconType: z.enum(["IMAGE", "LUCIDE", "REACT_ICON", "EMOJI"]).optional(),
+            iconType: z
+              .enum(["IMAGE", "LUCIDE", "REACT_ICON", "EMOJI"])
+              .optional(),
           }),
         },
       },
@@ -559,6 +579,7 @@ const updateTagRoute = createRoute({
     },
     401: UnauthorizedResponse,
     403: ForbiddenResponse,
+    400: BadRequestResponse,
   },
 });
 

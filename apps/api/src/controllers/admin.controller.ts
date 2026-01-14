@@ -5,7 +5,7 @@ import type {
   Prisma,
   UserRole,
 } from "../db/generated/prisma/client.js";
-import { PurchaseStatus } from "../db/generated/prisma/client.js";
+import { IconType, PurchaseStatus } from "../db/generated/prisma/client.js";
 
 import type { User as ClerkUser } from "@clerk/backend";
 import { prisma } from "../db/prisma.js";
@@ -191,7 +191,7 @@ export const adminController = {
 
     const updatedUser = await prisma.user.update({
       where: { id: userId },
-      data: { isBanned: true }
+      data: { isBanned: true },
     });
 
     if (dbUser.externalAuthId) {
@@ -200,8 +200,8 @@ export const adminController = {
       await clerkClient.users.updateUser(dbUser.externalAuthId, {
         publicMetadata: {
           ...clerkUser.publicMetadata,
-          isBanned: true
-        }
+          isBanned: true,
+        },
       });
     }
 
@@ -218,7 +218,7 @@ export const adminController = {
 
     const updatedUser = await prisma.user.update({
       where: { id: userId },
-      data: { isBanned: false }
+      data: { isBanned: false },
     });
 
     if (dbUser.externalAuthId) {
@@ -227,8 +227,8 @@ export const adminController = {
       await clerkClient.users.updateUser(dbUser.externalAuthId, {
         publicMetadata: {
           ...clerkUser.publicMetadata,
-          isBanned: false
-        }
+          isBanned: false,
+        },
       });
     }
 
@@ -347,31 +347,33 @@ export const adminController = {
     // Fetch creator to get userId
     const creator = await prisma.creator.findUnique({
       where: { id: creatorId },
-      include: { user: true }
+      include: { user: true },
     });
 
     if (!creator) return c.json({ message: "Creator not found" }, 404);
 
     const updatedCreator = await prisma.creator.update({
       where: { id: creatorId },
-      data: { isBanned: true }
+      data: { isBanned: true },
     });
 
     // Ban in our DB
     await prisma.user.update({
       where: { id: creator.userId },
-      data: { isBanned: true }
+      data: { isBanned: true },
     });
 
     // Ban in Clerk
     if (creator.user.externalAuthId) {
       await clerkClient.users.banUser(creator.user.externalAuthId);
-      const clerkUser = await clerkClient.users.getUser(creator.user.externalAuthId);
+      const clerkUser = await clerkClient.users.getUser(
+        creator.user.externalAuthId
+      );
       await clerkClient.users.updateUser(creator.user.externalAuthId, {
         publicMetadata: {
           ...clerkUser.publicMetadata,
-          isBanned: true
-        }
+          isBanned: true,
+        },
       });
     }
 
@@ -387,31 +389,33 @@ export const adminController = {
     // Fetch creator to get userId
     const creator = await prisma.creator.findUnique({
       where: { id: creatorId },
-      include: { user: true }
+      include: { user: true },
     });
 
     if (!creator) return c.json({ message: "Creator not found" }, 404);
 
     const updatedCreator = await prisma.creator.update({
       where: { id: creatorId },
-      data: { isBanned: false }
+      data: { isBanned: false },
     });
 
     // Unban in our DB
     await prisma.user.update({
       where: { id: creator.userId },
-      data: { isBanned: false }
+      data: { isBanned: false },
     });
 
     // Unban in Clerk
     if (creator.user.externalAuthId) {
       await clerkClient.users.unbanUser(creator.user.externalAuthId);
-      const clerkUser = await clerkClient.users.getUser(creator.user.externalAuthId);
+      const clerkUser = await clerkClient.users.getUser(
+        creator.user.externalAuthId
+      );
       await clerkClient.users.updateUser(creator.user.externalAuthId, {
         publicMetadata: {
           ...clerkUser.publicMetadata,
-          isBanned: false
-        }
+          isBanned: false,
+        },
       });
     }
 
@@ -443,13 +447,18 @@ export const adminController = {
     const { name, slug, icon, iconType, description, priority, isFeatured } =
       body;
 
+    const isIconTypeValid = Object.values(IconType).includes(
+      iconType as IconType
+    );
+    if (!isIconTypeValid) return c.json({ message: "Invalid icon type" }, 400);
+
     const category = await categoryService.create({
       name,
       slug,
       icon,
-      iconType,
+      iconType: IconType[iconType as keyof typeof IconType],
       description,
-      priority: priority ? Number(priority) : 0,
+      priority: priority ?? 0,
       isFeatured: !!isFeatured,
     });
 
@@ -471,14 +480,19 @@ export const adminController = {
     const { name, slug, icon, iconType, description, priority, isFeatured } =
       body;
 
+    const isIconTypeValid = Object.values(IconType).includes(
+      iconType as IconType
+    );
+    if (!isIconTypeValid) return c.json({ message: "Invalid icon type" }, 400);
+
     const category = await categoryService.update(id, {
       name,
       slug,
       icon,
-      iconType,
+      iconType: IconType[iconType as keyof typeof IconType],
       description,
-      priority: priority !== undefined ? Number(priority) : undefined,
-      isFeatured: isFeatured !== undefined ? !!isFeatured : undefined,
+      priority: priority ?? 0,
+      isFeatured: isFeatured ?? false,
     });
 
     return c.json(category, 200);
@@ -504,8 +518,24 @@ export const adminController = {
       iconType?: string;
       description?: string;
     }>(c);
+
     if (!body) return c.json({ message: "Request body required" }, 400);
-    const tag = await tagService.create(body);
+
+    const { name, slug, icon, iconType, description } = body;
+
+    if (!name || !slug)
+      return c.json({ message: "Name and slug are required" }, 400);
+
+    if (iconType && !Object.values(IconType).includes(iconType as IconType))
+      return c.json({ message: "Invalid icon type" }, 400);
+
+    const tag = await tagService.create({
+      name,
+      slug,
+      icon,
+      iconType: IconType[iconType as keyof typeof IconType],
+      description,
+    });
     return c.json(tag, 201);
   },
 
@@ -519,7 +549,18 @@ export const adminController = {
       description?: string;
     }>(c);
     if (!body) return c.json({ message: "Request body required" }, 400);
-    const tag = await tagService.update(id, body);
+    const { name, slug, icon, iconType, description } = body;
+
+    if (iconType && !Object.values(IconType).includes(iconType as IconType))
+      return c.json({ message: "Invalid icon type" }, 400);
+
+    const tag = await tagService.update(id, {
+      name,
+      slug,
+      icon,
+      iconType: IconType[iconType as keyof typeof IconType],
+      description,
+    });
     return c.json(tag, 200);
   },
 
