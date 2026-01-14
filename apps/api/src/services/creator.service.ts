@@ -83,6 +83,9 @@ export const creatorService = {
           name: creator.displayName ?? undefined,
         },
         capabilities,
+        metadata: {
+          creatorId: creator.id,
+        },
       };
 
       // Chile (CL) requires a 'recipient' service agreement for cross-border transfers

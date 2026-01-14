@@ -55,9 +55,15 @@ async function markWebhookProcessed(externalId: string) {
 async function updateCreatorFromStripeAccount(stripeAccountId: string) {
   const account = await stripe.accounts.retrieve(stripeAccountId);
   
-  const creator = await prisma.creator.findUnique({
+  let creator = await prisma.creator.findUnique({
     where: { stripeAccountId: account.id }
   });
+
+  if (!creator && account.metadata?.creatorId) {
+    creator = await prisma.creator.findUnique({
+      where: { id: account.metadata.creatorId },
+    });
+  }
 
   if (creator) {
     const isEnabled = account.charges_enabled && account.payouts_enabled;

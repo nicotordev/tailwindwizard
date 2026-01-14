@@ -5,13 +5,27 @@ import { userService } from "../services/user.service.js";
 import clerkClient from "../lib/clerkClient.js";
 
 export const userController = {
+  async getEmailFromClerk(userId: string): Promise<string> {
+    try {
+      const user = await clerkClient.users.getUser(userId);
+      const primaryEmail = user.emailAddresses.find(
+        (email) => email.id === user.primaryEmailAddressId
+      );
+      return (
+        primaryEmail?.emailAddress ?? user.emailAddresses[0]?.emailAddress ?? ""
+      );
+    } catch (error) {
+      console.error("Failed to fetch user email from Clerk:", error);
+      return "";
+    }
+  },
   async getMe(c: Context) {
     const auth = getAuth(c);
     if (!auth?.userId) {
       return c.json({ message: "Unauthorized" }, 401);
     }
 
-    const email = (auth.sessionClaims.email as string) || "";
+    const email = await this.getEmailFromClerk(auth.userId);
 
     if (process.env.ADMIN_EMAILS?.split(",").includes(email)) {
       await clerkClient.users.updateUser(auth.userId, {
@@ -30,7 +44,8 @@ export const userController = {
       return c.json({ message: "Unauthorized" }, 401);
     }
 
-    const user = await userService.getOrCreateUser(auth.userId, "");
+    const email = await this.getEmailFromClerk(auth.userId);
+    const user = await userService.getOrCreateUser(auth.userId, email);
 
     if (process.env.ADMIN_EMAILS?.split(",").includes(user.email)) {
       await clerkClient.users.updateUser(auth.userId, {
@@ -48,7 +63,8 @@ export const userController = {
     if (!auth?.userId) {
       return c.json({ message: "Unauthorized" }, 401);
     }
-    const user = await userService.getOrCreateUser(auth.userId, "");
+    const email = await this.getEmailFromClerk(auth.userId);
+    const user = await userService.getOrCreateUser(auth.userId, email);
 
     const purchases = await userService.getUserPurchases(user.id);
     return c.json(purchases);
@@ -59,7 +75,8 @@ export const userController = {
     if (!auth?.userId) {
       return c.json({ message: "Unauthorized" }, 401);
     }
-    const user = await userService.getOrCreateUser(auth.userId, "");
+    const email = await this.getEmailFromClerk(auth.userId);
+    const user = await userService.getOrCreateUser(auth.userId, email);
 
     const keys = await userService.getUserApiKeys(user.id);
     return c.json(keys);
@@ -70,7 +87,8 @@ export const userController = {
     if (!auth?.userId) {
       return c.json({ message: "Unauthorized" }, 401);
     }
-    const user = await userService.getOrCreateUser(auth.userId, "");
+    const email = await this.getEmailFromClerk(auth.userId);
+    const user = await userService.getOrCreateUser(auth.userId, email);
 
     const body = await c.req.json<{ name: string; scope: string }>();
     const { name, scope } = body;
@@ -88,7 +106,8 @@ export const userController = {
     if (!auth?.userId) {
       return c.json({ message: "Unauthorized" }, 401);
     }
-    const user = await userService.getOrCreateUser(auth.userId, "");
+    const email = await this.getEmailFromClerk(auth.userId);
+    const user = await userService.getOrCreateUser(auth.userId, email);
 
     const keyId = c.req.param("id");
     await userService.revokeApiKey(user.id, keyId);
@@ -100,7 +119,8 @@ export const userController = {
     if (!auth?.userId) {
       return c.json({ message: "Unauthorized" }, 401);
     }
-    const user = await userService.getOrCreateUser(auth.userId, "");
+    const email = await this.getEmailFromClerk(auth.userId);
+    const user = await userService.getOrCreateUser(auth.userId, email);
 
     const result = await userService.createSetupIntent(user.id);
     return c.json(result);
@@ -111,7 +131,8 @@ export const userController = {
     if (!auth?.userId) {
       return c.json({ message: "Unauthorized" }, 401);
     }
-    const user = await userService.getOrCreateUser(auth.userId, "");
+    const email = await this.getEmailFromClerk(auth.userId);
+    const user = await userService.getOrCreateUser(auth.userId, email);
 
     const body = await c.req.json<{ role: "CREATOR" | "BUILDER" }>();
     const result = await userService.finishOnboarding(user.id, body.role);
