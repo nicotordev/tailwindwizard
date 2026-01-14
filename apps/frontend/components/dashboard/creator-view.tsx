@@ -211,7 +211,7 @@ export function CreatorView() {
                           />
                         </TableCell>
                         <TableCell className="py-4 font-medium text-sm">
-                          <Money amount={block.price} />
+                          <Money amount={(block.price as number)} />
                         </TableCell>
                         <TableCell className="text-right py-4 font-bold tabular-nums text-sm">
                           {block.soldCount}

@@ -114,7 +114,10 @@ export default async function MarketPage(props: {
           name: b.title,
           game: categoryName,
           quantity: soldCount,
-          priceUSD: typeof b.price === "string" ? parseFloat(b.price) : b.price,
+          priceUSD:
+            typeof b.price === "string"
+              ? parseFloat(b.price)
+              : (b.price as number),
           details: `${categoryName} | ${soldCount} sales`,
           actionType: "sold",
         };
@@ -133,7 +136,10 @@ export default async function MarketPage(props: {
         name: b.title,
         game: category,
         quantity: soldCount,
-        priceUSD: typeof b.price === "string" ? parseFloat(b.price) : b.price,
+        priceUSD:
+          typeof b.price === "string"
+            ? parseFloat(b.price)
+            : (b.price as number),
         details:
           soldCount > 0
             ? `${category} | ${soldCount} sales`

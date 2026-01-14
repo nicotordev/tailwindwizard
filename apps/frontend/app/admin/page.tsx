@@ -3,19 +3,20 @@ import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Gavel, ShieldCheck, Users, Wallet } from "lucide-react"
 import { Money } from "@/components/primitives/formatters"
+import type { AdminStatsResponse } from "@/types/api-helpers"
 
 export default async function AdminPage() {
   const [moderationResponse, statsResponse] = await Promise.all([
     apiClient.GET("/api/v1/admin/moderation", {
       cache: "no-store",
     }),
-    apiClient.GET("/api/v1/admin/stats" as any, {
+    apiClient.GET("/api/v1/admin/stats", {
       cache: "no-store",
     })
   ])
 
   const pendingCount = moderationResponse.data?.meta.total ?? 0
-  const stats = statsResponse.data as any
+  const stats = statsResponse.data as AdminStatsResponse | undefined
 
   return (
     <div className="space-y-8">

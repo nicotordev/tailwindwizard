@@ -87,7 +87,7 @@ export function ProductView({ block, reviews }: ProductViewProps) {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-center justify-between text-lg">
-                <Money amount={block.price} />
+                <Money amount={(block.price as number)} />
                 <div className="flex items-center gap-1 text-xs text-muted-foreground">
                   <Star className="size-3 text-amber-500 fill-amber-500" />
                   <span className="font-semibold text-foreground">

@@ -102,7 +102,7 @@ export function ModerationQueue({ initialBlocks }: ModerationQueueProps) {
                   <BlockStatusBadge status={block.status as BlockStatus} />
                 </TableCell>
                 <TableCell>
-                  <Money amount={block.price} />
+                  <Money amount={(block.price as number)} />
                 </TableCell>
                 <TableCell className="text-xs text-muted-foreground">
                   <DateDisplay date={block.updatedAt} format="relative" />

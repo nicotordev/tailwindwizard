@@ -23,14 +23,21 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
-import { frontendApi } from "@/lib/frontend-api";
-import type { components } from "@/types/api";
+import { frontendApi, type Schema } from "@/lib/frontend-api";
 import type { AxiosError } from "axios";
 import { FileJson, Layers, Pencil, Plus, Search, Trash2 } from "lucide-react";
 import * as React from "react";
 import { toast } from "sonner";
 
-type Category = components["schemas"]["Category"];
+type Category = Schema["Category"];
+type IconType = "IMAGE" | "LUCIDE" | "REACT_ICON" | "EMOJI";
+
+const iconTypeOptions: IconType[] = ["IMAGE", "LUCIDE", "REACT_ICON", "EMOJI"];
+const parseIconType = (value: unknown): IconType | null => {
+  if (typeof value !== "string") return null;
+  const normalized = value.trim().toUpperCase() as IconType;
+  return iconTypeOptions.includes(normalized) ? normalized : null;
+};
 
 interface CategoryManagerProps {
   initialCategories: Category[];
@@ -153,13 +160,47 @@ export function CategoryManager({ initialCategories }: CategoryManagerProps) {
       const errors: string[] = [];
 
       for (const cat of categoriesToImport) {
+        if (!cat || typeof cat !== "object") {
+          errors.push("Invalid category format");
+          continue;
+        }
+        const category = cat as Record<string, unknown>;
+        const name =
+          typeof category.name === "string" ? category.name.trim() : "";
+        const slug =
+          typeof category.slug === "string" ? category.slug.trim() : "";
+        const iconType = parseIconType(category.iconType);
+
+        if (!name || !slug || !iconType) {
+          errors.push(name || "Unknown category");
+          continue;
+        }
+
+        const priorityValue =
+          typeof category.priority === "number"
+            ? category.priority
+            : Number(category.priority);
+        const priority = Number.isFinite(priorityValue) ? priorityValue : 0;
+
         try {
           const { data: newCat } = await frontendApi.admin.categories.create(
-            cat
+            {
+              name,
+              slug,
+              iconType,
+              description:
+                typeof category.description === "string"
+                  ? category.description
+                  : undefined,
+              icon:
+                typeof category.icon === "string" ? category.icon : undefined,
+              priority,
+              isFeatured: Boolean(category.isFeatured),
+            }
           );
           createdCategories.push(newCat);
         } catch (error) {
-          errors.push(cat.name || "Unknown category");
+          errors.push(name || "Unknown category");
         }
       }
 
@@ -465,7 +506,7 @@ export function CategoryManager({ initialCategories }: CategoryManagerProps) {
           <DialogHeader>
             <DialogTitle>Import Categories</DialogTitle>
             <DialogDescription>
-              Paste a JSON array of categories to import them in bulk.
+              Paste a JSON array using the new format (iconType: IMAGE, LUCIDE, REACT_ICON, EMOJI).
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
@@ -475,7 +516,7 @@ export function CategoryManager({ initialCategories }: CategoryManagerProps) {
                 id="json-input"
                 value={jsonInput}
                 onChange={(e) => setJsonInput(e.target.value)}
-                placeholder='[{"name": "Buttons", "slug": "buttons", "icon": "🔘"}]'
+                placeholder='[{"name": "Buttons", "slug": "buttons", "icon": "🔘", "iconType": "EMOJI"}]'
                 className="rounded-xl min-h-[300px] font-mono text-xs max-h-[400px] overflow-auto"
               />
             </div>
@@ -489,6 +530,7 @@ export function CategoryManager({ initialCategories }: CategoryManagerProps) {
     "slug": "navigation",
     "description": "Menus, navbars, and links",
     "icon": "🧭",
+    "iconType": "EMOJI",
     "priority": 10,
     "isFeatured": true
   }

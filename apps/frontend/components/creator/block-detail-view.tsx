@@ -91,7 +91,7 @@ export function BlockDetailView({ block: initialBlock }: { block: Block }) {
             </div>
           </div>
           <div className="grid gap-4 md:grid-cols-3">
-            <StatCard label="Price" value={<Money amount={block.price} />} />
+            <StatCard label="Price" value={<Money amount={(block.price as number)} />} />
             <StatCard label="Sales" value={block.soldCount ?? 0} />
             <StatCard
               label="Rating"

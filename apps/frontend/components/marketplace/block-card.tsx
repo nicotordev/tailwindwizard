@@ -44,7 +44,7 @@ export function BlockCard({ block }: { block: Block }) {
             <Badge variant="outline">{block.type}</Badge>
           </div>
           <div className="flex items-center justify-between text-sm">
-            <Money amount={block.price} />
+            <Money amount={(block.price as number)} />
             <div className="flex items-center gap-1 text-xs text-muted-foreground">
               <Star className="size-3 text-amber-500 fill-amber-500" />
               <span className="font-semibold text-foreground">

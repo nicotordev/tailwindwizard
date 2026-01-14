@@ -508,6 +508,7 @@ model Tag {
   id          String   @id @default(cuid())
   slug        String   @unique
   icon        String?
+  /// Icon type for JSON imports: IMAGE, LUCIDE, REACT_ICON, EMOJI
   iconType    IconType @default(IMAGE)
   name        String
   description String?
@@ -534,6 +535,7 @@ model Category {
   name        String
   description String?
   icon        String?
+  /// Icon type for JSON imports: IMAGE, LUCIDE, REACT_ICON, EMOJI
   iconType    IconType @default(LUCIDE)
   priority    Int      @default(0)
   isFeatured  Boolean  @default(false)

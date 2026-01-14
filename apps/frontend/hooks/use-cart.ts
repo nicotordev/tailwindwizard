@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { frontendApi } from "@/lib/frontend-api";
 import { toast } from "sonner";
 import { create } from "zustand";
+import { isAxiosError } from "axios";
 
 // UI State Store
 interface CartUIState {
@@ -25,7 +26,11 @@ export function useCart() {
   const queryClient = useQueryClient();
   const { openCart } = useCartUI();
 
-  const { data: cart, isLoading, error } = useQuery({
+  const {
+    data: cart,
+    isLoading,
+    error,
+  } = useQuery({
     queryKey: ["cart"],
     queryFn: async () => {
       const { data } = await frontendApi.cart.get();
@@ -35,10 +40,16 @@ export function useCart() {
   });
 
   const addItem = useMutation({
-    mutationFn: async ({ blockId, licenseType }: { blockId: string; licenseType?: "PERSONAL" | "TEAM" | "ENTERPRISE" }) => {
+    mutationFn: async ({
+      blockId,
+      licenseType,
+    }: {
+      blockId: string;
+      licenseType?: "PERSONAL" | "TEAM" | "ENTERPRISE";
+    }) => {
       const { data } = await frontendApi.cart.add({
-        blockId, 
-        licenseType: licenseType || "PERSONAL" 
+        blockId,
+        licenseType: licenseType || "PERSONAL",
       });
       return data;
     },
@@ -47,13 +58,13 @@ export function useCart() {
       toast.success("Added to cart");
       openCart();
     },
-    onError: (err: any) => {
+    onError: (err) => {
       // Check if it's a conflict (already in cart) - handle gracefully
-      if (err?.response?.status === 409) {
-          toast.info("Already in your cart");
-          openCart();
+      if (isAxiosError(err) && err?.response?.status === 409) {
+        toast.info("Already in your cart");
+        openCart();
       } else {
-          toast.error("Failed to add item");
+        toast.error("Failed to add item");
       }
     },
   });
@@ -73,12 +84,12 @@ export function useCart() {
 
   const clearCart = useMutation({
     mutationFn: async () => {
-        await frontendApi.cart.clear();
+      await frontendApi.cart.clear();
     },
     onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: ["cart"] });
-    }
-  })
+      queryClient.invalidateQueries({ queryKey: ["cart"] });
+    },
+  });
 
   return {
     cart,
@@ -86,6 +97,6 @@ export function useCart() {
     error,
     addItem,
     removeItem,
-    clearCart
+    clearCart,
   };
 }

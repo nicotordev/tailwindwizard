@@ -60,8 +60,11 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Spinner } from "@/components/ui/spinner";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import type { components } from "@/types/api";
+import type { RenderJob } from "@/types/extended";
 
 type WizardStep = "metadata" | "pricing" | "upload" | "preview" | "submit";
+type PreviewAsset = components["schemas"]["PreviewAsset"];
 
 type BlockDraft = {
   title: string;
@@ -155,11 +158,10 @@ export function BlockWizard() {
   const [isUploadingBundle, setIsUploadingBundle] = React.useState(false);
   const [previewQueued, setPreviewQueued] = React.useState(false);
   const [previewJobId, setPreviewJobId] = React.useState<string | null>(null);
-  const [jobStatus, setJobStatus] = React.useState<"QUEUED" | "RUNNING" | "SUCCEEDED" | "FAILED" | null>(null);
+  const [jobStatus, setJobStatus] = React.useState<RenderJob["status"] | null>(null);
   const [jobError, setJobError] = React.useState<string | null>(null);
   const [isPreviewing, setIsPreviewing] = React.useState(false);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [previews, setPreviews] = React.useState<any[]>([]);
+  const [previews, setPreviews] = React.useState<PreviewAsset[]>([]);
 
   const [isDevMode, setIsDevMode] = React.useState(false);
   const [jsonInput, setJsonInput] = React.useState("");
@@ -174,7 +176,7 @@ export function BlockWizard() {
       pollInterval = setInterval(async () => {
         try {
           const { data } = await frontendApi.render.status(previewJobId);
-          setJobStatus(data.status as any);
+          setJobStatus(data.status);
           if (data.status === "SUCCEEDED") {
             toast.success("Preview rendered successfully!");
             clearInterval(pollInterval);

@@ -1,23 +1,21 @@
 "use client";
 
+import { useCart } from "@/hooks/use-cart";
 import {
   ChevronRight,
+  Loader2,
   Package,
   ShoppingCart,
   Star,
   Zap,
-  Loader2
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useCart } from "@/hooks/use-cart";
 
 import { Money } from "@/components/primitives/formatters";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-} from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 
 // Types based on the shared schema and internal logic
 import type { components } from "@/types/api";
@@ -27,15 +25,13 @@ interface MarketProductViewProps {
   block: Block;
 }
 
-export function MarketProductView({
-  block,
-}: MarketProductViewProps) {
+export function MarketProductView({ block }: MarketProductViewProps) {
   const { addItem } = useCart();
-  
+
   const basePrice =
     typeof block.price === "string"
       ? parseFloat(block.price)
-      : block.price || 0;
+      : (block.price as number) || 0;
   const primaryCategory = block.categories?.[0]?.category;
   const heroImage = block.screenshot ?? block.previews?.[0]?.url;
 
@@ -53,7 +49,7 @@ export function MarketProductView({
 
   const handleAddToCart = () => {
     if (block.id) {
-        addItem.mutate({ blockId: block.id, licenseType: "PERSONAL" });
+      addItem.mutate({ blockId: block.id, licenseType: "PERSONAL" });
     }
   };
 
@@ -113,15 +109,15 @@ export function MarketProductView({
           </div>
 
           <div className="p-6 rounded-[2rem] bg-card/30 border border-border/40 backdrop-blur-md space-y-2 shadow-xl shadow-primary/20">
-              <div className="size-10 rounded-xl bg-amber-500/10 flex items-center justify-center mb-4">
-                <Star className="size-5 text-amber-500" />
-              </div>
-              <div className="text-2xl font-black font-heading">
-                {Number(block.ratingAvg || 0).toFixed(1)} Rating
-              </div>
-              <p className="text-sm text-muted-foreground">
-                Based on {block.ratingCount || 0} verified customer reviews.
-              </p>
+            <div className="size-10 rounded-xl bg-amber-500/10 flex items-center justify-center mb-4">
+              <Star className="size-5 text-amber-500" />
+            </div>
+            <div className="text-2xl font-black font-heading">
+              {Number(block.ratingAvg || 0).toFixed(1)} Rating
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Based on {block.ratingCount || 0} verified customer reviews.
+            </p>
           </div>
 
           <div className="space-y-4">
@@ -145,10 +141,7 @@ export function MarketProductView({
                 </span>
                 <div className="flex items-baseline gap-2">
                   <span className="text-6xl font-heading font-black text-primary">
-                    <Money
-                      amount={basePrice}
-                      currency={block.currency}
-                    />
+                    <Money amount={basePrice} currency={block.currency} />
                   </span>
                 </div>
               </div>
@@ -182,15 +175,15 @@ export function MarketProductView({
               </div>
 
               <div className="space-y-3">
-                <Button 
-                    className="w-full h-20 rounded-3xl text-xl font-black gap-4 group bg-primary hover:bg-primary/90 shadow-xl shadow-primary/20 transition-all active:scale-95"
-                    onClick={handleAddToCart}
-                    disabled={addItem.isPending}
+                <Button
+                  className="w-full h-20 rounded-3xl text-xl font-black gap-4 group bg-primary hover:bg-primary/90 shadow-xl shadow-primary/20 transition-all active:scale-95"
+                  onClick={handleAddToCart}
+                  disabled={addItem.isPending}
                 >
                   {addItem.isPending ? (
-                      <Loader2 className="size-7 animate-spin" />
+                    <Loader2 className="size-7 animate-spin" />
                   ) : (
-                      <ShoppingCart className="size-7 transition-transform group-hover:scale-110 group-hover:-rotate-12" />
+                    <ShoppingCart className="size-7 transition-transform group-hover:scale-110 group-hover:-rotate-12" />
                   )}
                   {addItem.isPending ? "Adding..." : "Add to Cart"}
                 </Button>

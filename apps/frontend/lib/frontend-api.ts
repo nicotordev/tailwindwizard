@@ -56,6 +56,14 @@ type AdminUsersParams =
 type AdminUsersResponse =
   paths["/api/v1/admin/users"]["get"]["responses"][200]["content"]["application/json"];
 
+type Cart =
+  paths["/api/v1/cart"]["get"]["responses"][200]["content"]["application/json"];
+type AddToCart = NonNullable<
+  paths["/api/v1/cart/items"]["post"]["requestBody"]
+>["content"]["application/json"];
+type CartItem =
+  paths["/api/v1/cart/items"]["post"]["responses"][201]["content"]["application/json"];
+
 type AdminPurchaseListParams = {
   status?: string;
   page?: string;
@@ -116,8 +124,9 @@ export const frontendApi = {
       axiosClient.get("/api/v1/blocks/random", { params }),
     listMyBlocks: (
       params?: CreatorBlocksParams
-    ): Promise<AxiosResponse<{ data: Block[]; meta: Schema["PaginationMeta"] }>> =>
-      axiosClient.get("/api/v1/creators/me/blocks", { params }),
+    ): Promise<
+      AxiosResponse<{ data: Block[]; meta: Schema["PaginationMeta"] }>
+    > => axiosClient.get("/api/v1/creators/me/blocks", { params }),
     create: (data: Schema["CreateBlock"]): Promise<AxiosResponse<Block>> =>
       axiosClient.post("/api/v1/blocks", data),
     update: (
@@ -175,9 +184,8 @@ export const frontendApi = {
   },
 
   cart: {
-    get: (): Promise<AxiosResponse<Schema["Cart"]>> =>
-      axiosClient.get("/api/v1/cart"),
-    add: (data: Schema["AddToCart"]): Promise<AxiosResponse<Schema["CartItem"]>> =>
+    get: (): Promise<AxiosResponse<Cart>> => axiosClient.get("/api/v1/cart"),
+    add: (data: AddToCart): Promise<AxiosResponse<CartItem>> =>
       axiosClient.post("/api/v1/cart/items", data),
     remove: (itemId: string): Promise<AxiosResponse<void>> =>
       axiosClient.delete(`/api/v1/cart/items/${itemId}`),

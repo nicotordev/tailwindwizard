@@ -22,13 +22,20 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
-import { frontendApi } from "@/lib/frontend-api";
-import type { components } from "@/types/api";
+import { frontendApi, type Schema } from "@/lib/frontend-api";
 import { FileJson, Pencil, Plus, Search, Tags, Trash2 } from "lucide-react";
 import * as React from "react";
 import { toast } from "sonner";
 
-type Tag = components["schemas"]["Tag"];
+type Tag = Schema["Tag"];
+type IconType = "IMAGE" | "LUCIDE" | "REACT_ICON" | "EMOJI";
+
+const iconTypeOptions: IconType[] = ["IMAGE", "LUCIDE", "REACT_ICON", "EMOJI"];
+const parseIconType = (value: unknown): IconType | null => {
+  if (typeof value !== "string") return null;
+  const normalized = value.trim().toUpperCase() as IconType;
+  return iconTypeOptions.includes(normalized) ? normalized : null;
+};
 
 interface TagManagerProps {
   initialTags: Tag[];
@@ -103,11 +110,36 @@ export function TagManager({ initialTags }: TagManagerProps) {
       const errors: string[] = [];
 
       for (const tag of tagsToImport) {
+        if (!tag || typeof tag !== "object") {
+          errors.push("Invalid tag format");
+          continue;
+        }
+        const parsedTag = tag as Record<string, unknown>;
+        const name =
+          typeof parsedTag.name === "string" ? parsedTag.name.trim() : "";
+        const slug =
+          typeof parsedTag.slug === "string" ? parsedTag.slug.trim() : "";
+        const iconType = parseIconType(parsedTag.iconType);
+
+        if (!name || !slug || !iconType) {
+          errors.push(name || "Unknown tag");
+          continue;
+        }
+
         try {
-          const { data: newTag } = await frontendApi.admin.tags.create(tag);
+          const { data: newTag } = await frontendApi.admin.tags.create({
+            name,
+            slug,
+            iconType,
+            icon: typeof parsedTag.icon === "string" ? parsedTag.icon : undefined,
+            description:
+              typeof parsedTag.description === "string"
+                ? parsedTag.description
+                : undefined,
+          });
           createdTags.push(newTag);
         } catch (error) {
-          errors.push(tag.name || "Unknown tag");
+          errors.push(name || "Unknown tag");
         }
       }
 
@@ -124,7 +156,7 @@ export function TagManager({ initialTags }: TagManagerProps) {
         setIsImportDialogOpen(false);
         setJsonInput("");
       }
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
       toast.error("Invalid JSON format");
     } finally {
@@ -323,7 +355,7 @@ export function TagManager({ initialTags }: TagManagerProps) {
           <DialogHeader>
             <DialogTitle>Import Tags</DialogTitle>
             <DialogDescription>
-              Paste a JSON array of tags to import them in bulk.
+              Paste a JSON array using the new format (iconType: IMAGE, LUCIDE, REACT_ICON, EMOJI).
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
@@ -333,7 +365,7 @@ export function TagManager({ initialTags }: TagManagerProps) {
                 id="json-input"
                 value={jsonInput}
                 onChange={(e) => setJsonInput(e.target.value)}
-                placeholder='[{"name": "Responsive", "slug": "responsive"}]'
+                placeholder='[{"name": "Responsive", "slug": "responsive", "iconType": "LUCIDE", "icon": "Sparkles"}]'
                 className="rounded-xl min-h-75 font-mono text-xs max-h-100"
               />
             </div>
@@ -345,6 +377,8 @@ export function TagManager({ initialTags }: TagManagerProps) {
   {
     "name": "Responsive",
     "slug": "responsive",
+    "iconType": "LUCIDE",
+    "icon": "Sparkles",
     "description": "Works on all devices"
   }
 ]`}

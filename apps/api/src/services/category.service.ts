@@ -1,3 +1,4 @@
+import type { IconType } from "../db/generated/prisma/client.js";
 import { prisma } from "../db/prisma.js";
 
 export const categoryService = {
@@ -41,6 +42,7 @@ export const categoryService = {
     name: string;
     slug: string;
     icon?: string;
+    iconType?: IconType;
     description?: string;
     priority?: number;
     isFeatured?: boolean;
@@ -56,6 +58,7 @@ export const categoryService = {
       name?: string;
       slug?: string;
       icon?: string;
+      iconType?: IconType;
       description?: string;
       priority?: number;
       isFeatured?: boolean;

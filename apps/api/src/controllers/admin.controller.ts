@@ -14,6 +14,16 @@ import { blockService } from "../services/block.service.js";
 import { categoryService } from "../services/category.service.js";
 import { tagService } from "../services/tag.service.js";
 
+const parseJsonBody = async <T>(c: Context): Promise<T | null> => {
+  const contentLength = c.req.header("content-length");
+  if (contentLength && Number(contentLength) === 0) return null;
+  try {
+    return await c.req.json<T>();
+  } catch {
+    return null;
+  }
+};
+
 export const adminController = {
   async getCategoryById(c: Context) {
     const id = c.req.param("id");
@@ -420,13 +430,24 @@ export const adminController = {
   },
 
   async createCategory(c: Context) {
-    const body = await c.req.json();
-    const { name, slug, icon, description, priority, isFeatured } = body;
+    const body = await parseJsonBody<{
+      name: string;
+      slug: string;
+      icon?: string;
+      iconType?: string;
+      description?: string;
+      priority?: number;
+      isFeatured?: boolean;
+    }>(c);
+    if (!body) return c.json({ message: "Request body required" }, 400);
+    const { name, slug, icon, iconType, description, priority, isFeatured } =
+      body;
 
     const category = await categoryService.create({
       name,
       slug,
       icon,
+      iconType,
       description,
       priority: priority ? Number(priority) : 0,
       isFeatured: !!isFeatured,
@@ -437,13 +458,24 @@ export const adminController = {
 
   async updateCategory(c: Context) {
     const id = c.req.param("id");
-    const body = await c.req.json();
-    const { name, slug, icon, description, priority, isFeatured } = body;
+    const body = await parseJsonBody<{
+      name?: string;
+      slug?: string;
+      icon?: string;
+      iconType?: string;
+      description?: string;
+      priority?: number;
+      isFeatured?: boolean;
+    }>(c);
+    if (!body) return c.json({ message: "Request body required" }, 400);
+    const { name, slug, icon, iconType, description, priority, isFeatured } =
+      body;
 
     const category = await categoryService.update(id, {
       name,
       slug,
       icon,
+      iconType,
       description,
       priority: priority !== undefined ? Number(priority) : undefined,
       isFeatured: isFeatured !== undefined ? !!isFeatured : undefined,
@@ -465,14 +497,28 @@ export const adminController = {
   },
 
   async createTag(c: Context) {
-    const body = await c.req.json<{ name: string; slug: string }>();
+    const body = await parseJsonBody<{
+      name: string;
+      slug: string;
+      icon?: string;
+      iconType?: string;
+      description?: string;
+    }>(c);
+    if (!body) return c.json({ message: "Request body required" }, 400);
     const tag = await tagService.create(body);
     return c.json(tag, 201);
   },
 
   async updateTag(c: Context) {
     const id = c.req.param("id");
-    const body = await c.req.json<{ name?: string; slug?: string }>();
+    const body = await parseJsonBody<{
+      name?: string;
+      slug?: string;
+      icon?: string;
+      iconType?: string;
+      description?: string;
+    }>(c);
+    if (!body) return c.json({ message: "Request body required" }, 400);
     const tag = await tagService.update(id, body);
     return c.json(tag, 200);
   },

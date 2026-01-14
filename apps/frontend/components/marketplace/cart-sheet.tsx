@@ -1,21 +1,21 @@
 "use client";
 
-import { useCart, useCartUI } from "@/hooks/use-cart";
+import { Money } from "@/components/primitives/formatters";
+import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
 import {
   Sheet,
   SheetContent,
-  SheetHeader,
-  SheetTitle,
   SheetDescription,
   SheetFooter,
+  SheetHeader,
+  SheetTitle,
 } from "@/components/ui/sheet";
-import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Trash2, ShoppingBag, Loader2 } from "lucide-react";
+import { useCart, useCartUI } from "@/hooks/use-cart";
+import { Loader2, ShoppingBag, Trash2 } from "lucide-react";
 import Image from "next/image";
-import { Money } from "@/components/primitives/formatters";
 import Link from "next/link";
-import { Separator } from "@/components/ui/separator";
 
 export function CartSheet() {
   const { isOpen, closeCart } = useCartUI();
@@ -26,7 +26,7 @@ export function CartSheet() {
     const price = item.block?.price
       ? typeof item.block.price === "string"
         ? parseFloat(item.block.price)
-        : item.block.price
+        : (item.block.price as number)
       : 0;
     return sum + price;
   }, 0);
@@ -100,7 +100,7 @@ export function CartSheet() {
                       <div className="flex items-center justify-between mt-2">
                         <div className="font-mono font-medium">
                           <Money
-                            amount={item.block?.price || 0}
+                            amount={(item.block?.price as number) || 0}
                             currency={item.block?.currency}
                           />
                         </div>

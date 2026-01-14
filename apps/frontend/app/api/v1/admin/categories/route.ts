@@ -1,29 +1,16 @@
 import { apiClient } from "@/lib/api";
 import { NextRequest } from "next/server";
+import { handleApiResponse } from "../../proxy-utils";
 
 export async function POST(req: NextRequest) {
-  try {
-    const body = await req.json();
-    const categories = await apiClient.POST("/api/v1/admin/categories", body);
-    return Response.json(categories, { status: 200 });
-  } catch (error) {
-    console.error(error);
-    return Response.json(
-      { error: "Failed to create category" },
-      { status: 500 }
-    );
-  }
+  const body = await req.json();
+  const result = await apiClient.POST("/api/v1/admin/categories", {
+    body,
+  });
+  return handleApiResponse(result);
 }
 
 export async function GET() {
-  try {
-    const categories = await apiClient.GET("/api/v1/admin/categories");
-    return Response.json(categories, { status: 200 });
-  } catch (error) {
-    console.error(error);
-    return Response.json(
-      { error: "Failed to fetch categories" },
-      { status: 500 }
-    );
-  }
+  const result = await apiClient.GET("/api/v1/admin/categories");
+  return handleApiResponse(result);
 }

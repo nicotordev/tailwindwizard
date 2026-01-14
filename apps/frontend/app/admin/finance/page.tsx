@@ -1,6 +1,11 @@
 import { apiClient } from "@/lib/api"
 import { FinanceOverview } from "@/components/admin/finance-overview"
 import { Badge } from "@/components/ui/badge"
+import type {
+  AdminPurchase,
+  AdminPurchaseListResponse,
+  AdminWebhookStatsResponse,
+} from "@/types/api-helpers"
 
 export default async function AdminFinancePage() {
   const [purchasesResponse, webhookResponse] = await Promise.all([
@@ -12,6 +17,14 @@ export default async function AdminFinancePage() {
       cache: "no-store",
     }),
   ])
+
+  const purchases: AdminPurchase[] =
+    (purchasesResponse.data as AdminPurchaseListResponse | undefined)?.data ?? []
+  const webhookStats: AdminWebhookStatsResponse =
+    (webhookResponse.data as AdminWebhookStatsResponse | undefined) ?? {
+      last24h: { total: 0, failed: 0, pending: 0, successRate: 100 },
+      lastEvents: [],
+    }
 
   return (
     <div className="space-y-8">
@@ -25,12 +38,9 @@ export default async function AdminFinancePage() {
         </p>
       </div>
 
-      <FinanceOverview 
-        initialPurchases={purchasesResponse.error ? [] : (purchasesResponse.data?.data as any) || []}
-        initialWebhookStats={webhookResponse.error ? { 
-          last24h: { total: 0, failed: 0, pending: 0, successRate: 100 }, 
-          lastEvents: [] 
-        } : (webhookResponse.data as any)}
+      <FinanceOverview
+        initialPurchases={purchasesResponse.error ? [] : purchases}
+        initialWebhookStats={webhookStats}
       />
     </div>
   )

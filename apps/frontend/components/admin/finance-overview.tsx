@@ -1,17 +1,16 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import { frontendApi } from "@/lib/frontend-api"
+import { DateDisplay, Money } from "@/components/primitives/formatters";
+import * as AvatarComponents from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import {
-  Receipt,
-  AlertTriangle,
-  CheckCircle2,
-  Clock,
-  ExternalLink,
-  Search,
-} from "lucide-react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
 import {
   Table,
   TableBody,
@@ -19,20 +18,26 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table"
-import { Money, DateDisplay } from "@/components/primitives/formatters"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Progress } from "@/components/ui/progress"
-import { cn } from "@/lib/utils"
+} from "@/components/ui/table";
+import { cn } from "@/lib/utils";
+import type {
+  AdminPurchase,
+  AdminWebhookStatsResponse,
+} from "@/types/api-helpers";
+import { Clock, Receipt } from "lucide-react";
+import * as React from "react";
 
 interface FinanceOverviewProps {
-  initialPurchases: any[]
-  initialWebhookStats: any
+  initialPurchases: AdminPurchase[];
+  initialWebhookStats: AdminWebhookStatsResponse;
 }
 
-export function FinanceOverview({ initialPurchases, initialWebhookStats }: FinanceOverviewProps) {
-  const [purchases] = React.useState(initialPurchases)
-  const [webhookStats] = React.useState(initialWebhookStats)
+export function FinanceOverview({
+  initialPurchases,
+  initialWebhookStats,
+}: FinanceOverviewProps) {
+  const [purchases] = React.useState(initialPurchases);
+  const [webhookStats] = React.useState(initialWebhookStats);
 
   return (
     <div className="space-y-8">
@@ -46,15 +51,22 @@ export function FinanceOverview({ initialPurchases, initialWebhookStats }: Finan
               <span className="text-3xl font-heading font-bold">
                 {webhookStats.last24h.successRate.toFixed(1)}%
               </span>
-              <Badge variant={webhookStats.last24h.successRate > 95 ? "secondary" : "destructive"} className="rounded-lg">
+              <Badge
+                variant={
+                  webhookStats.last24h.successRate > 95
+                    ? "secondary"
+                    : "destructive"
+                }
+                className="rounded-lg"
+              >
                 {webhookStats.last24h.failed} failed
               </Badge>
             </div>
           </CardHeader>
           <CardContent>
-            <Progress 
-              value={webhookStats.last24h.successRate} 
-              className="h-2 rounded-full" 
+            <Progress
+              value={webhookStats.last24h.successRate}
+              className="h-2 rounded-full"
             />
             <p className="text-xs text-muted-foreground mt-3 flex items-center gap-1">
               <Clock className="size-3" />
@@ -69,18 +81,27 @@ export function FinanceOverview({ initialPurchases, initialWebhookStats }: Finan
               Webhook Health
             </CardTitle>
             <div className="flex items-center gap-2 mt-2">
-              <div className={cn(
-                "size-3 rounded-full animate-pulse",
-                webhookStats.last24h.failed > 0 ? "bg-amber-500" : "bg-green-500"
-              )} />
+              <div
+                className={cn(
+                  "size-3 rounded-full animate-pulse",
+                  webhookStats.last24h.failed > 0
+                    ? "bg-amber-500"
+                    : "bg-green-500"
+                )}
+              />
               <span className="text-2xl font-heading font-bold">
-                {webhookStats.last24h.failed > 5 ? "Critical" : webhookStats.last24h.failed > 0 ? "Degraded" : "Healthy"}
+                {webhookStats.last24h.failed > 5
+                  ? "Critical"
+                  : webhookStats.last24h.failed > 0
+                  ? "Degraded"
+                  : "Healthy"}
               </span>
             </div>
           </CardHeader>
           <CardContent>
             <p className="text-sm text-muted-foreground">
-              {webhookStats.last24h.pending} events currently in queue for processing.
+              {webhookStats.last24h.pending} events currently in queue for
+              processing.
             </p>
           </CardContent>
         </Card>
@@ -93,14 +114,27 @@ export function FinanceOverview({ initialPurchases, initialWebhookStats }: Finan
           </CardHeader>
           <CardContent className="p-0">
             <div className="max-h-[120px] overflow-y-auto px-6 space-y-3 pb-4">
-              {webhookStats.lastEvents.map((event: any) => (
-                <div key={event.id} className="flex items-center justify-between text-xs">
+              {webhookStats.lastEvents.map((event) => (
+                <div
+                  key={event.id}
+                  className="flex items-center justify-between text-xs"
+                >
                   <div className="flex flex-col">
-                    <span className="font-mono font-medium truncate max-w-[120px]">{event.eventType}</span>
-                    <span className="text-muted-foreground">{new Date(event.receivedAt).toLocaleTimeString()}</span>
+                    <span className="font-mono font-medium truncate max-w-[120px]">
+                      {event.eventType}
+                    </span>
+                    <span className="text-muted-foreground">
+                      {new Date(event.receivedAt).toLocaleTimeString()}
+                    </span>
                   </div>
-                  <Badge 
-                    variant={event.status === "PROCESSED" ? "secondary" : event.status === "FAILED" ? "destructive" : "outline"}
+                  <Badge
+                    variant={
+                      event.status === "PROCESSED"
+                        ? "secondary"
+                        : event.status === "FAILED"
+                        ? "destructive"
+                        : "outline"
+                    }
                     className="rounded-md px-1.5 py-0 text-[10px]"
                   >
                     {event.status}
@@ -116,8 +150,12 @@ export function FinanceOverview({ initialPurchases, initialWebhookStats }: Finan
         <Card className="bg-card/40 backdrop-blur-xl border-border/50 rounded-[2rem] overflow-hidden">
           <CardHeader className="flex flex-row items-center justify-between px-8 pt-8">
             <div>
-              <CardTitle className="text-2xl font-heading">Global order feed</CardTitle>
-              <CardDescription>Real-time marketplace transactions</CardDescription>
+              <CardTitle className="text-2xl font-heading">
+                Global order feed
+              </CardTitle>
+              <CardDescription>
+                Real-time marketplace transactions
+              </CardDescription>
             </div>
             <Receipt className="size-6 text-primary" />
           </CardHeader>
@@ -125,8 +163,12 @@ export function FinanceOverview({ initialPurchases, initialWebhookStats }: Finan
             {purchases.length === 0 ? (
               <div className="py-20 text-center">
                 <Receipt className="mx-auto size-12 text-muted-foreground/20 mb-4" />
-                <h3 className="text-lg font-heading font-semibold">No purchases yet</h3>
-                <p className="text-sm text-muted-foreground">Marketplace transactions will appear here.</p>
+                <h3 className="text-lg font-heading font-semibold">
+                  No purchases yet
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  Marketplace transactions will appear here.
+                </p>
               </div>
             ) : (
               <Table>
@@ -142,7 +184,10 @@ export function FinanceOverview({ initialPurchases, initialWebhookStats }: Finan
                 </TableHeader>
                 <TableBody>
                   {purchases.map((purchase) => (
-                    <TableRow key={purchase.id} className="hover:bg-muted/20 border-border/40 group">
+                    <TableRow
+                      key={purchase.id}
+                      className="hover:bg-muted/20 border-border/40 group"
+                    >
                       <TableCell className="pl-8">
                         <span className="font-mono text-xs text-muted-foreground group-hover:text-foreground transition-colors">
                           {purchase.id.slice(0, 8)}...
@@ -150,36 +195,49 @@ export function FinanceOverview({ initialPurchases, initialWebhookStats }: Finan
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
-                          <Avatar className="size-7 rounded-lg">
-                            <AvatarImage src={purchase.buyer?.avatarUrl} />
-                            <AvatarFallback className="rounded-lg text-[10px] uppercase">
+                          <AvatarComponents.Avatar className="size-7 rounded-lg">
+                            <AvatarComponents.AvatarImage
+                              src={purchase.buyer?.avatarUrl || undefined}
+                            />
+                            <AvatarComponents.AvatarFallback className="rounded-lg text-[10px] uppercase">
                               {purchase.buyer?.email[0]}
-                            </AvatarFallback>
-                          </Avatar>
-                          <span className="text-sm font-medium">{purchase.buyer?.name || "Anonymous"}</span>
+                            </AvatarComponents.AvatarFallback>
+                          </AvatarComponents.Avatar>
+                          <span className="text-sm font-medium">
+                            {purchase.buyer?.name || "Anonymous"}
+                          </span>
                         </div>
                       </TableCell>
                       <TableCell>
                         <div className="flex flex-col">
                           <span className="text-sm">
-                            {purchase.lineItems[0]?.block?.title || "Unknown Block"}
-                            {purchase.lineItems.length > 1 && ` + ${purchase.lineItems.length - 1} more`}
+                            {purchase.lineItems?.[0]?.block?.title ||
+                              "Unknown Block"}
+                            {(purchase.lineItems?.length || 0) > 1 &&
+                              ` + ${
+                                (purchase.lineItems?.length || 0) - 1
+                              } more`}
                           </span>
                           <span className="text-[10px] text-muted-foreground uppercase tracking-wider">
-                            {purchase.lineItems[0]?.licenseType} License
+                            {purchase.lineItems?.[0]?.licenseType} License
                           </span>
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Money amount={purchase.totalAmount} className="font-bold" />
+                        <Money
+                          amount={purchase.totalAmount}
+                          className="font-bold"
+                        />
                       </TableCell>
                       <TableCell>
-                        <Badge 
+                        <Badge
                           className={cn(
                             "rounded-lg",
-                            purchase.status === "PAID" ? "bg-green-500/10 text-green-500 border-green-500/20" :
-                            purchase.status === "PENDING" ? "bg-amber-500/10 text-amber-500 border-amber-500/20" :
-                            "bg-destructive/10 text-destructive border-destructive/20"
+                            purchase.status === "PAID"
+                              ? "bg-green-500/10 text-green-500 border-green-500/20"
+                              : purchase.status === "PENDING"
+                              ? "bg-amber-500/10 text-amber-500 border-amber-500/20"
+                              : "bg-destructive/10 text-destructive border-destructive/20"
                           )}
                         >
                           {purchase.status}
@@ -197,5 +255,5 @@ export function FinanceOverview({ initialPurchases, initialWebhookStats }: Finan
         </Card>
       </div>
     </div>
-  )
+  );
 }

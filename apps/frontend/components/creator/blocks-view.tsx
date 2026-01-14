@@ -312,7 +312,7 @@ export function CreatorBlocksView({
                       <TableCell>
                         <div className="flex flex-col gap-0.5">
                           <Money
-                            amount={block.price}
+                            amount={(block.price as number)}
                             className="font-bold text-sm"
                           />
                           <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-tighter">

@@ -4,54 +4,6 @@
  */
 
 export interface paths {
-    "/api/v1/cart": {
-        get: {
-            responses: {
-                200: {
-                    content: {
-                        "application/json": components["schemas"]["Cart"];
-                    };
-                };
-            };
-        };
-        delete: {
-            responses: {
-                204: {
-                    description: "Cart cleared";
-                };
-            };
-        };
-    };
-    "/api/v1/cart/items": {
-        post: {
-            requestBody: {
-                content: {
-                    "application/json": components["schemas"]["AddToCart"];
-                };
-            };
-            responses: {
-                201: {
-                    content: {
-                        "application/json": components["schemas"]["CartItem"];
-                    };
-                };
-            };
-        };
-    };
-    "/api/v1/cart/items/{id}": {
-        delete: {
-            parameters: {
-                path: {
-                    id: string;
-                };
-            };
-            responses: {
-                204: {
-                    description: "Item removed";
-                };
-            };
-        };
-    };
     "/api/v1/users/me": {
         parameters: {
             query?: never;
@@ -2776,6 +2728,184 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/cart": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Retrieve the user's cart */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** Format: cuid */
+                            id: string;
+                            /** Format: cuid */
+                            userId: string;
+                            items: {
+                                /** Format: cuid */
+                                id: string;
+                                /** Format: cuid */
+                                cartId: string;
+                                /** Format: cuid */
+                                blockId: string;
+                                /** @enum {string} */
+                                licenseType: "PERSONAL" | "TEAM" | "ENTERPRISE";
+                                createdAt: string;
+                                block?: components["schemas"]["Block"];
+                            }[];
+                            createdAt: string;
+                            updatedAt: string;
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Cart cleared */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/cart/items": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        /** Format: cuid */
+                        blockId: string;
+                        /**
+                         * @default PERSONAL
+                         * @enum {string}
+                         */
+                        licenseType?: "PERSONAL" | "TEAM" | "ENTERPRISE";
+                    };
+                };
+            };
+            responses: {
+                /** @description Item added to cart */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** Format: cuid */
+                            id: string;
+                            /** Format: cuid */
+                            cartId: string;
+                            /** Format: cuid */
+                            blockId: string;
+                            /** @enum {string} */
+                            licenseType: "PERSONAL" | "TEAM" | "ENTERPRISE";
+                            createdAt: string;
+                            block?: components["schemas"]["Block"];
+                        };
+                    };
+                };
+                /** @description Item already in cart */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/cart/items/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Item removed from cart */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Item not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/tags": {
         parameters: {
             query?: never;
@@ -3182,7 +3312,7 @@ export interface components {
             visibility: "PRIVATE" | "UNLISTED" | "PUBLIC";
             /** @enum {string} */
             status: "DRAFT" | "SUBMITTED" | "APPROVED" | "REJECTED" | "PUBLISHED" | "UNPUBLISHED" | "ARCHIVED";
-            price: string | number;
+            price?: unknown;
             /** @enum {string} */
             currency: "USD" | "EUR" | "CLP" | "GBP" | "MXN" | "ARS" | "BRL";
             creator?: {
@@ -3401,27 +3531,6 @@ export interface components {
             licenseType: "PERSONAL" | "TEAM" | "ENTERPRISE";
             issuedAt: string;
             expiresAt: string | unknown;
-        };
-        Cart: {
-            id: string;
-            userId: string;
-            items: components["schemas"]["CartItem"][];
-            createdAt: string;
-            updatedAt: string;
-        };
-        CartItem: {
-            id: string;
-            cartId: string;
-            blockId: string;
-            /** @enum {string} */
-            licenseType: "PERSONAL" | "TEAM" | "ENTERPRISE";
-            createdAt: string;
-            block?: components["schemas"]["Block"];
-        };
-        AddToCart: {
-            blockId: string;
-            /** @enum {string} */
-            licenseType?: "PERSONAL" | "TEAM" | "ENTERPRISE";
         };
     };
     responses: never;

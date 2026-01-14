@@ -1,3 +1,4 @@
+import type { IconType } from "../db/generated/prisma/client.js";
 import { prisma } from "../db/prisma.js";
 
 export const tagService = {
@@ -18,13 +19,28 @@ export const tagService = {
     });
   },
 
-  async create(data: { name: string; slug: string }) {
+  async create(data: {
+    name: string;
+    slug: string;
+    icon?: string;
+    iconType?: IconType;
+    description?: string;
+  }) {
     return prisma.tag.create({
       data,
     });
   },
 
-  async update(id: string, data: { name?: string; slug?: string }) {
+  async update(
+    id: string,
+    data: {
+      name?: string;
+      slug?: string;
+      icon?: string;
+      iconType?: IconType;
+      description?: string;
+    }
+  ) {
     return prisma.tag.update({
       where: { id },
       data,

@@ -55,7 +55,7 @@ export function BlockRow({ block }: { block: Block }) {
 
       <div className="text-right min-w-30 pr-2 space-y-1">
         <div className="text-2xl font-heading font-bold tracking-tight">
-          <Money amount={block.price} />
+          <Money amount={(block.price as number)} />
         </div>
         <div className="flex items-center justify-end text-[10px] text-muted-foreground font-medium uppercase tracking-widest gap-1">
           <span>{Number(block.price) === 0 ? "Free" : "Unlock Now"}</span>
