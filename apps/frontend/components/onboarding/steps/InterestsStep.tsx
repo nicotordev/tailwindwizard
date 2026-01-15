@@ -1,7 +1,16 @@
 "use client";
 
 import { useFormContext } from "react-hook-form";
-import { Check, ArrowRight, Loader2, Layout, Layers, Globe, Shield, Sparkles } from "lucide-react";
+import {
+  Check,
+  ArrowRight,
+  Loader2,
+  Layout,
+  Layers,
+  Globe,
+  Shield,
+  Sparkles,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { OnboardingFormData } from "../types";
@@ -23,8 +32,16 @@ interface InterestsStepProps {
   isLoading: boolean;
 }
 
-export function InterestsStep({ onNext, onBack, isLoading }: InterestsStepProps) {
-  const { watch, setValue, formState: { errors } } = useFormContext<OnboardingFormData>();
+export function InterestsStep({
+  onNext,
+  onBack,
+  isLoading,
+}: InterestsStepProps) {
+  const {
+    watch,
+    setValue,
+    formState: { errors },
+  } = useFormContext<OnboardingFormData>();
   const interests = watch("interests");
 
   const { data: categories, isLoading: isCategoriesLoading } = useQuery({
@@ -93,9 +110,7 @@ export function InterestsStep({ onNext, onBack, isLoading }: InterestsStepProps)
                   <span
                     className={cn(
                       "text-xs font-medium text-center",
-                      isSelected
-                        ? "text-foreground"
-                        : "text-muted-foreground"
+                      isSelected ? "text-foreground" : "text-muted-foreground"
                     )}
                   >
                     {cat.name}
