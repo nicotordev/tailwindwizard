@@ -132,14 +132,14 @@ function resolveReactAliases(): { find: RegExp; replacement: string }[] {
     "react/jsx-dev-runtime",
     "react-dom",
     "react-dom/client",
-  ];
+  ] as const;
 
   for (const candidate of candidates) {
     try {
       const req = createRequire(candidate);
       const resolved = Object.fromEntries(
         ids.map((id) => [id, req.resolve(id)])
-      );
+      ) as Record<(typeof ids)[number], string>;
 
       return [
         { find: /^react$/, replacement: resolved["react"] },
