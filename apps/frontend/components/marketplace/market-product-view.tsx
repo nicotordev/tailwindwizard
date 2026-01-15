@@ -193,16 +193,12 @@ export function MarketProductView({ block }: MarketProductViewProps) {
                   )}
                   {addItem.isPending ? "Adding..." : "Add to Cart"}
                 </Button>
-                
+
                 <Button
                   variant="outline"
                   className="w-full h-14 rounded-2xl text-base font-bold gap-2 border-border/40 hover:bg-muted/50"
                   asChild
                 >
-                  <Link href={`/admin/onboarding?blockId=${block.id}`}>
-                    <FlaskConical className="size-4" />
-                    Open in Playground
-                  </Link>
                 </Button>
 
                 <div className="flex items-center justify-center gap-4 text-[10px] font-black uppercase text-muted-foreground/60 tracking-widest">
