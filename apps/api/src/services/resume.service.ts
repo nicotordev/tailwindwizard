@@ -1,4 +1,4 @@
-import { PDFParse } from "pdf-parse";
+import pdf from "pdf-parse";
 
 export interface ParsedResume {
   text: string;
@@ -11,8 +11,7 @@ export interface ParsedResume {
 
 export const resumeService = {
   async parse(buffer: Buffer): Promise<ParsedResume> {
-    const parser = new PDFParse({ data: buffer });
-    const result = await parser.getText();
+    const result = await pdf(buffer);
     const text = result.text || "";
 
     // Basic heuristics
@@ -24,13 +23,14 @@ export const resumeService = {
     const emailMatch = text.match(emailRegex);
     const githubMatch = text.match(githubRegex);
     const twitterMatch = text.match(twitterRegex);
-    
+
     // Find all URLs
     const urls = text.match(urlRegex) || [];
     // Filter out github/twitter to find potential portfolio
-    const website = urls.find((url: string) => 
-        !url.includes("github.com") && 
-        !url.includes("twitter.com") && 
+    const website = urls.find(
+      (url: string) =>
+        !url.includes("github.com") &&
+        !url.includes("twitter.com") &&
         !url.includes("x.com") &&
         !url.includes("linkedin.com")
     );
@@ -49,5 +49,5 @@ export const resumeService = {
       website,
       suggestedBio,
     };
-  }
+  },
 };
