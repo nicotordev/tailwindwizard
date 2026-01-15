@@ -2,6 +2,7 @@
 import type { components, paths } from "@/types/api";
 import type {
   Block,
+  Collection,
   Creator,
   ExtendedPurchase,
   License,
