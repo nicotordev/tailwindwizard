@@ -31,8 +31,8 @@ import {
   TrendingUp,
   Wallet,
 } from "lucide-react";
-import { EmptyState } from "../primitives/empty-state";
 import Link from "next/link";
+import { EmptyState } from "../primitives/empty-state";
 
 export function CreatorView() {
   const { data: creator, isLoading: creatorLoading } = useQuery({
@@ -42,7 +42,8 @@ export function CreatorView() {
 
   const { data: blocks, isLoading: blocksLoading } = useQuery({
     queryKey: ["blocks", "my"],
-    queryFn: () => frontendApi.blocks.listMyBlocks().then((res) => res.data.data),
+    queryFn: () =>
+      frontendApi.blocks.listMyBlocks().then((res) => res.data.data),
   });
 
   // Mock render jobs
@@ -151,7 +152,7 @@ export function CreatorView() {
               className="bg-creator hover:bg-creator/90 text-white rounded-xl shadow-lg shadow-creator/20 group"
               asChild
             >
-              <Link href="/dashboard/blocks/new">
+              <Link href="/dashboard/forgery/blocks/new">
                 <Plus className="size-4 mr-2 transition-transform group-hover:rotate-90" />
                 Forge New Block
               </Link>
@@ -172,7 +173,7 @@ export function CreatorView() {
                   icon={Sparkles}
                   action={{
                     label: "Create First Block",
-                    href: "/dashboard/blocks/new",
+                    href: "/dashboard/forgery/blocks/new",
                     icon: Plus,
                   }}
                 />
@@ -211,7 +212,7 @@ export function CreatorView() {
                           />
                         </TableCell>
                         <TableCell className="py-4 font-medium text-sm">
-                          <Money amount={(block.price as number)} />
+                          <Money amount={block.price as number} />
                         </TableCell>
                         <TableCell className="text-right py-4 font-bold tabular-nums text-sm">
                           {block.soldCount}
@@ -227,7 +228,7 @@ export function CreatorView() {
                       className="text-xs text-muted-foreground hover:text-creator h-auto p-0 gap-1"
                       asChild
                     >
-                      <Link href="/dashboard/blocks">
+                      <Link href="/dashboard/forgery/blocks">
                         Manage all artifacts <ArrowRight className="size-3" />
                       </Link>
                     </Button>

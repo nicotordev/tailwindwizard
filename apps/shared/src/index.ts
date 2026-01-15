@@ -1,6 +1,7 @@
 export * from "./schemas/block.schema.js";
 export * from "./schemas/cart.schema.js";
 export * from "./schemas/category.schema.js";
+export * from "./schemas/collection.schema.js";
 export * from "./schemas/creator.schema.js";
 export * from "./schemas/job.schema.js";
 export * from "./schemas/license.schema.js";

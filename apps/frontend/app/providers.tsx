@@ -1,6 +1,7 @@
 "use client";
 import { ClerkProvider } from "@clerk/nextjs";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { ThemeProvider } from "next-themes";
 import { OneSignalProvider } from "@/components/notifications/onesignal-provider";
 import { Toaster } from "@/components/ui/sonner";
 
@@ -36,9 +37,16 @@ export default function Providers({ children }: { children: React.ReactNode }) {
       }}
     >
       <QueryClientProvider client={queryClient}>
-        <OneSignalProvider />
-        <Toaster />
-        {children}
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <OneSignalProvider />
+          <Toaster />
+          {children}
+        </ThemeProvider>
       </QueryClientProvider>
     </ClerkProvider>
   );

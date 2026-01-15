@@ -10,16 +10,16 @@ import { useRouter } from "next/navigation";
 import * as React from "react";
 import { toast } from "sonner";
 
+import { DevManifestEditor } from "./block-wizard/dev-manifest-editor";
 import { Sidebar } from "./block-wizard/sidebar";
+import { MetadataStep } from "./block-wizard/steps/metadata-step";
+import { PreviewStep } from "./block-wizard/steps/preview-step";
+import { PricingStep } from "./block-wizard/steps/pricing-step";
+import { SubmitStep } from "./block-wizard/steps/submit-step";
+import { UploadStep } from "./block-wizard/steps/upload-step";
+import { BlockDraft, PreviewAsset, steps } from "./block-wizard/types";
 import { WizardHeader } from "./block-wizard/wizard-header";
 import { WizardNavigation } from "./block-wizard/wizard-navigation";
-import { DevManifestEditor } from "./block-wizard/dev-manifest-editor";
-import { MetadataStep } from "./block-wizard/steps/metadata-step";
-import { PricingStep } from "./block-wizard/steps/pricing-step";
-import { UploadStep } from "./block-wizard/steps/upload-step";
-import { PreviewStep } from "./block-wizard/steps/preview-step";
-import { SubmitStep } from "./block-wizard/steps/submit-step";
-import { BlockDraft, PreviewAsset, steps } from "./block-wizard/types";
 
 const toSlug = (value: string) =>
   value
@@ -44,7 +44,9 @@ export function BlockWizard() {
   const [isUploadingBundle, setIsUploadingBundle] = React.useState(false);
   const [previewQueued, setPreviewQueued] = React.useState(false);
   const [previewJobId, setPreviewJobId] = React.useState<string | null>(null);
-  const [jobStatus, setJobStatus] = React.useState<RenderJob["status"] | null>(null);
+  const [jobStatus, setJobStatus] = React.useState<RenderJob["status"] | null>(
+    null
+  );
   const [jobError, setJobError] = React.useState<string | null>(null);
   const [isPreviewing, setIsPreviewing] = React.useState(false);
   const [previews, setPreviews] = React.useState<PreviewAsset[]>([]);
@@ -123,7 +125,10 @@ export function BlockWizard() {
       if (typeof parsed === "object" && parsed !== null) {
         const toValidate = {
           ...parsed,
-          price: typeof parsed.price === "string" ? Number(parsed.price) : parsed.price,
+          price:
+            typeof parsed.price === "string"
+              ? Number(parsed.price)
+              : parsed.price,
           tags: Array.isArray(parsed.tags)
             ? parsed.tags
             : typeof parsed.tags === "string"
@@ -147,7 +152,9 @@ export function BlockWizard() {
         if (parsed.categoryId && categories) {
           const exists = categories.some((c) => c.id === parsed.categoryId);
           if (!exists) {
-            setJsonError(`categoryId "${parsed.categoryId}" does not exist in the database.`);
+            setJsonError(
+              `categoryId "${parsed.categoryId}" does not exist in the database.`
+            );
             return;
           }
         }
@@ -182,7 +189,10 @@ export function BlockWizard() {
   const step = steps[activeStep];
   const progressValue = ((activeStep + 1) / steps.length) * 100;
 
-  const setField = <K extends keyof BlockDraft>(key: K, value: BlockDraft[K]) => {
+  const setField = <K extends keyof BlockDraft>(
+    key: K,
+    value: BlockDraft[K]
+  ) => {
     setDraft((prev) => ({ ...prev, [key]: value }));
   };
 
@@ -233,7 +243,9 @@ export function BlockWizard() {
       return;
     }
 
-    const needsDraft = ["upload", "preview", "submit"].includes(steps[index]?.id ?? "");
+    const needsDraft = ["upload", "preview", "submit"].includes(
+      steps[index]?.id ?? ""
+    );
 
     if (needsDraft) {
       const id = await ensureDraft();
@@ -257,7 +269,14 @@ export function BlockWizard() {
       return jobStatus === "SUCCEEDED";
     }
     return true;
-  }, [bundleUploaded, draft.price, draft.slug, draft.title, jobStatus, step.id]);
+  }, [
+    bundleUploaded,
+    draft.price,
+    draft.slug,
+    draft.title,
+    jobStatus,
+    step.id,
+  ]);
 
   const isStepLocked = (index: number) => {
     if (index <= activeStep) return false;
@@ -276,7 +295,7 @@ export function BlockWizard() {
       await frontendApi.blocks.update(id, payload);
       const response = await frontendApi.blocks.submit(id);
       toast.success("Block submitted for review.");
-      router.push(`/dashboard/blocks/${response.data.id}`);
+      router.push(`/dashboard/forgery/blocks/${response.data.id}`);
     } catch (error) {
       console.error("Failed to submit block:", error);
       toast.error("Unable to submit the block right now.");
@@ -297,7 +316,7 @@ export function BlockWizard() {
       />
 
       <div className="space-y-8">
-        <Card className="bg-card/30 backdrop-blur-2xl border-border/40 rounded-[2.5rem] overflow-hidden shadow-2xl shadow-primary/5">
+        <Card className="p-0 bg-card/30 backdrop-blur-2xl border-border/40 rounded-[2.5rem] overflow-hidden shadow-2xl shadow-primary/5">
           <WizardHeader
             activeStep={activeStep}
             isDevMode={isDevMode}
@@ -332,7 +351,9 @@ export function BlockWizard() {
               />
             )}
 
-            {step.id === "pricing" && <PricingStep draft={draft} setField={setField} />}
+            {step.id === "pricing" && (
+              <PricingStep draft={draft} setField={setField} />
+            )}
 
             {step.id === "upload" && (
               <UploadStep

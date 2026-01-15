@@ -133,3 +133,6 @@ This project leverages Model Context Protocol (MCP) servers to enhance developme
 - **Moderation Bug:** Fixed "ModerationEvent_decidedById_fkey" error by resolving internal `User.id` from Clerk's `externalAuthId`.
 - **Block Model:** Added `screenshot` to `Block` model and seeded data.
 - **Type Sync:** Manually updated `frontend/types/api.d.ts` and `shared/schemas/block.schema.ts` for `screenshot`.
+- **Collections:** Implemented full-stack Collections feature (Models, API, UI). Users can organize blocks.
+- **Resume Parsing:** Implemented PDF parsing service (`pdf-parse`) and integrated it into the Creator Onboarding Profile step.
+- **API Refactoring:** Split frontend API client into `lib/api.ts` (Server, uses `auth()`) and `lib/api-client.ts` (Client, uses `openapi-fetch` + credentials) to fix `server-only` build errors.

@@ -141,14 +141,14 @@ Internal tools for platform management.
   - [x] List `SUBMITTED` blocks.
   - [x] Action: Approve / Reject (with notes).
   - [x] View secure code preview (button stub).
-- [x] **Creator Management** `/admin/creators` (placeholder page; API pending)
-  - [ ] List creators.
-  - [ ] View Stripe status.
-  - [ ] Action: Approve Seller / Suspend.
-- [x] **Finance Dashboard** `/admin/finance` (placeholder cards; API pending)
-  - [ ] Global Purchases list.
-  - [ ] Dispute monitoring.
-  - [ ] Webhook health status.
+- [x] **Creator Management** `/admin/creators`
+  - [x] List creators.
+  - [x] View Stripe status.
+  - [x] Action: Approve Seller / Suspend.
+- [x] **Finance Dashboard** `/admin/finance`
+  - [x] Global Purchases list.
+  - [x] Dispute monitoring.
+  - [x] Webhook health status.
 
 ---
 
@@ -163,3 +163,15 @@ Ensure these endpoints are ready in `apps/frontend/lib/frontend-api.ts`:
 - [x] `blocks.create` / `blocks.update`.
 - [x] `render.status` (For checking preview generation).
 - [x] `admin.moderationList` / `admin.decide`.
+
+## 7. New Features (Onboarding V2 & Collections)
+
+- [x] **Collections** (User-curated lists of blocks)
+  - [x] Backend: `Collection` model, Service, Controller, Routes.
+  - [x] Frontend: Dashboard UI (`/dashboard/collections`).
+  - [x] Frontend: "Add to Collection" dialog in Marketplace/Library.
+- [x] **Resume Parsing** (Onboarding Enhancement)
+  - [x] Backend: PDF extraction service (`/api/v1/resume/parse`).
+  - [x] Frontend: "Auto-fill from Resume" in Creator Onboarding.
+- [x] **Onboarding V2**
+  - [x] Dynamic Category fetching in Interests step.

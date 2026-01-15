@@ -222,6 +222,10 @@ enum AuditAction {
   WEBHOOK_RECEIVED
   WEBHOOK_PROCESSED
   WEBHOOK_FAILED
+
+  COLLECTION_CREATE
+  COLLECTION_UPDATE
+  COLLECTION_DELETE
 }
 
 enum PlanTier {
@@ -280,6 +284,7 @@ model User {
 
   // Commerce
   cart Cart?
+  collections Collection[]
 
   @@index([createdAt])
   @@index([role])
@@ -391,6 +396,7 @@ model Block {
   licenses  License[]
   reviews   Review[]
   cartItems CartItem[]
+  collections CollectionBlock[]
 
   // Counters (denormalized)
   soldCount   Int   @default(0)
@@ -554,6 +560,39 @@ model BlockCategory {
 
   @@unique([blockId, categoryId])
   @@index([categoryId])
+}
+
+model Collection {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  description String?
+  visibility  Visibility @default(PRIVATE)
+
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  blocks      CollectionBlock[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId])
+  @@index([visibility])
+}
+
+model CollectionBlock {
+  id           String     @id @default(cuid())
+  collectionId String
+  collection   Collection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+
+  blockId      String
+  block        Block      @relation(fields: [blockId], references: [id], onDelete: Cascade)
+
+  createdAt    DateTime   @default(now())
+
+  @@unique([collectionId, blockId])
+  @@index([blockId])
 }
 
 model ModerationEvent {

@@ -1,8 +1,8 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { useFormContext } from "react-hook-form";
-import { Camera, Globe, Github, Twitter, Loader2, ArrowRight } from "lucide-react";
+import { Camera, Globe, Github, Twitter, Loader2, ArrowRight, Upload, FileText } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -23,6 +23,8 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { OnboardingFormData } from "../types";
 import type { SerializedUser } from "@/utils/serialization";
+import { frontendApi } from "@/lib/frontend-api";
+import { toast } from "sonner";
 
 interface ProfileStepProps {
   onNext: () => void;
@@ -34,7 +36,9 @@ interface ProfileStepProps {
 export function ProfileStep({ onNext, onBack, isLoading, initialUser }: ProfileStepProps) {
   const { control, setValue, watch } = useFormContext<OnboardingFormData>();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const resumeInputRef = useRef<HTMLInputElement>(null);
   const imageUrl = watch("imageUrl");
+  const [isParsing, setIsParsing] = useState(false);
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -51,6 +55,30 @@ export function ProfileStep({ onNext, onBack, isLoading, initialUser }: ProfileS
       }
     };
     reader.readAsDataURL(file);
+  };
+
+  const handleResumeUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsParsing(true);
+    try {
+      const { data } = await frontendApi.resume.parse(file);
+      
+      if (data.suggestedBio) setValue("bio", data.suggestedBio, { shouldDirty: true });
+      if (data.website) setValue("websiteUrl", data.website, { shouldDirty: true });
+      if (data.github) setValue("githubUsername", data.github, { shouldDirty: true });
+      if (data.twitter) setValue("twitterUsername", data.twitter, { shouldDirty: true });
+      
+      toast.success("Resume parsed! Please review the fields.");
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to parse resume.");
+    } finally {
+      setIsParsing(false);
+      // Reset input so same file can be selected again if needed
+      if (resumeInputRef.current) resumeInputRef.current.value = "";
+    }
   };
 
   return (
@@ -78,11 +106,33 @@ export function ProfileStep({ onNext, onBack, isLoading, initialUser }: ProfileS
             className="hidden"
           />
         </div>
-        <div className="text-center">
-          <p className="text-sm font-medium">Wizard Portrait</p>
-          <p className="text-xs text-muted-foreground">
-            Click the camera to change your visage
-          </p>
+        <div className="text-center space-y-2">
+          <div>
+            <p className="text-sm font-medium">Wizard Portrait</p>
+            <p className="text-xs text-muted-foreground">
+              Click the camera to change your visage
+            </p>
+          </div>
+          <div className="pt-2">
+            <Button 
+                type="button" 
+                variant="outline" 
+                size="sm" 
+                className="gap-2 h-8 text-xs rounded-full"
+                onClick={() => resumeInputRef.current?.click()}
+                disabled={isParsing}
+            >
+                {isParsing ? <Loader2 className="h-3 w-3 animate-spin" /> : <FileText className="h-3 w-3" />}
+                Auto-fill from Resume
+            </Button>
+            <input
+                type="file"
+                ref={resumeInputRef}
+                onChange={handleResumeUpload}
+                accept=".pdf"
+                className="hidden"
+            />
+          </div>
         </div>
       </div>
 

@@ -99,8 +99,17 @@ type BundleUploadResponse = {
   size: number;
 };
 
+type ResumeParseResponse = {
+  text: string;
+  email?: string;
+  website?: string;
+  github?: string;
+  twitter?: string;
+  suggestedBio?: string;
+};
+
 const axiosClient = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL,
+  baseURL: "",
 });
 
 /**
@@ -114,6 +123,15 @@ const createResource = <T, Params = undefined>(path: string) => ({
 });
 
 export const frontendApi = {
+  resume: {
+    parse: (file: File): Promise<AxiosResponse<ResumeParseResponse>> => {
+      const formData = new FormData();
+      formData.append("file", file);
+      return axiosClient.post("/api/v1/resume/parse", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+    },
+  },
   categories: createResource<Schema["Category"], CategoryListParams>(
     "categories"
   ),
@@ -203,9 +221,38 @@ export const frontendApi = {
 
   render: {
     status: (jobId: string): Promise<AxiosResponse<RenderJob>> =>
-      axiosClient.get(`/api/v1/render/${jobId}`),
+      axiosClient.get(`/api/v1/blocks/render-jobs/${jobId}`),
   },
 
+  collections: {
+    list: (): Promise<AxiosResponse<Collection[]>> =>
+      axiosClient.get("/api/v1/collections"),
+    get: (id: string): Promise<AxiosResponse<Collection>> =>
+      axiosClient.get(`/api/v1/collections/${id}`),
+    create: (
+      data: Partial<Schema["Collection"]>
+    ): Promise<AxiosResponse<Collection>> =>
+      axiosClient.post("/api/v1/collections", data),
+    update: (
+      id: string,
+      data: Partial<Schema["Collection"]>
+    ): Promise<AxiosResponse<Collection>> =>
+      axiosClient.patch(`/api/v1/collections/${id}`, data),
+    delete: (id: string): Promise<AxiosResponse<{ success: boolean }>> =>
+      axiosClient.delete(`/api/v1/collections/${id}`),
+    addBlock: (
+      collectionId: string,
+      blockId: string
+    ): Promise<AxiosResponse<{ success: boolean }>> =>
+      axiosClient.post(`/api/v1/collections/${collectionId}/blocks/${blockId}`),
+    removeBlock: (
+      collectionId: string,
+      blockId: string
+    ): Promise<AxiosResponse<{ success: boolean }>> =>
+      axiosClient.delete(
+        `/api/v1/collections/${collectionId}/blocks/${blockId}`
+      ),
+  },
   admin: {
     moderationList: (
       params?: AdminModerationParams

@@ -40,7 +40,7 @@ export function AdminSidebar() {
 
       <nav className="flex-1 px-4 py-6 space-y-2">
         {adminNav.map((item) => {
-          const isActive = pathname === item.href
+          const isActive = pathname === item.href || (item.href !== "/admin" && pathname.startsWith(`${item.href}/`))
           const Icon = item.icon
           return (
             <Link

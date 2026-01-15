@@ -2906,6 +2906,151 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/collections": {
+        get: {
+            responses: {
+                200: {
+                    content: {
+                        "application/json": components["schemas"]["Collection"][];
+                    };
+                };
+                401: {
+                    content: never;
+                };
+            };
+        };
+        post: {
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["CreateCollection"];
+                };
+            };
+            responses: {
+                201: {
+                    content: {
+                        "application/json": components["schemas"]["Collection"];
+                    };
+                };
+                401: {
+                    content: never;
+                };
+            };
+        };
+    };
+    "/api/v1/collections/{id}": {
+        get: {
+            parameters: {
+                path: {
+                    id: string;
+                };
+            };
+            responses: {
+                200: {
+                    content: {
+                        "application/json": components["schemas"]["Collection"];
+                    };
+                };
+                404: {
+                    content: never;
+                };
+            };
+        };
+        patch: {
+            parameters: {
+                path: {
+                    id: string;
+                };
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["UpdateCollection"];
+                };
+            };
+            responses: {
+                200: {
+                    content: {
+                        "application/json": components["schemas"]["Collection"];
+                    };
+                };
+                401: {
+                    content: never;
+                };
+                404: {
+                    content: never;
+                };
+            };
+        };
+        delete: {
+            parameters: {
+                path: {
+                    id: string;
+                };
+            };
+            responses: {
+                200: {
+                    content: {
+                        "application/json": {
+                            success: boolean;
+                        };
+                    };
+                };
+                401: {
+                    content: never;
+                };
+                404: {
+                    content: never;
+                };
+            };
+        };
+    };
+    "/api/v1/collections/{id}/blocks/{blockId}": {
+        post: {
+            parameters: {
+                path: {
+                    id: string;
+                    blockId: string;
+                };
+            };
+            responses: {
+                200: {
+                    content: {
+                        "application/json": {
+                            success: boolean;
+                        };
+                    };
+                };
+                401: {
+                    content: never;
+                };
+                404: {
+                    content: never;
+                };
+            };
+        };
+        delete: {
+            parameters: {
+                path: {
+                    id: string;
+                    blockId: string;
+                };
+            };
+            responses: {
+                200: {
+                    content: {
+                        "application/json": {
+                            success: boolean;
+                        };
+                    };
+                };
+                401: {
+                    content: never;
+                };
+                404: {
+                    content: never;
+                };
+            };
+        };
+    };
     "/api/v1/tags": {
         parameters: {
             query?: never;
@@ -3498,7 +3643,44 @@ export interface components {
                 name: string | null;
                 avatarUrl: string | null;
             };
-            createdAt: string;
+        };
+        Collection: {
+            id: string;
+            name: string;
+            slug: string;
+            description?: string | null;
+            /**
+             * @default PRIVATE
+             * @enum {string}
+             */
+            visibility: "PRIVATE" | "UNLISTED" | "PUBLIC";
+            userId: string;
+            createdAt: string | Date;
+            updatedAt: string | Date;
+            _count?: {
+                blocks: number;
+            };
+            blocks?: ({
+                block: components["schemas"]["Block"];
+            })[];
+        };
+        CreateCollection: {
+            name: string;
+            description?: string;
+            /**
+             * @default PRIVATE
+             * @enum {string}
+             */
+            visibility: "PRIVATE" | "UNLISTED" | "PUBLIC";
+        };
+        UpdateCollection: {
+            name?: string;
+            description?: string;
+            /**
+             * @default PRIVATE
+             * @enum {string}
+             */
+            visibility: "PRIVATE" | "UNLISTED" | "PUBLIC";
         };
         CreateReview: {
             rating: number;

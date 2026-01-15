@@ -4,10 +4,12 @@
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 import { GetObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3";
 import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
+import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import type { AddressInfo } from "node:net";
 import type { Readable } from "node:stream";
+import { fileURLToPath } from "node:url";
 import type { Page } from "playwright";
 import { chromium } from "playwright";
 import { createServer } from "vite";
@@ -18,6 +20,10 @@ import { prisma } from "../db/prisma.js";
 import { r2Client } from "../lib/r2.js";
 
 type BlockType = "COMPONENT" | "SECTION" | "PAGE";
+
+const apiRoot = fileURLToPath(new URL("../..", import.meta.url));
+const repoRoot = fileURLToPath(new URL("../../../..", import.meta.url));
+const frontendRoot = join(repoRoot, "apps", "frontend");
 
 /* -------------------------------------------------- */
 /* utils */
@@ -115,6 +121,52 @@ createRoot(root).render(
 `;
 }
 
+function resolveReactAliases(): { find: RegExp; replacement: string }[] {
+  const candidates = [
+    join(apiRoot, "package.json"),
+    join(frontendRoot, "package.json"),
+  ];
+  const ids = [
+    "react",
+    "react/jsx-runtime",
+    "react/jsx-dev-runtime",
+    "react-dom",
+    "react-dom/client",
+  ];
+
+  for (const candidate of candidates) {
+    try {
+      const req = createRequire(candidate);
+      const resolved = Object.fromEntries(
+        ids.map((id) => [id, req.resolve(id)])
+      );
+
+      return [
+        { find: /^react$/, replacement: resolved["react"] },
+        {
+          find: /^react\/jsx-runtime$/,
+          replacement: resolved["react/jsx-runtime"],
+        },
+        {
+          find: /^react\/jsx-dev-runtime$/,
+          replacement: resolved["react/jsx-dev-runtime"],
+        },
+        { find: /^react-dom$/, replacement: resolved["react-dom"] },
+        {
+          find: /^react-dom\/client$/,
+          replacement: resolved["react-dom/client"],
+        },
+      ];
+    } catch {
+      // Try the next candidate.
+    }
+  }
+
+  throw new Error(
+    "React dependencies not found. Install react and react-dom in apps/api or ensure apps/frontend dependencies are installed."
+  );
+}
+
 /* -------------------------------------------------- */
 /* screenshot */
 /* -------------------------------------------------- */
@@ -128,9 +180,14 @@ async function captureAndUpload(page: Page, blockId: string): Promise<void> {
 
   for (const vp of viewports) {
     await page.setViewportSize({ width: vp.width, height: vp.height });
-    await page.waitForTimeout(800);
+    await page.evaluate(() => window.scrollTo(0, 0));
+    await page.waitForTimeout(1000);
 
-    const buffer = await page.screenshot({ type: "jpeg", quality: 85 });
+    const buffer = await page.screenshot({ 
+      type: "jpeg", 
+      quality: 90,
+      fullPage: true 
+    });
     const key = `previews/${blockId}/${vp.name.toLowerCase()}.jpg`;
 
     await r2Client.send(
@@ -173,11 +230,21 @@ async function startVite(root: string): Promise<{
   server: ViteDevServer;
   url: string;
 }> {
+  const reactAliases = resolveReactAliases();
   const server = await createServer({
     root,
     plugins: [react()],
     logLevel: "error",
-    server: { port: 0 },
+    resolve: {
+      alias: reactAliases,
+      dedupe: ["react", "react-dom"],
+    },
+    server: {
+      port: 0,
+      fs: {
+        allow: [repoRoot, root],
+      },
+    },
   });
 
   await server.listen();
@@ -254,7 +321,10 @@ export const renderService = {
       const { server, url } = await startVite(workdir);
       vite = server;
 
-      browser = await chromium.launch({ headless: true });
+      browser = await chromium.launch({ 
+        headless: true,
+        args: ["--no-sandbox", "--disable-setuid-sandbox"]
+      });
       const context = await browser.newContext({ deviceScaleFactor: 2 });
 
       await context.route("**/*", async (route) => {
@@ -271,6 +341,7 @@ export const renderService = {
       });
 
       const page = await context.newPage();
+
       await page.goto(url, { waitUntil: "networkidle" });
       await page.waitForSelector("#root > *", { timeout: 15000 });
 

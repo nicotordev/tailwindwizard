@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { Input } from "@/components/ui/input"
-import { Search, LayoutGrid, List, SlidersHorizontal, Package, Download, Terminal } from "lucide-react"
+import { Search, LayoutGrid, List, SlidersHorizontal, Package, Download, Terminal, Bookmark } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
   Select,
@@ -16,6 +16,7 @@ import { DeliveryStatusBadge } from "@/components/primitives/status-badges"
 import { DateDisplay } from "@/components/primitives/formatters"
 import { EmptyState } from "@/components/primitives/empty-state"
 import type { License } from "@/types/extended"
+import { AddToCollectionDialog } from "@/components/dashboard/collections/add-to-collection-dialog"
 
 interface LibraryViewProps {
   initialLicenses: License[]
@@ -25,6 +26,7 @@ export function LibraryView({ initialLicenses }: LibraryViewProps) {
   const [search, setSearch] = React.useState("")
   const [view, setView] = React.useState<"grid" | "list">("grid")
   const [filter, setFilter] = React.useState("all")
+  const [collectionBlockId, setCollectionBlockId] = React.useState<string | null>(null)
 
   const filteredLicenses = initialLicenses.filter(license => {
     const matchesSearch = license.block?.title.toLowerCase().includes(search.toLowerCase()) || 
@@ -96,7 +98,7 @@ export function LibraryView({ initialLicenses }: LibraryViewProps) {
       ) : view === "grid" ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredLicenses.map((license) => (
-            <Card key={license.id} className="group overflow-hidden bg-card/40 backdrop-blur-xl border-border/50 hover:shadow-2xl hover:shadow-primary/10 transition-all duration-300 rounded-3xl">
+            <Card key={license.id} className="group overflow-hidden bg-card/40 backdrop-blur-xl border-border/50 hover:shadow-2xl hover:shadow-primary/10 transition-all duration-300 rounded-3xl relative">
               <CardHeader>
                 <div className="flex justify-between items-start">
                   <div className="space-y-1">
@@ -107,7 +109,18 @@ export function LibraryView({ initialLicenses }: LibraryViewProps) {
                        <span className="text-[10px] font-bold uppercase tracking-widest text-primary/70">{license.type} LICENSE</span>
                     </div>
                   </div>
-                  <DeliveryStatusBadge status={license.deliveryStatus} />
+                  <div className="flex flex-col items-end gap-2">
+                    <DeliveryStatusBadge status={license.deliveryStatus} />
+                    <Button 
+                        size="icon" 
+                        variant="ghost" 
+                        className="h-8 w-8 text-muted-foreground hover:text-primary"
+                        onClick={() => setCollectionBlockId(license.blockId)}
+                        title="Add to Collection"
+                    >
+                        <Bookmark className="size-4" />
+                    </Button>
+                  </div>
                 </div>
                 <CardDescription className="line-clamp-2 mt-2">
                   {license.block?.description || "No description provided for this component."}
@@ -155,6 +168,15 @@ export function LibraryView({ initialLicenses }: LibraryViewProps) {
                 <div className="flex items-center gap-3">
                   <DeliveryStatusBadge status={license.deliveryStatus} />
                   <div className="h-8 w-px bg-border/60 mx-2" />
+                  <Button 
+                    size="icon" 
+                    variant="ghost" 
+                    className="rounded-lg h-9 w-9 text-muted-foreground hover:text-primary"
+                    onClick={() => setCollectionBlockId(license.blockId)}
+                    title="Add to Collection"
+                  >
+                    <Bookmark className="size-4" />
+                  </Button>
                   <Button size="icon" variant="ghost" className="rounded-lg h-9 w-9">
                     <Download className="size-4" />
                   </Button>
@@ -167,6 +189,12 @@ export function LibraryView({ initialLicenses }: LibraryViewProps) {
           </div>
         </div>
       )}
+
+      <AddToCollectionDialog 
+        blockId={collectionBlockId} 
+        open={!!collectionBlockId} 
+        onOpenChange={(open) => !open && setCollectionBlockId(null)} 
+      />
     </div>
   )
 }

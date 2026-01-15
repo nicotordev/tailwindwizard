@@ -1,7 +1,7 @@
-import * as React from "react";
-import Link from "next/link";
-import { PackagePlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { PackagePlus } from "lucide-react";
+import Link from "next/link";
+import * as React from "react";
 
 export function MarketActions({ children }: { children?: React.ReactNode }) {
   return (
@@ -13,7 +13,7 @@ export function MarketActions({ children }: { children?: React.ReactNode }) {
           size="sm"
           className="gap-2 rounded-xl px-6 shadow-lg shadow-primary/20 hover:shadow-primary/30 active:scale-95 transition-all font-semibold"
         >
-          <Link href="/dashboard/blocks/new">
+          <Link href="/dashboard/forgery/blocks/new">
             <PackagePlus className="size-4" />
             Publish Block
           </Link>

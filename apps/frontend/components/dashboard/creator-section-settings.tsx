@@ -39,9 +39,10 @@ import {
   Loader2,
   Shield,
   Wand2,
+  FileText,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useRef } from "react";
 import { useForm } from "react-hook-form";
 import rawCountries from "world-countries";
 import { toast } from "sonner";
@@ -77,8 +78,10 @@ export default function CreatorSection({
 }: CreatorSectionProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [isStripeLoading, setIsStripeLoading] = useState(false);
+  const [isParsing, setIsParsing] = useState(false);
   const [isCountryOpen, setIsCountryOpen] = useState(false);
   const router = useRouter();
+  const resumeInputRef = useRef<HTMLInputElement>(null);
 
   const countries = useMemo(
     () =>
@@ -101,6 +104,31 @@ export default function CreatorSection({
       countryCode: creator?.countryCode || "",
     },
   });
+
+  const handleResumeUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsParsing(true);
+    try {
+      const { data } = await frontendApi.resume.parse(file);
+      
+      if (data.suggestedBio) form.setValue("bio", data.suggestedBio, { shouldDirty: true });
+      if (data.website) form.setValue("websiteUrl", data.website, { shouldDirty: true });
+      // portfolioUrl isn't mapped in resume service explicitly, but we could check
+      if (data.github || data.twitter) {
+         // Maybe just toast about found social links if fields aren't present
+      }
+      
+      toast.success("Resume parsed! Please review the fields.");
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to parse resume.");
+    } finally {
+      setIsParsing(false);
+      if (resumeInputRef.current) resumeInputRef.current.value = "";
+    }
+  };
 
   async function onSubmit(data: z.infer<typeof creatorSchema>) {
     setIsLoading(true);
@@ -461,7 +489,20 @@ export default function CreatorSection({
                   name="bio"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Bio</FormLabel>
+                      <div className="flex items-center justify-between">
+                        <FormLabel>Bio</FormLabel>
+                        <Button 
+                            type="button" 
+                            variant="ghost" 
+                            size="sm" 
+                            className="h-6 text-xs gap-1 text-muted-foreground hover:text-primary"
+                            onClick={() => resumeInputRef.current?.click()}
+                            disabled={isParsing}
+                        >
+                            {isParsing ? <Loader2 className="h-3 w-3 animate-spin" /> : <FileText className="h-3 w-3" />}
+                            Auto-fill from Resume
+                        </Button>
+                      </div>
                       <FormControl>
                         <Textarea
                           placeholder="Tell us about yourself..."
@@ -472,6 +513,14 @@ export default function CreatorSection({
                       <FormMessage />
                     </FormItem>
                   )}
+                />
+                
+                <input
+                    type="file"
+                    ref={resumeInputRef}
+                    onChange={handleResumeUpload}
+                    accept=".pdf"
+                    className="hidden"
                 />
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

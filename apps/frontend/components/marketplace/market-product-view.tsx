@@ -3,6 +3,7 @@
 import { useCart } from "@/hooks/use-cart";
 import {
   ChevronRight,
+  FlaskConical,
   Loader2,
   Package,
   ShoppingCart,
@@ -16,6 +17,7 @@ import { Money } from "@/components/primitives/formatters";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { ReviewsSection } from "./reviews-section";
 
 // Types based on the shared schema and internal logic
 import type { components } from "@/types/api";
@@ -129,6 +131,10 @@ export function MarketProductView({ block }: MarketProductViewProps) {
                 "Enhance your development workflow with this professionally crafted block. Designed for performance, accessibility, and maximum flexibility. Built by experts for developers who value quality and speed in their development cycle."}
             </p>
           </div>
+
+          <div className="pt-8 border-t border-border/40">
+            <ReviewsSection blockId={block.id} />
+          </div>
         </div>
 
         {/* Action Sidebar */}
@@ -187,6 +193,18 @@ export function MarketProductView({ block }: MarketProductViewProps) {
                   )}
                   {addItem.isPending ? "Adding..." : "Add to Cart"}
                 </Button>
+                
+                <Button
+                  variant="outline"
+                  className="w-full h-14 rounded-2xl text-base font-bold gap-2 border-border/40 hover:bg-muted/50"
+                  asChild
+                >
+                  <Link href={`/admin/onboarding?blockId=${block.id}`}>
+                    <FlaskConical className="size-4" />
+                    Open in Playground
+                  </Link>
+                </Button>
+
                 <div className="flex items-center justify-center gap-4 text-[10px] font-black uppercase text-muted-foreground/60 tracking-widest">
                   <span>Instant Delivery</span>
                   <div className="size-1 rounded-full bg-muted-foreground/30" />

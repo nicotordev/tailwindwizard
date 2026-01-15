@@ -5,6 +5,7 @@ export type User = components["schemas"]["User"];
 export type Purchase = components["schemas"]["Purchase"];
 export type Block = components["schemas"]["Block"];
 export type Creator = components["schemas"]["Creator"];
+export type Collection = components["schemas"]["Collection"];
 
 // Extended types that might be missing or incomplete in auto-generated file
 // due to backend DTOs not matching full Prisma models or being WIP.

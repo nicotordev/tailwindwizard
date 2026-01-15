@@ -37,6 +37,7 @@ import type { Block } from "@/types/extended";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   Ban,
+  Bookmark,
   Box,
   ExternalLink,
   Eye,
@@ -57,6 +58,7 @@ import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import * as React from "react";
 import { toast } from "sonner";
+import { AddToCollectionDialog } from "../dashboard/collections/add-to-collection-dialog";
 
 interface PaginationMeta {
   total: number;
@@ -92,6 +94,11 @@ export function CreatorBlocksView({
   const router = useRouter();
   const pathname = usePathname();
   const urlSearchParams = useSearchParams();
+
+  const [selectedBlockId, setSelectedBlockId] = React.useState<string | null>(
+    null
+  );
+  const [isCollectionOpen, setIsCollectionOpen] = React.useState(false);
 
   const initialQ = normalizeQueryParam(searchParams.q) ?? "";
   const [search, setSearch] = React.useState<string>(initialQ);
@@ -153,7 +160,7 @@ export function CreatorBlocksView({
         icon={Plus}
         action={{
           label: "Create Block",
-          href: "/dashboard/blocks/new",
+          href: "/dashboard/forgery/blocks/new",
           icon: Plus,
         }}
         variant="hero"
@@ -196,7 +203,7 @@ export function CreatorBlocksView({
             size="lg"
             className="rounded-2xl h-12 px-6 shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all duration-300"
           >
-            <Link href="/dashboard/blocks/new">
+            <Link href="/dashboard/forgery/blocks/new">
               <Plus className="mr-2 size-5" />
               Create Block
             </Link>
@@ -278,19 +285,27 @@ export function CreatorBlocksView({
                       <TableCell className="pl-8 py-4">
                         <div className="flex items-center gap-4">
                           <div className="size-12 rounded-2xl bg-muted/60 flex items-center justify-center text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary transition-all duration-300 ring-1 ring-border/50 shadow-sm relative overflow-hidden">
-                            {block.screenshot ? (
-                              <Image
-                                src={block.screenshot}
-                                alt=""
-                                className="size-full object-cover"
-                                width={50}
-                                height={50}
-                              />
-                            ) : (
-                              <Box className="size-6 transition-transform group-hover:scale-110" />
-                            )}
+                            <Link
+                              href={`/dashboard/forgery/blocks/${block.id}`}
+                              className="contents"
+                            >
+                              {block.screenshot ? (
+                                <Image
+                                  src={block.screenshot}
+                                  alt=""
+                                  className="size-full object-cover"
+                                  width={50}
+                                  height={50}
+                                />
+                              ) : (
+                                <Box className="size-6 transition-transform group-hover:scale-110" />
+                              )}
+                            </Link>
                           </div>
-                          <div className="flex flex-col">
+                          <Link
+                            href={`/dashboard/forgery/blocks/${block.id}`}
+                            className="flex flex-col"
+                          >
                             <span className="font-bold text-foreground group-hover:text-primary transition-colors">
                               {block.title}
                             </span>
@@ -300,7 +315,7 @@ export function CreatorBlocksView({
                                 <ExternalLink className="size-2 opacity-0 group-hover:opacity-100 transition-opacity" />
                               )}
                             </span>
-                          </div>
+                          </Link>
                         </div>
                       </TableCell>
                       <TableCell>
@@ -312,7 +327,7 @@ export function CreatorBlocksView({
                       <TableCell>
                         <div className="flex flex-col gap-0.5">
                           <Money
-                            amount={(block.price as number)}
+                            amount={block.price as number}
                             className="font-bold text-sm"
                           />
                           <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-tighter">
@@ -348,7 +363,13 @@ export function CreatorBlocksView({
                       </TableCell>
                       <TableCell className="pr-8">
                         <div className="flex justify-end opacity-0 group-hover:opacity-100 transition-all duration-200 -translate-x-2 group-hover:translate-x-0">
-                          <BlockActions block={block} />
+                          <BlockActions
+                            block={block}
+                            onAddToCollection={(id) => {
+                              setSelectedBlockId(id);
+                              setIsCollectionOpen(true);
+                            }}
+                          />
                         </div>
                       </TableCell>
                     </motion.tr>
@@ -419,11 +440,23 @@ export function CreatorBlocksView({
           </CardFooter>
         )}
       </Card>
+
+      <AddToCollectionDialog
+        blockId={selectedBlockId}
+        open={isCollectionOpen}
+        onOpenChange={setIsCollectionOpen}
+      />
     </div>
   );
 }
 
-function BlockActions({ block }: { block: Block }) {
+function BlockActions({
+  block,
+  onAddToCollection,
+}: {
+  block: Block;
+  onAddToCollection: (id: string) => void;
+}) {
   const status = block.status as BlockStatus;
 
   return (
@@ -442,10 +475,20 @@ function BlockActions({ block }: { block: Block }) {
         align="end"
         className="w-45 rounded-2xl p-2 border-border/40 bg-card/95 backdrop-blur-xl shadow-2xl"
       >
+        <DropdownMenuItem
+          className="rounded-xl focus:bg-primary/10"
+          onSelect={() => onAddToCollection(block.id)}
+        >
+          <Bookmark className="mr-2 size-4 text-primary" />
+          Add to Collection
+        </DropdownMenuItem>
+
+        <div className="my-1 h-px bg-border/40" />
+
         {/* DRAFT: Edit */}
         {status === "DRAFT" && (
           <DropdownMenuItem asChild className="rounded-xl focus:bg-primary/10">
-            <Link href={`/dashboard/blocks/${block.id}`}>
+            <Link href={`/dashboard/forgery/blocks/${block.id}`}>
               <Pencil className="mr-2 size-4 text-primary" />
               Edit Block
             </Link>
@@ -481,7 +524,7 @@ function BlockActions({ block }: { block: Block }) {
         {/* REJECTED: Edit */}
         {status === "REJECTED" && (
           <DropdownMenuItem asChild className="rounded-xl focus:bg-primary/10">
-            <Link href={`/dashboard/blocks/${block.id}`}>
+            <Link href={`/dashboard/forgery/blocks/${block.id}`}>
               <Pencil className="mr-2 size-4 text-primary" />
               Fix & Resubmit
             </Link>
